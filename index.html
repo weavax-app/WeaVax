@@ -76,16 +76,28 @@
 
             <!-- Enlaces de navegación rápida de producto -->
             <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-400">
-                <a href="#modulos" onclick="showSection('home')" class="hover:text-white transition-colors">Módulos</a>
-                <a href="#web-pc" onclick="showSection('home')" class="hover:text-white transition-colors flex items-center">
+                <a href="#descargar" onclick="scrollToAnchor('descargar')" class="text-white hover:text-purpleLight transition-colors font-semibold flex items-center">
+                    <svg class="w-4 h-4 mr-1 text-purpleLight" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Descargar APK
+                </a>
+                <a href="#modulos" onclick="scrollToAnchor('modulos')" class="hover:text-white transition-colors">Módulos</a>
+                <a href="#web-pc" onclick="scrollToAnchor('web-pc')" class="hover:text-white transition-colors flex items-center">
                     <span class="w-1.5 h-1.5 rounded-full bg-purpleLight mr-1.5 animate-pulse"></span>
                     Web para PC
                 </a>
-                <a href="#google-sync" onclick="showSection('home')" class="hover:text-white transition-colors">Sincronización</a>
+                <a href="#google-sync" onclick="scrollToAnchor('google-sync')" class="hover:text-white transition-colors">Sincronización</a>
             </nav>
 
             <!-- Acciones Derecha -->
             <div class="flex items-center space-x-3">
+                <a href="#descargar" onclick="scrollToAnchor('descargar')" class="flex items-center space-x-2 text-xs font-bold text-white bg-purplePrimary hover:bg-purpleLight px-3.5 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-purplePrimary/30">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Descargar APK</span>
+                </a>
                 <a href="https://www.instagram.com/weavax.app/" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2 text-xs font-bold text-white bg-gradient-to-r from-purplePrimary to-pink-600 hover:opacity-95 px-3.5 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-purplePrimary/30">
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
                         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -120,12 +132,17 @@
                     </p>
 
                     <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <a href="#web-pc" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl bg-purplePrimary hover:bg-purpleLight text-white font-bold text-sm transition-all shadow-lg hover:shadow-purplePrimary/30">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                            <span>Explorar Versión Web PC</span>
+                        <a href="#descargar" onclick="scrollToAnchor('descargar')" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-7 py-3.5 rounded-xl bg-purplePrimary hover:bg-purpleLight text-white font-bold text-sm transition-all shadow-lg hover:shadow-purplePrimary/30">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span>Descargar APK (Android)</span>
                         </a>
-                        <a href="#modulos" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl bg-darkCard border border-darkBorder hover:border-purplePrimary/50 text-gray-300 hover:text-white font-semibold text-sm transition-all">
-                            <span>Conocer los 4 Módulos</span>
+                        <a href="#web-pc" onclick="scrollToAnchor('web-pc')" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl bg-darkCard border border-darkBorder hover:border-purplePrimary/50 text-gray-300 hover:text-white font-semibold text-sm transition-all">
+                            <svg class="w-4 h-4 text-purpleLight" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                            <span>Explorar Web PC</span>
                         </a>
                     </div>
 
@@ -150,6 +167,119 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ======================================================== -->
+            <!-- SECCIÓN DEDICADA: DESCARGA DE WEAVAX APK (ANDROID)       -->
+            <!-- ======================================================== -->
+            <section id="descargar" class="py-16 px-4 sm:px-6 max-w-6xl mx-auto border-t border-darkBorder scroll-mt-20">
+                <div class="rounded-3xl p-8 sm:p-12 glass-panel border border-purplePrimary/40 relative overflow-hidden bg-gradient-to-br from-darkCard via-darkCard to-purplePrimary/10 shadow-2xl">
+                    <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-purplePrimary/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -right-20 -top-20 w-80 h-80 bg-greenAccent/15 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+                        <!-- Columna Izquierda: Información de Descarga y Botón Principal (7 cols) -->
+                        <div class="lg:col-span-7">
+                            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-greenAccent/15 border border-greenAccent/30 text-greenAccent text-xs font-bold mb-4">
+                                <span class="w-2 h-2 rounded-full bg-greenAccent animate-pulse"></span>
+                                <span>Descarga Directa Oficial · Versión 2.12</span>
+                            </div>
+
+                            <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+                                Instala WeaVax en tu <span class="bg-gradient-to-r from-purpleLight to-greenAccent bg-clip-text text-transparent">Android</span>
+                            </h2>
+
+                            <p class="text-sm sm:text-base text-gray-300 mt-4 leading-relaxed">
+                                Obtén el archivo APK oficial directamente desde nuestro dominio, sin intermediarios ni demoras. Tu sistema operativo personal con sincronización a Google Calendar listo en tu teléfono.
+                            </p>
+
+                            <!-- Botón Principal de Descarga APK -->
+                            <div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                                <a href="/weavax.apk" download="weavax.apk" class="inline-flex items-center justify-center space-x-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-purplePrimary via-purpleLight to-purplePrimary text-white font-extrabold text-base transition-all duration-300 shadow-xl shadow-purplePrimary/30 hover:scale-[1.02] active:scale-[0.98]">
+                                    <svg class="w-6 h-6 text-white animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    <div class="text-left">
+                                        <div class="leading-none">Descargar APK Oficial</div>
+                                        <div class="text-[11px] font-normal text-purple-200 mt-1">weavax.apk (~45 MB) · v2.12</div>
+                                    </div>
+                                </a>
+
+                                <!-- Enlace directo alternativo / Copiar -->
+                                <div class="flex items-center justify-between sm:justify-start space-x-2 px-4 py-3 rounded-xl bg-darkBg/80 border border-darkBorder text-xs text-gray-400 font-mono">
+                                    <span class="truncate max-w-[200px] sm:max-w-[240px]">https://weavax.link/weavax.apk</span>
+                                    <button onclick="navigator.clipboard.writeText('https://weavax.link/weavax.apk'); alert('¡Enlace directo copiado al portapapeles!');" title="Copiar enlace directo" class="p-1.5 rounded-lg bg-darkCard hover:bg-purplePrimary/20 text-purpleLight hover:text-white transition-colors">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Ficha de especificaciones técnicas -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
+                                <div class="p-3 rounded-xl bg-darkBg/60 border border-darkBorder">
+                                    <div class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Versión</div>
+                                    <div class="text-sm font-bold text-white mt-0.5">2.12 Estable</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-darkBg/60 border border-darkBorder">
+                                    <div class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Compatibilidad</div>
+                                    <div class="text-sm font-bold text-greenAccent mt-0.5">Android 8.0+</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-darkBg/60 border border-darkBorder">
+                                    <div class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Tamaño</div>
+                                    <div class="text-sm font-bold text-white mt-0.5">~45 MB</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-darkBg/60 border border-darkBorder">
+                                    <div class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Seguridad</div>
+                                    <div class="text-sm font-bold text-purpleLight mt-0.5">Verificado ✓</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Columna Derecha: Guía de Instalación Paso a Paso (5 cols) -->
+                        <div class="lg:col-span-5 bg-darkBg/90 border border-darkBorder/80 rounded-2xl p-6 shadow-inner">
+                            <h3 class="text-sm font-extrabold uppercase tracking-wider text-purpleLight flex items-center mb-4">
+                                <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                Guía rápida de instalación
+                            </h3>
+
+                            <div class="space-y-4 text-xs">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-6 h-6 rounded-full bg-purplePrimary/30 text-purpleLight font-black flex items-center justify-center shrink-0 border border-purplePrimary/50">1</div>
+                                    <div>
+                                        <div class="font-bold text-white">Descarga el archivo</div>
+                                        <p class="text-gray-400 mt-0.5">Toca el botón morado. Si Chrome avisa "Este tipo de archivo puede ser dañino", selecciona <strong class="text-gray-200">Descargar de todos modos</strong>.</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-6 h-6 rounded-full bg-purplePrimary/30 text-purpleLight font-black flex items-center justify-center shrink-0 border border-purplePrimary/50">2</div>
+                                    <div>
+                                        <div class="font-bold text-white">Abre el APK</div>
+                                        <p class="text-gray-400 mt-0.5">Al completarse la descarga, pulsa en la notificación o abre <code class="text-purpleLight font-mono">weavax.apk</code> en tu carpeta Descargas.</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-6 h-6 rounded-full bg-purplePrimary/30 text-purpleLight font-black flex items-center justify-center shrink-0 border border-purplePrimary/50">3</div>
+                                    <div>
+                                        <div class="font-bold text-white">Habilita orígenes desconocidos</div>
+                                        <p class="text-gray-400 mt-0.5">Si Android pide autorización, toca <strong class="text-gray-200">Configuración</strong> y activa <strong class="text-gray-200">Permitir desde esta fuente</strong>.</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-6 h-6 rounded-full bg-greenAccent/20 text-greenAccent font-black flex items-center justify-center shrink-0 border border-greenAccent/40">4</div>
+                                    <div>
+                                        <div class="font-bold text-white">Instala y disfruta</div>
+                                        <p class="text-gray-400 mt-0.5">Presiona <strong class="text-gray-200">Instalar</strong>, abre WeaVax y comienza a organizar tus hábitos, finanzas y entrenamientos.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <!-- SECCIÓN: EXPERIENCIA WEB PARA PC -->
             <section id="web-pc" class="py-16 px-4 sm:px-6 max-w-6xl mx-auto border-t border-darkBorder">
@@ -448,27 +578,56 @@
             const sections = ['home', 'privacy', 'terms'];
             sections.forEach(s => {
                 const el = document.getElementById('view-' + s);
-                if (s === sectionId) {
-                    el.classList.remove('hidden');
-                    el.classList.add('block');
-                } else {
-                    el.classList.remove('block');
-                    el.classList.add('hidden');
+                if (el) {
+                    if (s === sectionId) {
+                        el.classList.remove('hidden');
+                        el.classList.add('block');
+                    } else {
+                        el.classList.remove('block');
+                        el.classList.add('hidden');
+                    }
                 }
             });
 
-            // Actualizar URL hash discretamente
             window.location.hash = sectionId;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Leer hash inicial si Google revisa directamente https://weavax.link/#privacy
+        function scrollToAnchor(anchorId) {
+            const homeView = document.getElementById('view-home');
+            if (homeView && homeView.classList.contains('hidden')) {
+                const sections = ['home', 'privacy', 'terms'];
+                sections.forEach(s => {
+                    const el = document.getElementById('view-' + s);
+                    if (el) {
+                        if (s === 'home') {
+                            el.classList.remove('hidden');
+                            el.classList.add('block');
+                        } else {
+                            el.classList.remove('block');
+                            el.classList.add('hidden');
+                        }
+                    }
+                });
+            }
+            setTimeout(() => {
+                const target = document.getElementById(anchorId);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 60);
+        }
+
+        // Leer hash inicial si el usuario o Google entra con enlaces directos
         window.addEventListener('DOMContentLoaded', () => {
             const hash = window.location.hash.replace('#', '').toLowerCase();
             if (hash === 'privacy' || hash === 'privacidad') {
                 showSection('privacy');
             } else if (hash === 'terms' || hash === 'terminos') {
                 showSection('terms');
+            } else if (hash === 'descargar' || hash === 'download') {
+                showSection('home');
+                scrollToAnchor('descargar');
             } else {
                 showSection('home');
             }
