@@ -58,35 +58,19 @@
 </head>
 <body class="min-h-screen flex flex-col selection:bg-purplePrimary selection:text-white">
 
-    <!-- BARRA DE NAVEGACIÓN SUPERIOR (LIMPIA, SIN PASTILLAS DE LEGALES) -->
+    <!-- BARRA DE NAVEGACIÓN SUPERIOR (LIMPIA) -->
     <header class="sticky top-0 z-50 bg-[#0B0A12]/80 backdrop-blur-md border-b border-darkBorder">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <!-- Logo WeaVax -->
-           <!-- CÓDIGO ACTUALIZADO CON TU IMAGEN PNG: -->
-<a href="javascript:void(0)" onclick="showSection('home')" class="flex items-center space-x-3 group">
-    <div class="w-10 h-10 rounded-xl overflow-hidden bg-purplePrimary/10 border border-purplePrimary/40 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-        <img src="weavax_logo.png" alt="WeaVax Logo" class="w-full h-full object-contain p-1">
-    </div>
-    <div>
-        <span class="text-xl font-extrabold tracking-tight text-white flex items-center">
-            WeaVax <span class="ml-1.5 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-purplePrimary/20 text-purpleLight border border-purplePrimary/40">LifeOS</span>
-        </span>
-    </div>
-</a>
+            <!-- Logo WeaVax (Sin recuadro exterior) -->
+            <a href="javascript:void(0)" onclick="showSection('home')" class="flex items-center space-x-2.5 group">
+                <img src="weavax_logo.png" alt="WeaVax Logo" class="w-8 h-8 object-contain group-hover:scale-105 transition-transform duration-200">
+                <span class="text-xl font-extrabold tracking-tight text-white flex items-center">
+                    WeaVax <span class="ml-1.5 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-purplePrimary/20 text-purpleLight border border-purplePrimary/40">LifeOS</span>
+                </span>
+            </a>
 
-            <!-- Enlaces de navegación rápida de producto -->
+            <!-- Enlaces centrales de navegación -->
             <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-400">
-               <a href="https://github.com/weavax-app/WeaVax/releases/latest/download/weavax.apk" download="weavax.apk" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-7 py-3.5 rounded-xl bg-purplePrimary hover:bg-purpleLight text-white font-bold text-sm transition-all shadow-lg hover:shadow-purplePrimary/30">
-    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="7 10 12 15 17 10"></polyline>
-        <line x1="12" y1="15" x2="12" y2="3"></line>
-    </svg>
-    <span>Descargar APK (Android)</span>
-</a>
-                    <svg class="w-4 h-4 mr-1 text-purpleLight" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    Descargar APK
-                </a>
                 <a href="#modulos" onclick="scrollToAnchor('modulos')" class="hover:text-white transition-colors">Módulos</a>
                 <a href="#web-pc" onclick="scrollToAnchor('web-pc')" class="hover:text-white transition-colors flex items-center">
                     <span class="w-1.5 h-1.5 rounded-full bg-purpleLight mr-1.5 animate-pulse"></span>
@@ -95,9 +79,10 @@
                 <a href="#google-sync" onclick="scrollToAnchor('google-sync')" class="hover:text-white transition-colors">Sincronización</a>
             </nav>
 
-            <!-- Acciones Derecha -->
+            <!-- Acciones Derecha (Único botón de descarga + Instagram) -->
             <div class="flex items-center space-x-3">
-<a href="https://github.com/weavax-app/WeaVax/releases/latest/download/weavax.apk" download="weavax.apk" class="flex items-center space-x-2 text-xs font-bold text-white bg-purplePrimary hover:bg-purpleLight px-3.5 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-purplePrimary/30">                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <a href="https://github.com/weavax-app/WeaVax/releases/latest/download/WeaVax.apk" download="WeaVax.apk" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2 text-xs font-bold text-white bg-purplePrimary hover:bg-purpleLight px-3.5 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-purplePrimary/30">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
