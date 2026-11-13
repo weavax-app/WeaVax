@@ -182,7 +182,42 @@ export function renderSettings() {
         </div>
     `;
 }
-
+const pro = window.state.pro || {};
+Pega esta tarjeta justo arriba del grid en renderSettings():
+/*
+<div class="mb-6 p-6 rounded-3xl bg-gradient-to-r from-[#181824] via-purple-900/20 to-[#181824] border border-accent/40 flex flex-wrap items-center justify-between gap-4">
+    <div>
+        <div class="flex items-center space-x-2">
+            <span class="text-lg">👑</span>
+            <h4 class="text-base font-black">Suscripción WeaVax Pro · ${pro.isPro ? `Activa (${pro.planName})` : 'Plan Gratuito'}</h4>
+        </div>
+        <p class="text-xs text-gray-400 mt-1">Escaneos IA usados este mes: ${pro.isPro ? 'Ilimitados' : `${pro.scansUsed || 0} / 5`} · <span ondblclick="toggleSecretAdminMode()" class="cursor-pointer select-none">Código de activación</span></p>
+    </div>
+    <div class="flex gap-2">
+        <button onclick="openProPaywall()" class="px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shadow-lg">
+            ${pro.isPro ? 'Ver Mi Plan / Canjear' : '👑 Activar WeaVax Pro'}
+        </button>
+    </div>
+</div>
+${pro.isAdmin ? `
+    <div class="mb-6 p-5 rounded-2xl bg-[#181824] border border-amber-500/40 space-y-3 text-xs">
+        <div class="flex justify-between items-center">
+            <span class="font-extrabold text-amber-400">🛠️ Panel Administrador Secreto (Generador de Códigos Pro)</span>
+            <button onclick="toggleSecretAdminMode()" class="text-gray-400 hover:text-white">Ocultar</button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <button onclick="generateAdminProCode(30)" class="px-3 py-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] font-bold">+ 1 Mes (30d)</button>
+            <button onclick="generateAdminProCode(90)" class="px-3 py-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] font-bold">+ 3 Meses (90d)</button>
+            <button onclick="generateAdminProCode(180)" class="px-3 py-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] font-bold">+ 6 Meses (180d)</button>
+            <button onclick="generateAdminProCode(365)" class="px-3 py-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] font-bold">+ 1 Año (365d)</button>
+            <button onclick="generateAdminProCode(-1)" class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 font-bold">+ Vitalicio</button>
+            <button onclick="resetAiScansQuota()" class="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 font-bold">Reiniciar Cuota IA</button>
+            <button onclick="setProStatusAdmin(${!pro.isPro})" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold">Alternar Pro Directo</button>
+        </div>
+        <p class="text-gray-400">Último código generado (copiado al portapapeles): <code id="admin-generated-code" class="text-amber-300 font-mono font-bold">-</code></p>
+    </div>
+` : ''}
+*/
 window.saveProfileSettings = async (e) => {
     e.preventDefault();
     const name = document.getElementById('set-prof-name').value.trim();
@@ -193,6 +228,9 @@ window.saveProfileSettings = async (e) => {
 };
 
 window.applyWeavaxColor = async (hex) => {
+    if (hex.toLowerCase() !== '#8b5cf6' && !isUserPro()) {
+        return window.openProPaywall('Los temas de acento personalizados (Azul Océano, Esmeralda, Ámbar, Frambuesa, Carmesí y Cian) son exclusivos de WeaVax Pro.');
+    }
     document.documentElement.style.setProperty('--color-primary', hex);
     localStorage.setItem('weavax_theme_color', hex);
     if (window.state.activeUserDocId) {
