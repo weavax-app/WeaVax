@@ -146,12 +146,20 @@ export function initSync(onUpdate) {
 export const fsActions = {
     setItem: async (col, id, data) => {
         const uid = window.state.activeUserDocId;
-        const docId = String(id || Date.now());
-        await setDoc(doc(db, 'users', uid, col, docId), { ...data, id: Number(id || Date.now()), updatedAt: Date.now() }, { merge: true });
+        const numericId = Number(id) || Math.floor(Date.now() / 1000);
+        const docId = String(numericId);
+        await setDoc(doc(db, 'users', uid, col, docId), {
+            ...data,
+            id: numericId,
+            updatedAt: Date.now()
+        }, { merge: true });
     },
     updateItem: async (col, docId, data) => {
         const uid = window.state.activeUserDocId;
-        await setDoc(doc(db, 'users', uid, col, String(docId)), { ...data, updatedAt: Date.now() }, { merge: true });
+        const numericId = Number(docId);
+        const payload = { ...data, updatedAt: Date.now() };
+        if (!isNaN(numericId)) payload.id = numericId;
+        await setDoc(doc(db, 'users', uid, col, String(docId)), payload, { merge: true });
     },
     updateProfile: async (data) => {
         const uid = window.state.activeUserDocId;
