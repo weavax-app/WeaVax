@@ -46,7 +46,7 @@
     <!-- PANTALLA DE CARGA -->
     <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0A0A0F]">
         <img src="../weavax_logo.png" alt="WeaVax" class="w-14 h-14 object-contain animate-pulse mb-4">
-        <p class="text-xs font-semibold tracking-widest uppercase text-gray-400">Sincronizando con Cloud Firestore (lifeos-575b9)...</p>
+        <p class="text-xs font-semibold tracking-widest uppercase text-gray-400">Verificando ruta en Cloud Firestore (lifeos-575b9)...</p>
     </div>
 
     <!-- PANTALLA DE LOGIN -->
@@ -115,11 +115,14 @@
                 <button onclick="navigate('finances')" data-nav="finances" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span>💳</span><span>Finanzas</span>
                 </button>
+                <button onclick="navigate('workouts')" data-nav="workouts" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                    <span>🏋️</span><span>Entrenamiento</span>
+                </button>
                 <button onclick="navigate('progress')" data-nav="progress" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span>📊</span><span>Progreso</span>
                 </button>
                 <button onclick="navigate('settings')" data-nav="settings" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
-                    <span>⚙️</span><span>Ajustes & Respaldo</span>
+                    <span>⚙️</span><span>Ajustes & Diagnóstico</span>
                 </button>
             </nav>
 
@@ -158,6 +161,12 @@
                 </div>
             </header>
 
+            <!-- BANNER DE ALERTA DE PERMISOS FIRESTORE (SOLO VISIBLE SI HAY ERROR) -->
+            <div id="firestore-error-banner" class="hidden mx-4 sm:mx-8 mt-4 p-4 rounded-2xl bg-red-500/15 border border-red-500/40 text-xs text-red-300">
+                <strong class="font-bold block mb-1">⚠️ Alerta de conexión con Firestore:</strong>
+                <span id="firestore-error-text"></span>
+            </div>
+
             <div class="max-w-6xl mx-auto p-4 sm:p-8">
 
                 <!-- 1. DASHBOARD (MI DÍA) -->
@@ -188,7 +197,7 @@
                             <div id="dashboard-habits-list" class="space-y-2.5 text-sm"></div>
                         </div>
 
-                        <!-- Agenda de Hoy (Tareas vs Eventos) -->
+                        <!-- Agenda de Hoy -->
                         <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-sm font-extrabold">Agenda de Hoy</h3>
@@ -198,7 +207,7 @@
                         </div>
                     </div>
 
-                    <!-- Resumen Rápido de Presupuestos y Metas -->
+                    <!-- Presupuestos y Metas -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                             <div class="flex items-center justify-between mb-3">
@@ -218,12 +227,12 @@
                     </div>
                 </section>
 
-                <!-- 2. PLAN & AGENDA (CALENDARIO INTERACTIVO + LISTA) -->
+                <!-- 2. PLAN & AGENDA -->
                 <section id="view-plan" class="app-view hidden space-y-6">
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         <div>
                             <h3 class="text-xl font-black">Plan & Agenda</h3>
-                            <p class="text-xs text-gray-400">Sincronizado con users/{uid}/tasks</p>
+                            <p id="plan-active-path" class="text-xs font-mono text-gray-400"></p>
                         </div>
                         <div class="flex gap-2">
                             <button onclick="setPlanTab('calendar')" id="tab-plan-cal" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">Calendario</button>
@@ -232,7 +241,6 @@
                         </div>
                     </div>
 
-                    <!-- Vista Calendario Mensual -->
                     <div id="plan-calendar-view" class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <div class="flex items-center justify-between mb-4">
                             <button onclick="changeCalendarMonth(-1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">← Anterior</button>
@@ -246,13 +254,12 @@
                         <div id="calendar-selected-day-items" class="mt-6 pt-4 border-t border-[#28283C] space-y-2"></div>
                     </div>
 
-                    <!-- Vista Lista Completa -->
                     <div id="plan-list-view" class="hidden p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <div id="all-tasks-list" class="space-y-2"></div>
                     </div>
                 </section>
 
-                <!-- 3. FINANZAS (CUENTAS, MOVIMIENTOS, PRESUPUESTOS, METAS) -->
+                <!-- 3. FINANZAS -->
                 <section id="view-finances" class="app-view hidden space-y-6">
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         <h3 class="text-xl font-black">Finanzas Multi-Moneda</h3>
@@ -264,10 +271,8 @@
                         </div>
                     </div>
 
-                    <!-- Cuentas -->
                     <div id="accounts-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
 
-                    <!-- Presupuestos y Metas -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                             <h4 class="text-sm font-extrabold mb-4">Presupuestos Mensuales</h4>
@@ -279,14 +284,26 @@
                         </div>
                     </div>
 
-                    <!-- Historial de Transacciones -->
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <h4 class="text-sm font-extrabold mb-4">Historial de Transacciones</h4>
                         <div id="transactions-list" class="space-y-2"></div>
                     </div>
                 </section>
 
-                <!-- 4. PROGRESO -->
+                <!-- 4. ENTRENAMIENTO -->
+                <section id="view-workouts" class="app-view hidden space-y-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <h3 class="text-xl font-black">Rutinas y Sesiones</h3>
+                        <button onclick="openRoutineModal()" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Crear Rutina</button>
+                    </div>
+                    <div id="routines-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                        <h4 class="text-sm font-extrabold mb-4">Historial de Sesiones</h4>
+                        <div id="sessions-list" class="space-y-2"></div>
+                    </div>
+                </section>
+
+                <!-- 5. PROGRESO -->
                 <section id="view-progress" class="app-view hidden space-y-6">
                     <h3 class="text-xl font-black">Distribución del Daily Score</h3>
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
@@ -295,19 +312,29 @@
                     </div>
                 </section>
 
-                <!-- 5. AJUSTES & RESPALDO -->
+                <!-- 6. AJUSTES & DIAGNÓSTICO DE FIRESTORE -->
                 <section id="view-settings" class="app-view hidden space-y-6">
-                    <h3 class="text-xl font-black">Ajustes, Sincronización y Respaldo</h3>
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-6">
+                    <h3 class="text-xl font-black">Ajustes y Diagnóstico de Sincronización</h3>
+                    
+                    <!-- Monitor en Tiempo Real de Firestore -->
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-bold">UID de Usuario Conectado</p>
-                                <p id="settings-uid" class="text-xs font-mono text-gray-400 mt-0.5"></p>
+                                <h4 class="text-sm font-extrabold">Monitor de Colecciones Cloud Firestore</h4>
+                                <p class="text-xs text-gray-400">Ruta activa detectada: <code id="diag-active-path" class="text-accent font-mono"></code></p>
                             </div>
-                            <span class="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold">Firestore Activo</span>
+                            <span id="diag-status-badge" class="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold">Escuchando (onSnapshot)</span>
                         </div>
 
-                        <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-[#28283C]">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs" id="diag-counts-grid"></div>
+                        <p class="text-[11px] text-gray-400">
+                            <strong>Nota:</strong> Si los contadores marcan <code>0</code>, verifica en tu app Android (<code>com.Arax.LifeOs</code>) que se haya ejecutado la subida inicial desde Room hacia Firestore tras habilitar la base de datos hoy.
+                        </p>
+                    </div>
+
+                    <!-- Tema y Respaldo -->
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-6">
+                        <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm font-bold">Apariencia (Oscuro / Claro)</p>
                                 <p class="text-xs text-gray-400">Alternar tema visual</p>
@@ -356,7 +383,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB7exiNH2ncLbwJ7TVIQ6-Dl3Lh9sDFcVo",
@@ -372,9 +399,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // ESTADO CONECTADO A FIRESTORE (CERO DATOS BASURA)
         window.state = {
             user: null,
+            activeUserDocId: null, // Puede ser user.uid o email.replace(/\./g, "_")
             profile: {},
             habits: [],
             tasks: [],
@@ -382,6 +409,8 @@
             transactions: [],
             budgets: [],
             goals: [],
+            workout_routines: [],
+            workout_sessions: [],
             isBalanceVisible: false,
             calYear: new Date().getFullYear(),
             calMonth: new Date().getMonth(),
@@ -402,16 +431,113 @@
             document.getElementById('loading-screen').classList.add('hidden');
             if (user) {
                 window.state.user = user;
-                document.getElementById('settings-uid').textContent = user.uid;
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
-                await ensureUserProfile(user);
-                subscribeFirestore(user.uid);
+
+                // Resolver ID de documento (uid vs email con guiones bajos)
+                const resolvedId = await resolveUserDocId(user);
+                window.state.activeUserDocId = resolvedId;
+                document.getElementById('diag-active-path').textContent = `users/${resolvedId}`;
+                document.getElementById('plan-active-path').textContent = `Ruta activa: users/${resolvedId}/tasks`;
+                console.log(`[WeaVax Firestore] Conectado como ${user.email}. Ruta raíz resuelta: users/${resolvedId}`);
+
+                subscribeFirestore(resolvedId);
             } else {
                 document.getElementById('auth-screen').classList.remove('hidden');
                 document.getElementById('app-container').classList.add('hidden');
             }
         });
+
+        // DETECCIÓN AUTOMÁTICA DE RUTA (uid vs email.replace(/\./g, "_"))
+        async function resolveUserDocId(user) {
+            const uidId = user.uid;
+            const emailId = user.email ? user.email.replace(/\./g, "_") : null;
+
+            try {
+                // 1. Verificar si existen datos bajo users/{uid}
+                const uidHabits = await getDocs(collection(db, 'users', uidId, 'habits'));
+                const uidTasks = await getDocs(collection(db, 'users', uidId, 'tasks'));
+                const uidAccounts = await getDocs(collection(db, 'users', uidId, 'accounts'));
+                if (!uidHabits.empty || !uidTasks.empty || !uidAccounts.empty) {
+                    return uidId;
+                }
+
+                // 2. Fallback: comprobar si Android guardó bajo users/{email_con_guiones}
+                if (emailId) {
+                    const emailDoc = await getDoc(doc(db, 'users', emailId));
+                    const emailHabits = await getDocs(collection(db, 'users', emailId, 'habits'));
+                    const emailTasks = await getDocs(collection(db, 'users', emailId, 'tasks'));
+                    if (emailDoc.exists() || !emailHabits.empty || !emailTasks.empty) {
+                        console.log(`[WeaVax Firestore] Fallback activado: usando users/${emailId}`);
+                        return emailId;
+                    }
+                }
+
+                // 3. Si ambos están vacíos (nube recién creada), inicializar users/{uid}
+                const userRef = doc(db, 'users', uidId);
+                const snap = await getDoc(userRef);
+                if (!snap.exists()) {
+                    await setDoc(userRef, {
+                        name: user.displayName || 'Marcelo Subieta',
+                        email: user.email,
+                        avatar: user.photoURL || '../weavax_logo.png',
+                        xp: 0,
+                        level: 1,
+                        streak: 0,
+                        themeColor: '#8B5CF6',
+                        isDarkMode: true
+                    });
+                }
+                return uidId;
+            } catch (err) {
+                showFirestoreError(`Error al verificar ruta (${err.code || err.message}). Revisa las reglas de seguridad de Firestore.`);
+                return uidId;
+            }
+        }
+
+        function showFirestoreError(msg) {
+            console.error("[WeaVax Firestore Error]", msg);
+            const banner = document.getElementById('firestore-error-banner');
+            document.getElementById('firestore-error-text').textContent = msg;
+            banner.classList.remove('hidden');
+            const badge = document.getElementById('diag-status-badge');
+            badge.textContent = "Error de permisos / red";
+            badge.className = "px-3 py-1 rounded-full bg-red-500/15 text-red-400 text-xs font-bold";
+        }
+
+        // SUSCRIPCIÓN REAL-TIME A TODAS LAS SUBCOLECCIONES
+        function subscribeFirestore(docId) {
+            onSnapshot(doc(db, 'users', docId), (snap) => {
+                if (snap.exists()) {
+                    window.state.profile = snap.data();
+                    renderProfile();
+                }
+            }, (err) => showFirestoreError(`Perfil (${err.code}): ${err.message}`));
+
+            const collectionsList = [
+                'habits',
+                'tasks',
+                'accounts',
+                'transactions',
+                'budgets',
+                'goals',
+                'workout_routines',
+                'workout_sessions'
+            ];
+
+            collectionsList.forEach(colName => {
+                onSnapshot(collection(db, 'users', docId, colName), (snap) => {
+                    window.state[colName] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    console.log(`[WeaVax Firestore] users/${docId}/${colName} -> ${snap.size} documentos leídos`);
+                    if (colName === 'transactions') {
+                        window.state.transactions.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+                    }
+                    renderAll();
+                }, (err) => {
+                    showFirestoreError(`Subcolección '${colName}' (${err.code}): ${err.message}`);
+                });
+            });
+        }
 
         document.getElementById('btn-google-login').addEventListener('click', async () => {
             try {
@@ -436,50 +562,13 @@
 
         window.logoutUser = () => signOut(auth);
 
-        async function ensureUserProfile(user) {
-            const ref = doc(db, 'users', user.uid);
-            const snap = await getDoc(ref);
-            if (!snap.exists()) {
-                await setDoc(ref, {
-                    name: user.displayName || 'Marce',
-                    email: user.email,
-                    avatar: user.photoURL || '../weavax_logo.png',
-                    xp: 0,
-                    level: 1,
-                    streak: 0,
-                    themeColor: '#8B5CF6',
-                    isDarkMode: true
-                });
-            }
-        }
-
-        // SUSCRIPCIÓN EXACTA A users/{uid} Y SUS 6 SUBCOLECCIONES
-        function subscribeFirestore(uid) {
-            onSnapshot(doc(db, 'users', uid), (snap) => {
-                if (snap.exists()) {
-                    window.state.profile = snap.data();
-                    renderProfile();
-                }
-            });
-
-            const subcollections = ['habits', 'tasks', 'accounts', 'transactions', 'budgets', 'goals'];
-            subcollections.forEach(colName => {
-                onSnapshot(collection(db, 'users', uid, colName), (snap) => {
-                    window.state[colName] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    if (colName === 'transactions') {
-                        window.state.transactions.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
-                    }
-                    renderAll();
-                });
-            });
-        }
-
         function renderProfile() {
             const p = window.state.profile;
             const xp = Number(p.xp || 0);
             const level = Math.floor(xp / 100) + 1;
-            document.getElementById('user-name').textContent = p.name || window.state.user.displayName || 'Usuario';
-            document.getElementById('header-greeting').textContent = `Hola, ${(p.name || 'Marce').split(' ')[0]}`;
+            const displayName = p.name || window.state.user.displayName || 'Marce';
+            document.getElementById('user-name').textContent = displayName;
+            document.getElementById('header-greeting').textContent = `Hola, ${displayName.split(' ')[0]}`;
             document.getElementById('user-level-xp').textContent = `Nivel ${level} · ${xp} XP`;
             document.getElementById('xp-progress-bar').style.width = `${xp % 100}%`;
             document.getElementById('streak-count').textContent = `${p.streak || 0} d`;
@@ -487,7 +576,7 @@
             if (p.themeColor) document.documentElement.style.setProperty('--color-primary', p.themeColor);
         }
 
-        // DAILY SCORE ESTRICTO (SOLO HÁBITOS + TAREAS SIN EVENTOS)
+        // DAILY SCORE ESTRICTO (HÁBITOS + TAREAS SIN EVENTOS + ENTRENAMIENTO)
         function calculateDailyScore() {
             const todayHabits = window.state.habits.filter(h => !h.frequencyDays || h.frequencyDays.includes(todayLetter));
             const completedHabits = todayHabits.filter(h => h.isCompleted).length;
@@ -495,8 +584,11 @@
             const todayTasks = window.state.tasks.filter(t => !t.isEvent && Number(t.day) === todayDay && Number(t.month) === todayMonth && Number(t.year) === todayYear);
             const completedTasks = todayTasks.filter(t => t.isCompleted).length;
 
-            const total = todayHabits.length + todayTasks.length;
-            const done = completedHabits + completedTasks;
+            const todayIso = todayObj.toISOString().split('T')[0];
+            const trainedToday = window.state.workout_sessions.some(s => String(s.date || '').startsWith(todayIso));
+
+            const total = todayHabits.length + todayTasks.length + (trainedToday ? 1 : 0);
+            const done = completedHabits + completedTasks + (trainedToday ? 1 : 0);
             const score = total === 0 ? 0 : Math.round((done / total) * 100);
 
             return {
@@ -504,13 +596,23 @@
                 todayHabits,
                 todayTasks,
                 habitPct: todayHabits.length ? Math.round((completedHabits / todayHabits.length) * 100) : 0,
-                taskPct: todayTasks.length ? Math.round((completedTasks / todayTasks.length) * 100) : 0
+                taskPct: todayTasks.length ? Math.round((completedTasks / todayTasks.length) * 100) : 0,
+                workoutPct: trainedToday ? 100 : 0
             };
         }
 
         function renderAll() {
             const ds = calculateDailyScore();
             document.getElementById('daily-score-pct').textContent = ds.score;
+
+            // Diagnóstico de conteo en Ajustes
+            const diagCols = ['habits', 'tasks', 'accounts', 'transactions', 'budgets', 'goals', 'workout_routines', 'workout_sessions'];
+            document.getElementById('diag-counts-grid').innerHTML = diagCols.map(c => `
+                <div class="p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
+                    <span class="text-[10px] font-mono text-gray-400 block">${c}</span>
+                    <span class="text-base font-black text-white">${window.state[c].length} docs</span>
+                </div>
+            `).join('');
 
             // Balance
             const totalBs = window.state.accounts.reduce((sum, a) => {
@@ -522,9 +624,8 @@
                 : 'Bs •••••';
 
             // Hábitos Hoy
-            const habitsEl = document.getElementById('dashboard-habits-list');
-            habitsEl.innerHTML = ds.todayHabits.length === 0
-                ? `<p class="text-xs text-gray-400">Sin hábitos programados hoy (${todayLetter}).</p>`
+            document.getElementById('dashboard-habits-list').innerHTML = ds.todayHabits.length === 0
+                ? `<p class="text-xs text-gray-400">Sin hábitos programados hoy (${todayLetter}). Crea uno o sincroniza desde Android.</p>`
                 : ds.todayHabits.map(h => `
                     <div class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
                         <div class="flex items-center space-x-2.5">
@@ -541,14 +642,13 @@
                 ? `<p class="text-xs text-gray-400">No hay tareas ni eventos para hoy.</p>`
                 : todayItems.map(t => renderTaskRow(t)).join('');
 
-            // Lista completa Plan
             document.getElementById('all-tasks-list').innerHTML = window.state.tasks.length === 0
-                ? `<p class="text-xs text-gray-400">No hay registros en users/{uid}/tasks.</p>`
+                ? `<p class="text-xs text-gray-400">0 documentos en la subcolección tasks.</p>`
                 : window.state.tasks.map(t => renderTaskRow(t, true)).join('');
 
             // Cuentas
             document.getElementById('accounts-grid').innerHTML = window.state.accounts.length === 0
-                ? `<p class="text-xs text-gray-400 col-span-3">Aún no tienes cuentas en Firestore.</p>`
+                ? `<p class="text-xs text-gray-400 col-span-3">0 cuentas en Firestore. Crea una con "+ Cuenta" o sincroniza desde Android.</p>`
                 : window.state.accounts.map(a => `
                     <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex justify-between items-start">
                         <div>
@@ -583,7 +683,7 @@
             document.getElementById('dashboard-budgets-list').innerHTML = budgetsHtml;
             document.getElementById('finances-budgets-list').innerHTML = budgetsHtml;
 
-            // Metas de Ahorro
+            // Metas
             const goalsHtml = window.state.goals.length === 0
                 ? `<p class="text-xs text-gray-400">Sin metas de ahorro registradas.</p>`
                 : window.state.goals.map(g => {
@@ -610,7 +710,7 @@
 
             // Transacciones
             document.getElementById('transactions-list').innerHTML = window.state.transactions.length === 0
-                ? `<p class="text-xs text-gray-400">No hay movimientos en Firestore.</p>`
+                ? `<p class="text-xs text-gray-400">No hay movimientos registrados.</p>`
                 : window.state.transactions.map(tx => `
                     <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
                         <div>
@@ -626,13 +726,44 @@
                     </div>
                 `).join('');
 
+            // Rutinas y Sesiones
+            document.getElementById('routines-grid').innerHTML = window.state.workout_routines.length === 0
+                ? `<p class="text-xs text-gray-400 col-span-3">0 rutinas en Firestore.</p>`
+                : window.state.workout_routines.map(r => `
+                    <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h5 class="font-extrabold text-base">${r.name}</h5>
+                                <p class="text-xs text-gray-400 mt-1">${r.description || 'Rutina'}</p>
+                            </div>
+                            <button onclick="deleteItem('workout_routines', '${r.id}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
+                        </div>
+                        <button onclick="logQuickSession('${r.name}')" class="mt-4 w-full py-2 rounded-xl bg-accent/15 text-accent hover:bg-accent hover:text-white text-xs font-bold transition-all">
+                            ✓ Registrar Sesión Hoy
+                        </button>
+                    </div>
+                `).join('');
+
+            document.getElementById('sessions-list').innerHTML = window.state.workout_sessions.length === 0
+                ? `<p class="text-xs text-gray-400">No hay sesiones registradas.</p>`
+                : window.state.workout_sessions.map(s => `
+                    <div class="p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex justify-between items-center">
+                        <div>
+                            <p class="text-sm font-bold">${s.routineName || 'Entrenamiento'}</p>
+                            <p class="text-[11px] text-gray-400">${s.date} · ${s.durationMinutes || 60} min</p>
+                        </div>
+                        <button onclick="deleteItem('workout_sessions', '${s.id}')" class="text-xs text-red-400">Eliminar</button>
+                    </div>
+                `).join('');
+
             // Progreso
             const modules = [
                 { label: 'Hábitos', pct: ds.habitPct },
-                { label: 'Tareas', pct: ds.taskPct }
+                { label: 'Tareas', pct: ds.taskPct },
+                { label: 'Entrenamiento', pct: ds.workoutPct }
             ].filter(m => m.pct > 0);
             document.getElementById('progress-bars-container').innerHTML = modules.length === 0
-                ? `<p class="text-xs text-gray-400">Completa al menos un hábito o tarea hoy para ver el gráfico.</p>`
+                ? `<p class="text-xs text-gray-400">Completa al menos un hábito, tarea o entrenamiento hoy para ver la distribución.</p>`
                 : modules.map(m => `
                     <div>
                         <div class="flex justify-between text-xs font-bold mb-1"><span>${m.label}</span><span>${m.pct}%</span></div>
@@ -674,7 +805,6 @@
             `;
         }
 
-        // CALENDARIO MENSUAL INTERACTIVO
         function renderCalendar() {
             const y = window.state.calYear;
             const m = window.state.calMonth;
@@ -717,38 +847,47 @@
             document.getElementById('plan-list-view').classList.toggle('hidden', tab !== 'list');
         };
 
-        // OPERACIONES CRUD FIRESTORE
+        // OPERACIONES CRUD BIDIRECCIONALES SOBRE activeUserDocId
         window.toggleHabit = async (id, state, xpReward) => {
-            const uid = window.state.user.uid;
-            await updateDoc(doc(db, 'users', uid, 'habits', id), { isCompleted: state, updatedAt: new Date().toISOString() });
+            const docId = window.state.activeUserDocId;
+            await updateDoc(doc(db, 'users', docId, 'habits', id), { isCompleted: state, updatedAt: new Date().toISOString() });
             const nextXp = Math.max(0, Number(window.state.profile.xp || 0) + (state ? xpReward : -xpReward));
-            await updateDoc(doc(db, 'users', uid), { xp: nextXp, level: Math.floor(nextXp / 100) + 1 });
+            await updateDoc(doc(db, 'users', docId), { xp: nextXp, level: Math.floor(nextXp / 100) + 1 });
         };
 
         window.toggleTask = async (id, state) => {
-            await updateDoc(doc(db, 'users', window.state.user.uid, 'tasks', id), { isCompleted: state, updatedAt: new Date().toISOString() });
+            await updateDoc(doc(db, 'users', window.state.activeUserDocId, 'tasks', id), { isCompleted: state, updatedAt: new Date().toISOString() });
         };
 
         window.deleteItem = async (col, id) => {
             if (!confirm('¿Eliminar permanentemente de Firestore?')) return;
-            await deleteDoc(doc(db, 'users', window.state.user.uid, col, id));
+            await deleteDoc(doc(db, 'users', window.state.activeUserDocId, col, id));
         };
 
         window.deleteTransaction = async (txId, accId, amount, type) => {
             if (!confirm('¿Eliminar movimiento y revertir saldo?')) return;
-            const uid = window.state.user.uid;
-            await deleteDoc(doc(db, 'users', uid, 'transactions', txId));
+            const docId = window.state.activeUserDocId;
+            await deleteDoc(doc(db, 'users', docId, 'transactions', txId));
             const acc = window.state.accounts.find(a => a.id === accId);
             if (acc) {
                 const reverted = type === 'income' ? Number(acc.balance) - Number(amount) : Number(acc.balance) + Number(amount);
-                await updateDoc(doc(db, 'users', uid, 'accounts', accId), { balance: reverted });
+                await updateDoc(doc(db, 'users', docId, 'accounts', accId), { balance: reverted });
             }
         };
 
         window.addGoalDeposit = async (goalId, current) => {
             const val = prompt('Monto a abonar a esta meta:');
             if (!val || isNaN(val)) return;
-            await updateDoc(doc(db, 'users', window.state.user.uid, 'goals', goalId), { currentAmount: Number(current) + Number(val) });
+            await updateDoc(doc(db, 'users', window.state.activeUserDocId, 'goals', goalId), { currentAmount: Number(current) + Number(val) });
+        };
+
+        window.logQuickSession = async (routineName) => {
+            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'workout_sessions'), {
+                routineName,
+                date: new Date().toISOString().split('T')[0],
+                durationMinutes: 60,
+                createdAt: new Date().toISOString()
+            });
         };
 
         // MODALES
@@ -769,7 +908,7 @@
         `);
         window.saveHabit = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, 'users', window.state.user.uid, 'habits'), {
+            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'habits'), {
                 name: document.getElementById('h-name').value,
                 frequencyDays: document.getElementById('h-days').value.toUpperCase(),
                 xpReward: Number(document.getElementById('h-xp').value) || 15,
@@ -792,7 +931,7 @@
         `);
         window.saveTask = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, 'users', window.state.user.uid, 'tasks'), {
+            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'tasks'), {
                 title: document.getElementById('t-title').value,
                 isEvent: document.getElementById('t-type').value === 'event',
                 time: document.getElementById('t-time').value,
@@ -818,7 +957,7 @@
         window.saveAccount = async (e) => {
             e.preventDefault();
             const bal = Number(document.getElementById('a-balance').value);
-            await addDoc(collection(db, 'users', window.state.user.uid, 'accounts'), {
+            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'accounts'), {
                 name: document.getElementById('a-name').value,
                 currency: document.getElementById('a-currency').value,
                 balance: bal,
@@ -848,13 +987,13 @@
         };
         window.saveTx = async (e) => {
             e.preventDefault();
-            const uid = window.state.user.uid;
+            const docId = window.state.activeUserDocId;
             const type = document.getElementById('tx-type').value;
             const amount = Number(document.getElementById('tx-amount').value);
             const accId = document.getElementById('tx-acc').value;
             const acc = window.state.accounts.find(a => a.id === accId);
 
-            await addDoc(collection(db, 'users', uid, 'transactions'), {
+            await addDoc(collection(db, 'users', docId, 'transactions'), {
                 type,
                 title: document.getElementById('tx-title').value,
                 amount,
@@ -867,7 +1006,7 @@
 
             if (acc) {
                 const newBal = type === 'income' ? Number(acc.balance) + amount : Number(acc.balance) - amount;
-                await updateDoc(doc(db, 'users', uid, 'accounts', accId), { balance: newBal });
+                await updateDoc(doc(db, 'users', docId, 'accounts', accId), { balance: newBal });
             }
             closeModal();
         };
@@ -881,7 +1020,7 @@
         `);
         window.saveBudget = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, 'users', window.state.user.uid, 'budgets'), {
+            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'budgets'), {
                 category: document.getElementById('b-cat').value,
                 limitAmount: Number(document.getElementById('b-limit').value),
                 spentAmount: 0,
@@ -900,12 +1039,28 @@
         `);
         window.saveGoal = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, 'users', window.state.user.uid, 'goals'), {
+            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'goals'), {
                 name: document.getElementById('g-name').value,
                 targetAmount: Number(document.getElementById('g-target').value),
                 currentAmount: 0,
                 currency: 'Bs',
                 isCompleted: false
+            });
+            closeModal();
+        };
+
+        window.openRoutineModal = () => openModal('Nueva Rutina', `
+            <form onsubmit="saveRoutine(event)" class="space-y-3">
+                <input id="r-name" required placeholder="Nombre de rutina" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
+                <input id="r-desc" placeholder="Descripción o días" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-xs">Guardar Rutina</button>
+            </form>
+        `);
+        window.saveRoutine = async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'workout_routines'), {
+                name: document.getElementById('r-name').value,
+                description: document.getElementById('r-desc').value
             });
             closeModal();
         };
@@ -934,7 +1089,7 @@
         window.toggleTheme = () => document.documentElement.classList.toggle('dark');
         window.setAccentColor = async (hex) => {
             document.documentElement.style.setProperty('--color-primary', hex);
-            if (window.state.user) await updateDoc(doc(db, 'users', window.state.user.uid), { themeColor: hex });
+            if (window.state.activeUserDocId) await updateDoc(doc(db, 'users', window.state.activeUserDocId), { themeColor: hex });
         };
 
         window.navigate = (viewId) => {
