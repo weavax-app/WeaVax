@@ -2,12 +2,12 @@ import { fsActions } from './firebase-sync.js?v=5';
 
 export const FREE_LIMITS = {
     MAX_AI_SCANS_MONTH: 5,
-    MAX_HABITS: 5,
-    MAX_ACCOUNTS: 2,
-    MAX_BUDGETS: 2,
-    MAX_GOALS: 2,
-    MAX_PROJECTS: 1,
-    MAX_ROUTINES: 2
+    MAX_HABITS: 15,
+    MAX_ACCOUNTS: 10,
+    MAX_BUDGETS: 10,
+    MAX_GOALS: 10,
+    MAX_PROJECTS: 10,
+    MAX_ROUTINES: 15
 };
 
 function getCurrentMonthKey() {
@@ -309,4 +309,69 @@ window.handleRedeemProSubmit = async (e) => {
     if (res.ok) {
         setTimeout(() => window.openProPaywall(), 900);
     }
+};
+export function openProPaywall(customReason = '') {
+    const pro = window.state.pro || {};
+    const isPro = Boolean(pro.isPro);
+    const expDateStr = (pro.expiresAt && pro.expiresAt < 9000000000000)
+        ? new Date(pro.expiresAt).toLocaleDateString('es-BO')
+        : (isPro ? 'Vitalicio ∞' : 'Sin suscripción activa');
+
+    window.openUniversalModal('👑 WeaVax Pro · Centro de Suscripción', `
+        <div class="space-y-4 text-xs">
+            ${customReason ? `
+                <div class="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold">
+                    🔒 ${customReason}
+                </div>
+            ` : ''}
+
+            <div class="p-4 rounded-2xl bg-gradient-to-br from-[#181824] via-purple-900/25 to-[#0A0A0F] border border-accent/40 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${isPro ? 'bg-emerald-500/20 text-emerald-300' : 'bg-gray-500/20 text-gray-300'}">
+                        Estado: ${isPro ? `PRO ACTIVO (${pro.planName})` : 'PLAN GRATUITO'}
+                    </span>
+                    <span class="text-[11px] text-gray-400">Escaneos IA: <strong>${isPro ? 'Ilimitados' : `${pro.scansUsed || 0}/${FREE_LIMITS.MAX_AI_SCANS_MONTH}`}</strong></span>
+                </div>
+                ${isPro ? `<p class="text-[11px] text-gray-300">Vencimiento: <strong>${expDateStr}</strong></p>` : ''}
+            </div>
+
+            <div class="space-y-2 p-3.5 rounded-2xl bg-[#0A0A0F] border border-[#28283C]">
+                <p class="font-extrabold text-white mb-1">Beneficios incluidos en WeaVax Pro:</p>
+                <div class="flex justify-between text-[11px]"><span class="text-gray-400">📷 Escáner IA de recibos y QR</span><span class="font-bold text-emerald-400">Ilimitado (Gratis: 5/mes)</span></div>
+                <div class="flex justify-between text-[11px]"><span class="text-gray-400">🤖 Entrenador Personal IA (Vax Coach)</span><span class="font-bold text-emerald-400">Desbloqueado</span></div>
+                <div class="flex justify-between text-[11px]"><span class="text-gray-400">🎨 Colores Esmeralda, Ámbar, Frambuesa y Cian</span><span class="font-bold text-emerald-400">Desbloqueados</span></div>
+                <div class="flex justify-between text-[11px]"><span class="text-gray-400">🔥 Hábitos, Cuentas, Metas y Rutinas</span><span class="font-bold text-emerald-400">Sin límites</span></div>
+            </div>
+
+            <form onsubmit="handleRedeemProSubmit(event)" class="space-y-2">
+                <label class="text-[10px] font-bold uppercase text-gray-400">Canjear Código de Activación WeaVax Pro</label>
+                <div class="flex gap-2">
+                    <input id="pro-code-input" required placeholder="Ej. WVX-1M-XXXXXXXX" class="flex-1 px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-mono uppercase font-bold">
+                    <button type="submit" class="px-4 py-2.5 rounded-xl bg-accent text-white font-extrabold">Activar</button>
+                </div>
+                <p id="pro-redeem-feedback" class="text-[11px] font-bold hidden"></p>
+            </form>
+
+            <div class="pt-2 border-t border-[#28283C] flex items-center justify-between">
+                <span class="text-[11px] text-gray-400">¿Aún no tienes tu código?</span>
+                <a href="https://www.instagram.com/weavax.app/" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 rounded-xl bg-pink-500/15 text-pink-300 border border-pink-500/30 font-bold hover:bg-pink-500/25">
+                    📲 Solicitar en @weavax.app →
+                </a>
+            </div>
+        </div>
+    `);
+}
+window.openProPaywall = openProPaywall;
+
+window.setProStatusAdmin = async (status) => {
+    const pro = window.state.pro;
+    pro.isPro = Boolean(status);
+    pro.planName = status ? 'Admin Pro' : 'Gratuito';
+    localStorage.setItem('pref_is_pro', String(Boolean(status)));
+    localStorage.setItem('pref_pro_plan_name', pro.planName);
+    if (window.state.activeUserDocId) {
+        await fsActions.updateProfile({ isPro: Boolean(status), proPlanName: pro.planName });
+    }
+    updateProHeaderBadge();
+    if (window.renderSettings) window.renderSettings();
 };
