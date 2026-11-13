@@ -256,7 +256,7 @@ window.openProPaywall = (customReason = '') => {
                 </div>
             ` : ''}
 
-            <div class="p-4 rounded-2xl bg-gradient-to-br from-[#181824] via-purple-900/25 to-[#0A0A0F] border border-accent/40 space-y-2">
+            <div class="flex justify-between text-[11px]"><span class="text-gray-400">🎨 Colores Esmeralda, Ámbar, Frambuesa y Cian</span><span class="font-bold text-emerald-400">Desbloqueados</span></div>
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${isPro ? 'bg-emerald-500/20 text-emerald-300' : 'bg-gray-500/20 text-gray-300'}">
                         Estado: ${isPro ? `PRO ACTIVO (${pro.planName})` : 'PLAN GRATUITO'}
