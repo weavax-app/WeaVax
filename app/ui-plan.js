@@ -1,4 +1,5 @@
 import { fsActions } from './firebase-sync.js';
+import { requireProOrCheckLimit, FREE_LIMITS } from './weavax-pro.js?v=1';
 
 export function renderPlanModule() {
     const sub = window.state.planSubTab || 'calendar';
@@ -220,6 +221,7 @@ window.saveTaskOrEvent = async (e, isEvent) => {
 };
 
 window.openProjectModal = () => {
+    if (!requireProOrCheckLimit('PROJECTS', (window.state.projects || []).length, FREE_LIMITS.MAX_PROJECTS, 'El plan Gratuito permite 1 proyecto activo. Desbloquea proyectos ilimitados con WeaVax Pro.')) return;
     window.openUniversalModal('Nuevo Proyecto', `
         <form onsubmit="saveProjectForm(event)" class="space-y-3 text-xs">
             <input id="p-name" required placeholder="Nombre del proyecto" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
