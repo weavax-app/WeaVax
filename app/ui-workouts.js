@@ -1,8 +1,7 @@
-import { fsActions } from './firebase-sync.js?v=4';
+import { fsActions } from './firebase-sync.js?v=5';
 
 const BASE_IMG = "https://lyfta.app/images/exercises";
 
-// Catálogo base de ejercicios con rutas anatómicas de PredefinedWorkoutData.kt
 export const EXERCISE_CATALOG = [
     { id: 1, name: "Press de banca plano con barra", muscleGroup: "Pecho", equipment: "Barra", img: `${BASE_IMG}/00251101.png` },
     { id: 2, name: "Press de banca inclinado con barra", muscleGroup: "Pecho", equipment: "Barra", img: `${BASE_IMG}/00471101.png` },
@@ -70,7 +69,6 @@ export function getExById(id) {
     return EXERCISE_CATALOG.find(e => Number(e.id) === Number(id)) || EXERCISE_CATALOG[0];
 }
 
-// Helper para armar días de las 30 plantillas de PredefinedTemplatesCatalog.kt
 function mkDay(dayNumber, dayName, dayImageUri, exTuples) {
     return {
         dayNumber,
@@ -99,7 +97,6 @@ const pPull = "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=80
 const pLegs = "https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=800";
 const pFb   = "https://images.unsplash.com/photo-1579758629938-03607ccdbaba?w=800";
 
-// Las 30 Plantillas Oficiales extraídas de PredefinedTemplatesCatalog.kt
 export const WEAVAX_30_TEMPLATES = [
     { id: 1, name: "Push / Pull / Legs Clásico", categoryGroup: "PPL (Push Pull Legs)", focusCategory: "Hipertrofia", targetDaysPerWeek: 6, estimatedDurationMinutes: 65, isSystemTemplate: true, imageUri: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800", description: "Estructura de 6 días con doble frecuencia semanal. Máxima síntesis proteica y balance muscular.", days: [
         mkDay(1, "Push A (Empuje)", pPush, [[1,4,"6-8",120],[41,3,"8-10",90],[5,3,"8-12",90],[43,4,"12-15",60],[61,3,"10-12",60]]),
@@ -228,15 +225,14 @@ export const WEAVAX_30_TEMPLATES = [
     ]}
 ];
 
-// Estado interno del módulo de Entrenamiento
 const wState = {
-    subScreen: 'PRINCIPAL', // PRINCIPAL | LIBRERIA_RUTINAS | DETALLE_RUTINA | DETALLE_ENTRENAMIENTO | SESION_ACTIVA | POR_FINALIZAR | RESUMEN_SESION | BANCO_EJERCICIOS | HISTORIAL | COACH_IA
-    libraryTab: 'PLANTILLAS', // MIS_RUTINAS | PLANTILLAS
-    viewMode: 'grid', // grid | list
+    subScreen: 'PRINCIPAL',
+    libraryTab: 'MIS_RUTINAS',
+    viewMode: 'grid',
     categoryFilter: 'Todas',
     muscleFilter: 'Todos',
     searchQuery: '',
-    selectedRoutineId: Number(localStorage.getItem('weavax_primary_routine_id') || 1),
+    selectedRoutineId: Number(localStorage.getItem('weavax_primary_routine_id') || 0),
     viewingRoutine: null,
     viewingDayPlan: null,
     activeSession: null,
@@ -248,18 +244,24 @@ const wState = {
     summarySlideIdx: 0
 };
 
-function getAllAvailableRoutines() {
-    const userRoutines = (window.state.workout_routines || []).map(r => ({
-        ...r,
-        isSystemTemplate: Boolean(r.isSystemTemplate),
-        days: Array.isArray(r.days) && r.days.length > 0 ? r.days : [mkDay(1, "Día 1", pPush, [[1,4,"8-10",90],[14,4,"8-10",90],[21,4,"8-10",120]])]
-    }));
-    const userIds = new Set(userRoutines.map(r => Number(r.id)));
-    const templates = WEAVAX_30_TEMPLATES.filter(t => !userIds.has(Number(t.id)));
-    return [...userRoutines, ...templates];
+// Obtener únicamente las rutinas guardadas en la biblioteca personal del usuario
+export function getUserSavedRoutines() {
+    return (window.state.workout_routines || [])
+        .filter(r => !r.isSystemTemplate)
+        .map(r => ({
+            ...r,
+            days: Array.isArray(r.days) && r.days.length > 0
+                ? r.days
+                : [mkDay(1, "Día 1", pPush, [[1,4,"8-10",90],[14,4,"8-10",90],[21,4,"8-10",120]])]
+        }));
 }
 
-function getWeeklyWorkoutStats() {
+function getAllRoutinesAndTemplates() {
+    const userRoutines = getUserSavedRoutines();
+    return [...userRoutines, ...WEAVAX_30_TEMPLATES];
+}
+
+export function getWeeklyWorkoutStats() {
     const now = new Date();
     const day = now.getDay() || 7;
     const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1).getTime();
@@ -268,241 +270,304 @@ function getWeeklyWorkoutStats() {
     return { count: sessions.length, volume: weeklyVol, sessions };
 }
 
+// Exportado para mostrar en Inicio / Mi Día qué entrenamiento toca hoy
+export function getTodayScheduledWorkoutInfo() {
+    const userRoutines = getUserSavedRoutines();
+    if (userRoutines.length === 0) return null;
+    const primary = userRoutines.find(r => Number(r.id) === Number(wState.selectedRoutineId)) || userRoutines[0];
+    const weekStats = getWeeklyWorkoutStats();
+    const days = primary.days || [];
+    if (days.length === 0) return null;
+
+    // Buscar el primer día no completado esta semana, o rotar según sesiones hechas
+    const nextDay = days.find(d => !weekStats.sessions.some(s => Number(s.routineId) === Number(primary.id) && Number(s.dayNumber) === Number(d.dayNumber)))
+        || days[weekStats.count % days.length];
+
+    const startOfToday = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime();
+    const doneToday = weekStats.sessions.some(s => Number(s.startedAt || 0) >= startOfToday);
+
+    return {
+        routineId: primary.id,
+        routineName: primary.name,
+        dayNumber: nextDay.dayNumber,
+        dayName: nextDay.dayName,
+        exercisesCount: (nextDay.exercises || []).length,
+        estimatedMin: primary.estimatedDurationMinutes || 60,
+        doneToday
+    };
+}
+
 export function renderWorkouts() {
     const container = document.getElementById('view-workouts');
     if (!container) return;
 
-    const allRoutines = getAllAvailableRoutines();
-    const primaryRoutine = allRoutines.find(r => Number(r.id) === Number(wState.selectedRoutineId)) || allRoutines[0];
-    const userLibraryRoutines = (window.state.workout_routines || []).filter(r => !r.isSystemTemplate);
+    const userLibraryRoutines = getUserSavedRoutines();
+    const primaryRoutine = userLibraryRoutines.find(r => Number(r.id) === Number(wState.selectedRoutineId)) || userLibraryRoutines[0] || null;
     const weekStats = getWeeklyWorkoutStats();
     const targetDays = Number(primaryRoutine?.targetDaysPerWeek || 4);
 
+    // Banner flotante si hay una sesión activa minimizada y el usuario está navegando otras pantallas de Entrenamiento
+    const minimizedBannerHtml = (wState.activeSession && wState.subScreen !== 'SESION_ACTIVA' && wState.subScreen !== 'POR_FINALIZAR') ? `
+        <div class="p-4 rounded-2xl bg-accent/20 border-2 border-accent flex flex-wrap items-center justify-between gap-3 mb-6 shadow-lg">
+            <div class="flex items-center space-x-3">
+                <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+                <div>
+                    <p class="text-xs font-extrabold text-white">Entrenamiento en curso: ${wState.activeSession.routineName}</p>
+                    <p class="text-[11px] text-gray-300">Tiempo transcurrido: ${Math.floor(wState.activeSession.elapsedSeconds / 60)}m ${wState.activeSession.elapsedSeconds % 60}s</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openWorkoutSub('SESION_ACTIVA')" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-extrabold">Reanudar Sesión</button>
+                <button onclick="discardActiveWorkout()" class="px-3.5 py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/40 text-xs font-bold">Descartar</button>
+            </div>
+        </div>
+    ` : '';
+
     if (wState.subScreen === 'PRINCIPAL') {
         container.innerHTML = `
-            <!-- CABECERA Y MÉTRICAS SEMANALES -->
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h3 class="text-2xl font-black tracking-tight">WeaVax Gym</h3>
-                    <p class="text-xs text-gray-400">Centro de entrenamiento, rutinas e inteligencia artificial</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] hover:border-accent text-xs font-bold">📚 Biblioteca de Rutinas</button>
-                    <button onclick="openWorkoutSub('BANCO_EJERCICIOS')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] hover:border-accent text-xs font-bold">💪 Banco de Ejercicios</button>
-                    <button onclick="openWorkoutSub('HISTORIAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">🕒 Historial</button>
-                    <button onclick="openRoutineCreatorModal()" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Crear Rutina</button>
-                </div>
-            </div>
+            <div class="space-y-8">
+                ${minimizedBannerHtml}
 
-            <!-- 3 TARJETAS DE PROGRESO SEMANAL -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                    <span class="text-[10px] font-bold uppercase text-gray-400">Entrenamientos Completados</span>
-                    <div class="flex items-baseline justify-between mt-1">
-                        <span class="text-2xl font-black text-accent">${weekStats.count} / ${targetDays}</span>
-                        <span class="text-xs text-gray-400">esta semana</span>
-                    </div>
-                    <div class="w-full h-2 bg-gray-200 dark:bg-[#0A0A0F] rounded-full mt-3 overflow-hidden">
-                        <div class="h-full bg-accent transition-all" style="width:${Math.min(100, Math.round((weekStats.count / targetDays) * 100))}%"></div>
-                    </div>
-                </div>
-                <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                    <span class="text-[10px] font-bold uppercase text-gray-400">Volumen Semanal</span>
-                    <div class="text-2xl font-black mt-1">${weekStats.volume.toLocaleString('es-BO')} <span class="text-sm font-normal text-gray-400">kg</span></div>
-                    <p class="text-[11px] text-emerald-400 mt-2">Sobrecarga progresiva activa</p>
-                </div>
-                <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                    <span class="text-[10px] font-bold uppercase text-gray-400">Total Histórico</span>
-                    <div class="text-2xl font-black mt-1">${(window.state.workout_sessions || []).length} <span class="text-sm font-normal text-gray-400">sesiones</span></div>
-                    <p class="text-[11px] text-purple-400 mt-2">Sincronizado con Cloud Firestore</p>
-                </div>
-            </div>
-
-            <!-- SELECTOR DE RUTINA PRINCIPAL Y DÍAS DEL PROGRAMA -->
-            <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-5">
-                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 dark:border-[#28283C] pb-4">
+                <!-- CABECERA LIMPIA Y ESPACIADA -->
+                <div class="flex flex-wrap items-center justify-between gap-4 pb-2">
                     <div>
-                        <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/15 text-accent">Rutina Principal Seleccionada</span>
-                        <h4 class="text-lg font-black mt-2">${primaryRoutine.name}</h4>
-                        <p class="text-xs text-gray-400">${primaryRoutine.description || ''}</p>
+                        <h3 class="text-2xl font-black tracking-tight">Entrenamiento</h3>
+                        <p class="text-xs text-gray-400 mt-1">Tu programación activa, progreso semanal y biblioteca</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <select onchange="selectPrimaryRoutine(this.value)" class="px-3 py-2 rounded-xl bg-gray-100 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] text-xs font-bold">
-                            ${allRoutines.map(r => `<option value="${r.id}" ${Number(r.id) === Number(primaryRoutine.id) ? 'selected' : ''}>${r.name} (${r.targetDaysPerWeek || 4}d)</option>`).join('')}
-                        </select>
-                        <button onclick="openRoutineDetailView(${primaryRoutine.id})" class="px-3.5 py-2 rounded-xl bg-accent/15 text-accent text-xs font-bold">Ver Programa</button>
+                    <div class="flex flex-wrap gap-2.5">
+                        <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'MIS_RUTINAS')" class="px-4 py-2.5 rounded-xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] hover:border-accent text-xs font-bold transition-all">📚 Biblioteca de Rutinas</button>
+                        <button onclick="openWorkoutSub('BANCO_EJERCICIOS')" class="px-4 py-2.5 rounded-xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] hover:border-accent text-xs font-bold transition-all">💪 Ejercicios</button>
+                        <button onclick="openWorkoutSub('HISTORIAL')" class="px-4 py-2.5 rounded-xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] hover:border-accent text-xs font-bold transition-all">🕒 Historial</button>
                     </div>
                 </div>
 
-                <!-- DÍAS DEL PROGRAMA ACTIVO -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                    ${(primaryRoutine.days || []).map(d => {
-                        const completedThisWeek = weekStats.sessions.some(s => Number(s.routineId) === Number(primaryRoutine.id) && Number(s.dayNumber) === Number(d.dayNumber));
-                        return `
-                            <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border ${completedThisWeek ? 'border-emerald-500/50' : 'border-gray-200 dark:border-[#28283C]'} flex items-center justify-between gap-3">
-                                <div onclick="openDayDetailView(${primaryRoutine.id}, ${d.dayNumber})" class="flex items-center space-x-3 cursor-pointer flex-1 min-w-0">
-                                    <div class="w-12 h-12 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center font-black text-accent shrink-0 overflow-hidden">
-                                        ${d.dayImageUri ? `<img src="${d.dayImageUri}" class="w-full h-full object-cover">` : d.dayName.charAt(0)}
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-center space-x-1.5">
-                                            <p class="text-xs font-extrabold truncate">${d.dayName}</p>
-                                            ${completedThisWeek ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">✓ Hecho</span>' : ''}
-                                        </div>
-                                        <p class="text-[11px] text-gray-400 mt-0.5">${(d.exercises || []).length} ejercicios · ~${primaryRoutine.estimatedDurationMinutes || 60} min</p>
-                                    </div>
-                                </div>
-                                <button onclick="beginActiveWorkoutSession(${primaryRoutine.id}, ${d.dayNumber})" class="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center font-bold shadow-lg hover:opacity-90 shrink-0" title="Iniciar entrenamiento">
-                                    ▶
-                                </button>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-
-            <!-- TARJETA ENTRENADOR PERSONAL IA (DEBAJO DEL SELECTOR PRINCIPAL) -->
-            <div class="p-6 rounded-3xl bg-gradient-to-r from-[#181824] via-[#1E1B36] to-[#181824] border border-accent/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div class="flex items-start space-x-4">
-                    <div class="w-12 h-12 rounded-2xl bg-accent/20 border border-accent flex items-center justify-center text-2xl shrink-0">🤖</div>
-                    <div>
-                        <div class="flex items-center space-x-2">
-                            <h4 class="text-base font-black text-white">Entrenador Personal IA · Vax Coach</h4>
-                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">Activo</span>
+                <!-- 3 TARJETAS DE PROGRESO SEMANAL -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Meta de la Semana</span>
+                        <div class="flex items-baseline justify-between mt-2">
+                            <span class="text-2xl font-black text-accent">${weekStats.count} / ${targetDays}</span>
+                            <span class="text-xs text-gray-400">entrenamientos</span>
                         </div>
-                        <p class="text-xs text-gray-300 mt-1">Analiza tu fatiga muscular, calcula tu 1RM estimado y te sugiere qué día de <strong>${primaryRoutine.name}</strong> entrenar hoy con sobrecarga progresiva.</p>
+                        <div class="w-full h-2 bg-gray-200 dark:bg-[#0A0A0F] rounded-full mt-3.5 overflow-hidden">
+                            <div class="h-full bg-accent transition-all" style="width:${Math.min(100, Math.round((weekStats.count / targetDays) * 100))}%"></div>
+                        </div>
+                    </div>
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Volumen Semanal</span>
+                        <div class="text-2xl font-black mt-2">${weekStats.volume.toLocaleString('es-BO')} <span class="text-sm font-normal text-gray-400">kg</span></div>
+                        <p class="text-[11px] text-emerald-400 mt-2">Registrado en series completadas</p>
+                    </div>
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Sesiones Totales</span>
+                        <div class="text-2xl font-black mt-2">${(window.state.workout_sessions || []).length} <span class="text-sm font-normal text-gray-400">completadas</span></div>
+                        <p class="text-[11px] text-purple-400 mt-2">Sincronizadas en tu cuenta</p>
                     </div>
                 </div>
-                <button onclick="openWorkoutSub('COACH_IA')" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shrink-0 shadow-lg">
-                    Consultar Coach IA →
-                </button>
-            </div>
 
-            <!-- MIS RUTINAS EN TU BIBLIOTECA Y ACCESO A PLANTILLAS WEAVAX -->
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h4 class="text-base font-extrabold">Mis Rutinas Guardadas (${userLibraryRoutines.length})</h4>
-                        <p class="text-xs text-gray-400">Tus programas personalizados o guardados desde la biblioteca</p>
-                    </div>
-                    <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="text-xs font-bold text-accent hover:underline">
-                        Explorar las 30 Plantillas WeaVax →
-                    </button>
-                </div>
-
-                ${userLibraryRoutines.length === 0 ? `
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <p class="text-xs text-gray-400">Aún no has agregado rutinas personalizadas a "Mis Rutinas". Explora la Biblioteca de Plantillas WeaVax o crea una propia.</p>
-                        <div class="flex gap-2 shrink-0">
-                            <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">Ver Plantillas WeaVax</button>
-                            <button onclick="openRoutineCreatorModal()" class="px-4 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">+ Crear Rutina</button>
+                <!-- SELECTOR DE RUTINA PRINCIPAL (EXCLUSIVO DE MIS RUTINAS GUARDADAS) -->
+                ${!primaryRoutine ? `
+                    <div class="p-8 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] text-center space-y-4">
+                        <span class="text-3xl">🏋️</span>
+                        <h4 class="text-lg font-black">Aún no tienes una Rutina Principal en tu Biblioteca</h4>
+                        <p class="text-xs text-gray-400 max-w-md mx-auto leading-relaxed">Para seleccionar tu rutina principal, primero crea una rutina propia o entra a la Biblioteca de Plantillas WeaVax y copia tu favorita a "Mis Rutinas".</p>
+                        <div class="flex flex-wrap justify-center gap-3 pt-2">
+                            <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shadow-lg">Explorar Plantillas WeaVax</button>
+                            <button onclick="openRoutineCreatorModal()" class="px-5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">+ Crear Mi Propia Rutina</button>
                         </div>
                     </div>
                 ` : `
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        ${userLibraryRoutines.map(r => renderRoutineCard(r)).join('')}
+                    <div class="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-6">
+                        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-[#28283C] pb-5">
+                            <div>
+                                <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/15 text-accent">Rutina Principal Activa</span>
+                                <h4 class="text-xl font-black mt-2.5">${primaryRoutine.name}</h4>
+                                <p class="text-xs text-gray-400 mt-1">${primaryRoutine.description || ''}</p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <select onchange="selectPrimaryRoutine(this.value)" class="px-3.5 py-2.5 rounded-xl bg-gray-100 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] text-xs font-bold">
+                                    ${userLibraryRoutines.map(r => `<option value="${r.id}" ${Number(r.id) === Number(primaryRoutine.id) ? 'selected' : ''}>${r.name} (${r.targetDaysPerWeek || 4} días)</option>`).join('')}
+                                </select>
+                                <button onclick="openRoutineDetailView(${primaryRoutine.id})" class="px-4 py-2.5 rounded-xl bg-accent/15 text-accent text-xs font-bold">Detalles</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${(primaryRoutine.days || []).map(d => {
+                                const completedThisWeek = weekStats.sessions.some(s => Number(s.routineId) === Number(primaryRoutine.id) && Number(s.dayNumber) === Number(d.dayNumber));
+                                return `
+                                    <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border ${completedThisWeek ? 'border-emerald-500/50' : 'border-gray-200 dark:border-[#28283C]'} flex items-center justify-between gap-3">
+                                        <div onclick="openDayDetailView(${primaryRoutine.id}, ${d.dayNumber})" class="flex items-center space-x-3.5 cursor-pointer flex-1 min-w-0">
+                                            <div class="w-12 h-12 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center font-black text-accent shrink-0 overflow-hidden">
+                                                ${d.dayImageUri ? `<img src="${d.dayImageUri}" class="w-full h-full object-cover">` : d.dayName.charAt(0)}
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center space-x-1.5">
+                                                    <p class="text-xs font-extrabold truncate">${d.dayName}</p>
+                                                    ${completedThisWeek ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">✓</span>' : ''}
+                                                </div>
+                                                <p class="text-[11px] text-gray-400 mt-1">${(d.exercises || []).length} ejercicios · ~${primaryRoutine.estimatedDurationMinutes || 60} min</p>
+                                            </div>
+                                        </div>
+                                        <button onclick="beginActiveWorkoutSession(${primaryRoutine.id}, ${d.dayNumber})" class="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center font-bold shadow-lg hover:opacity-90 shrink-0" title="Entrenar este día">
+                                            ▶
+                                        </button>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
                     </div>
                 `}
+
+                <!-- TARJETA ENTRENADOR PERSONAL IA -->
+                <div class="p-6 rounded-3xl bg-gradient-to-r from-[#181824] via-[#1E1B36] to-[#181824] border border-accent/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 rounded-2xl bg-accent/20 border border-accent flex items-center justify-center text-2xl shrink-0">🤖</div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h4 class="text-base font-black text-white">Entrenador Personal IA · Vax Coach</h4>
+                                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">Activo</span>
+                            </div>
+                            <p class="text-xs text-gray-300 mt-1">Analiza tu fatiga muscular y te sugiere qué día entrenar hoy con sobrecarga progresiva.</p>
+                        </div>
+                    </div>
+                    <button onclick="openWorkoutSub('COACH_IA')" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shrink-0 shadow-lg">
+                        Abrir Coach IA →
+                    </button>
+                </div>
+
+                <!-- MIS RUTINAS EN TU BIBLIOTECA -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-base font-extrabold">Mis Rutinas (${userLibraryRoutines.length})</h4>
+                            <p class="text-xs text-gray-400 mt-0.5">Tus programas guardados listos para usar</p>
+                        </div>
+                        <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="text-xs font-bold text-accent hover:underline">
+                            Ir a Biblioteca de Plantillas WeaVax →
+                        </button>
+                    </div>
+
+                    ${userLibraryRoutines.length === 0 ? `
+                        <p class="text-xs text-gray-400">Todavía no tienes rutinas en tu biblioteca personal.</p>
+                    ` : `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                            ${userLibraryRoutines.map(r => renderRoutineCard(r, 'grid', false)).join('')}
+                        </div>
+                    `}
+                </div>
             </div>
         `;
         return;
     }
 
-    // 2. BIBLIOTECA DE RUTINAS (MIS RUTINAS vs PLANTILLAS WEAVAX)
+    // 2. BIBLIOTECA DE RUTINAS (MIS RUTINAS vs PLANTILLAS WEAVAX CON BOTÓN COPIAR A BIBLIOTECA)
     if (wState.subScreen === 'LIBRERIA_RUTINAS') {
         const categories = ['Todas', 'PPL (Push Pull Legs)', 'Torso / Pierna', 'Full Body', 'Énfasis Específico', 'Calistenia y Funcional', 'Anime Aesthetic & Superhero', 'Híbridos y Acondicionamiento'];
-        const listToShow = wState.libraryTab === 'MIS_RUTINAS'
-            ? userLibraryRoutines
-            : WEAVAX_30_TEMPLATES.filter(t => wState.categoryFilter === 'Todas' || t.categoryGroup === wState.categoryFilter);
+        const isTemplatesTab = wState.libraryTab === 'PLANTILLAS';
+        const listToShow = isTemplatesTab
+            ? WEAVAX_30_TEMPLATES.filter(t => wState.categoryFilter === 'Todas' || t.categoryGroup === wState.categoryFilter)
+            : userLibraryRoutines;
 
         container.innerHTML = `
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="flex items-center space-x-3">
-                    <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3 py-1.5 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
-                    <div>
-                        <h3 class="text-xl font-black">Biblioteca de Rutinas</h3>
-                        <p class="text-xs text-gray-400">Mis Rutinas y Catálogo Oficial de 30 Plantillas WeaVax</p>
+            <div class="space-y-6">
+                ${minimizedBannerHtml}
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                        <div>
+                            <h3 class="text-xl font-black">Biblioteca de Rutinas</h3>
+                            <p class="text-xs text-gray-400">Gestiona tus rutinas o copia plantillas WeaVax a tu biblioteca</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="setLibraryViewMode('grid')" class="px-3 py-2 rounded-xl border ${wState.viewMode === 'grid' ? 'bg-accent text-white border-accent' : 'border-[#28283C]'} text-xs font-bold">⊞ Cuadrícula</button>
+                        <button onclick="setLibraryViewMode('list')" class="px-3 py-2 rounded-xl border ${wState.viewMode === 'list' ? 'bg-accent text-white border-accent' : 'border-[#28283C]'} text-xs font-bold">☰ Lista</button>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="setLibraryViewMode('grid')" class="px-3 py-1.5 rounded-xl border ${wState.viewMode === 'grid' ? 'bg-accent text-white border-accent' : 'border-[#28283C]'} text-xs font-bold">⊞ Cuadrícula (3 col)</button>
-                    <button onclick="setLibraryViewMode('list')" class="px-3 py-1.5 rounded-xl border ${wState.viewMode === 'list' ? 'bg-accent text-white border-accent' : 'border-[#28283C]'} text-xs font-bold">☰ Lista</button>
-                </div>
-            </div>
 
-            <!-- Pestañas Mis Rutinas / Plantillas WeaVax -->
-            <div class="flex gap-2 border-b border-gray-200 dark:border-[#28283C] pb-3">
-                <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'MIS_RUTINAS')" class="px-4 py-2 rounded-xl text-xs font-bold ${wState.libraryTab === 'MIS_RUTINAS' ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">Mis Rutinas (${userLibraryRoutines.length})</button>
-                <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="px-4 py-2 rounded-xl text-xs font-bold ${wState.libraryTab === 'PLANTILLAS' ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">Plantillas WeaVax (30)</button>
-            </div>
-
-            ${wState.libraryTab === 'PLANTILLAS' ? `
-                <div class="flex flex-wrap gap-2">
-                    ${categories.map(c => `
-                        <button onclick="setTemplateCategory('${c}')" class="px-3 py-1.5 rounded-full text-[11px] font-bold ${wState.categoryFilter === c ? 'bg-accent text-white' : 'bg-[#181824] border border-[#28283C] text-gray-400'}">${c}</button>
-                    `).join('')}
+                <div class="flex gap-2.5 border-b border-gray-200 dark:border-[#28283C] pb-4">
+                    <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'MIS_RUTINAS')" class="px-4 py-2.5 rounded-xl text-xs font-bold ${!isTemplatesTab ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">Mis Rutinas (${userLibraryRoutines.length})</button>
+                    <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="px-4 py-2.5 rounded-xl text-xs font-bold ${isTemplatesTab ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">Plantillas WeaVax (30)</button>
                 </div>
-            ` : ''}
 
-            <div class="${wState.viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}">
-                <!-- Primera tarjeta interactiva + Crear programa -->
-                <div onclick="openRoutineCreatorModal()" class="p-6 rounded-2xl border-2 border-dashed border-accent/50 hover:border-accent flex flex-col items-center justify-center text-center cursor-pointer min-h-[160px]">
-                    <span class="text-2xl text-accent font-black">+</span>
-                    <p class="text-sm font-extrabold text-accent mt-1">Crear nuevo programa</p>
-                    <p class="text-[11px] text-gray-400 mt-0.5">Diseña tus días, series y superseries</p>
-                </div>
-                ${listToShow.map(r => renderRoutineCard(r, wState.viewMode)).join('')}
-            </div>
-        `;
-        return;
-    }
-
-    // 3. DETALLE DEL PROGRAMA (DetalleRutinaScreen)
-    if (wState.subScreen === 'DETALLE_RUTINA' && wState.viewingRoutine) {
-        const r = wState.viewingRoutine;
-        container.innerHTML = `
-            <div class="flex items-center justify-between">
-                <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3 py-1.5 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
-                <div class="flex gap-2">
-                    <button onclick="selectPrimaryRoutine(${r.id})" class="px-3.5 py-1.5 rounded-xl bg-accent text-white text-xs font-bold">★ Usar como Rutina Principal</button>
-                    <button onclick="publishRoutineCommunity(${r.id})" class="px-3.5 py-1.5 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">🌍 Publicar en la comunidad</button>
-                </div>
-            </div>
-
-            <div class="rounded-3xl overflow-hidden bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                <div class="h-48 bg-cover bg-center relative" style="background-image:url('${r.imageUri || pPush}')">
-                    <div class="absolute inset-0 bg-gradient-to-t from-[#181824] via-[#181824]/40 to-transparent"></div>
-                    <div class="absolute bottom-4 left-6 right-6">
-                        <span class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-accent text-white">${r.focusCategory || 'Hipertrofia'} · ${r.targetDaysPerWeek || 4} días/sem</span>
-                        <h3 class="text-2xl font-black text-white mt-2">${r.name}</h3>
-                        <p class="text-xs text-gray-300 mt-1">${r.description || ''}</p>
-                    </div>
-                </div>
-                <div class="p-6 space-y-3">
-                    <h4 class="text-sm font-extrabold">Días de Entrenamiento del Programa (${(r.days || []).length})</h4>
-                    <div class="space-y-3">
-                        ${(r.days || []).map(d => `
-                            <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex items-center justify-between">
-                                <div onclick="openDayDetailView(${r.id}, ${d.dayNumber})" class="flex items-center space-x-3.5 cursor-pointer flex-1">
-                                    <div class="w-12 h-12 rounded-xl bg-accent/20 text-accent font-black flex items-center justify-center overflow-hidden">
-                                        ${d.dayImageUri ? `<img src="${d.dayImageUri}" class="w-full h-full object-cover">` : d.dayName.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-extrabold">${d.dayName}</p>
-                                        <p class="text-xs text-gray-400">${(d.exercises || []).map(e => e.exerciseName).slice(0, 3).join(', ')}...</p>
-                                    </div>
-                                </div>
-                                <button onclick="beginActiveWorkoutSession(${r.id}, ${d.dayNumber})" class="w-10 h-10 rounded-full bg-accent text-white font-bold flex items-center justify-center">▶</button>
-                            </div>
+                ${isTemplatesTab ? `
+                    <div class="flex flex-wrap gap-2">
+                        ${categories.map(c => `
+                            <button onclick="setTemplateCategory('${c}')" class="px-3.5 py-1.5 rounded-full text-[11px] font-bold ${wState.categoryFilter === c ? 'bg-accent text-white' : 'bg-[#181824] border border-[#28283C] text-gray-400'}">${c}</button>
                         `).join('')}
                     </div>
+                ` : ''}
+
+                <div class="${wState.viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5' : 'space-y-3'}">
+                    ${!isTemplatesTab ? `
+                        <div onclick="openRoutineCreatorModal()" class="p-6 rounded-2xl border-2 border-dashed border-accent/50 hover:border-accent flex flex-col items-center justify-center text-center cursor-pointer min-h-[180px]">
+                            <span class="text-2xl text-accent font-black">+</span>
+                            <p class="text-sm font-extrabold text-accent mt-1">Crear nueva rutina</p>
+                            <p class="text-[11px] text-gray-400 mt-0.5">Personaliza tus propios días y ejercicios</p>
+                        </div>
+                    ` : ''}
+                    ${listToShow.map(r => renderRoutineCard(r, wState.viewMode, isTemplatesTab)).join('')}
                 </div>
             </div>
         `;
         return;
     }
 
-    // 4. DETALLE DE DÍA DE ENTRENAMIENTO (DetalleEntrenamientoScreen)
+    // 3. DETALLE DEL PROGRAMA
+    if (wState.subScreen === 'DETALLE_RUTINA' && wState.viewingRoutine) {
+        const r = wState.viewingRoutine;
+        const isSavedInUserLib = userLibraryRoutines.some(u => Number(u.id) === Number(r.id) || u.name === r.name);
+
+        container.innerHTML = `
+            <div class="space-y-6">
+                ${minimizedBannerHtml}
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <button onclick="openWorkoutSub('LIBRERIA_RUTINAS')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                    <div class="flex gap-2">
+                        ${isSavedInUserLib ? `
+                            <button onclick="selectPrimaryRoutine(${r.id})" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-extrabold">★ Elegir como Rutina Principal</button>
+                        ` : `
+                            <button onclick="copyTemplateToLibrary(${r.id})" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold">📥 Copiar a mi biblioteca</button>
+                        `}
+                    </div>
+                </div>
+
+                <div class="rounded-3xl overflow-hidden bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                    <div class="h-48 bg-cover bg-center relative" style="background-image:url('${r.imageUri || pPush}')">
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#181824] via-[#181824]/40 to-transparent"></div>
+                        <div class="absolute bottom-4 left-6 right-6">
+                            <span class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-accent text-white">${r.focusCategory || 'Hipertrofia'} · ${r.targetDaysPerWeek || 4} días/sem</span>
+                            <h3 class="text-2xl font-black text-white mt-2">${r.name}</h3>
+                            <p class="text-xs text-gray-300 mt-1">${r.description || ''}</p>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <h4 class="text-sm font-extrabold">Días del Programa (${(r.days || []).length})</h4>
+                        <div class="space-y-3">
+                            ${(r.days || []).map(d => `
+                                <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex items-center justify-between">
+                                    <div onclick="openDayDetailView(${r.id}, ${d.dayNumber})" class="flex items-center space-x-3.5 cursor-pointer flex-1">
+                                        <div class="w-12 h-12 rounded-xl bg-accent/20 text-accent font-black flex items-center justify-center overflow-hidden">
+                                            ${d.dayImageUri ? `<img src="${d.dayImageUri}" class="w-full h-full object-cover">` : d.dayName.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-extrabold">${d.dayName}</p>
+                                            <p class="text-xs text-gray-400 mt-0.5">${(d.exercises || []).map(e => e.exerciseName).slice(0, 3).join(', ')}...</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="beginActiveWorkoutSession(${r.id}, ${d.dayNumber})" class="w-10 h-10 rounded-full bg-accent text-white font-bold flex items-center justify-center">▶</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    // 4. DETALLE DE DÍA DE ENTRENAMIENTO
     if (wState.subScreen === 'DETALLE_ENTRENAMIENTO' && wState.viewingDayPlan) {
         const r = wState.viewingRoutine;
         const d = wState.viewingDayPlan;
@@ -510,131 +575,164 @@ export function renderWorkouts() {
         const totalSets = (d.exercises || []).reduce((acc, e) => acc + Number(e.targetSets || 3), 0);
 
         container.innerHTML = `
-            <div class="flex items-center justify-between">
-                <button onclick="openRoutineDetailView(${r.id})" class="px-3 py-1.5 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver al Programa</button>
-                <button onclick="beginActiveWorkoutSession(${r.id}, ${d.dayNumber})" class="px-5 py-2 rounded-full bg-accent text-white text-xs font-extrabold shadow-lg">▶ Iniciar Entrenamiento</button>
-            </div>
-
-            <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
-                <h3 class="text-xl font-black">${d.dayName}</h3>
-                <div class="flex flex-wrap gap-4 text-xs text-gray-400">
-                    <span>📊 <strong>${totalSets}</strong> series totales</span>
-                    <span>⏱️ <strong>~${r.estimatedDurationMinutes || 60} min</strong> estimados</span>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    ${muscles.map(m => `<span class="px-3 py-1 rounded-full bg-accent/15 text-accent text-xs font-bold">${m}</span>`).join('')}
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <button onclick="openRoutineDetailView(${r.id})" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver al Programa</button>
+                    <button onclick="beginActiveWorkoutSession(${r.id}, ${d.dayNumber})" class="px-5 py-2.5 rounded-full bg-accent text-white text-xs font-extrabold shadow-lg">▶ Iniciar Entrenamiento</button>
                 </div>
 
-                <div class="space-y-2.5 pt-3">
-                    ${(d.exercises || []).map(ex => {
-                        const catEx = getExById(ex.exerciseId);
-                        return `
-                            <div onclick="showExerciseAnatomyModal(${catEx.id})" class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex items-center justify-between cursor-pointer hover:border-accent">
-                                <div class="flex items-center space-x-3.5">
-                                    <img src="${catEx.img}" class="w-14 h-14 rounded-xl object-contain bg-white p-1">
-                                    <div>
-                                        <p class="text-sm font-bold">${ex.exerciseName}</p>
-                                        <p class="text-xs text-gray-400">${ex.targetSets} series × ${ex.targetRepsRange} reps · Descanso ${ex.restSeconds}s</p>
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-5">
+                    <h3 class="text-xl font-black">${d.dayName}</h3>
+                    <div class="flex flex-wrap gap-4 text-xs text-gray-400">
+                        <span>📊 <strong>${totalSets}</strong> series programadas</span>
+                        <span>⏱️ <strong>~${r.estimatedDurationMinutes || 60} min</strong> estimados</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        ${muscles.map(m => `<span class="px-3 py-1 rounded-full bg-accent/15 text-accent text-xs font-bold">${m}</span>`).join('')}
+                    </div>
+
+                    <div class="space-y-3 pt-2">
+                        ${(d.exercises || []).map(ex => {
+                            const catEx = getExById(ex.exerciseId);
+                            return `
+                                <div onclick="showExerciseAnatomyModal(${catEx.id})" class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex items-center justify-between cursor-pointer hover:border-accent">
+                                    <div class="flex items-center space-x-4">
+                                        <img src="${catEx.img}" class="w-14 h-14 rounded-xl object-contain bg-white p-1">
+                                        <div>
+                                            <p class="text-sm font-bold">${ex.exerciseName}</p>
+                                            <p class="text-xs text-gray-400 mt-0.5">${ex.targetSets} series × ${ex.targetRepsRange} reps · Descanso ${ex.restSeconds}s</p>
+                                        </div>
                                     </div>
+                                    <span class="text-xs text-accent font-bold">Anatomía →</span>
                                 </div>
-                                <span class="text-xs text-accent font-bold">Ver anatomía →</span>
-                            </div>
-                        `;
-                    }).join('')}
+                            `;
+                        }).join('')}
+                    </div>
                 </div>
             </div>
         `;
         return;
     }
 
-    // 5. SESIÓN ACTIVA EN VIVO (SesionActivaScreen)
+    // 5. SESIÓN ACTIVA (CON BOTÓN SALIR/MINIMIZAR, BOTÓN DESCARTAR Y MODAL DE TIPO DE SERIE)
     if (wState.subScreen === 'SESION_ACTIVA' && wState.activeSession) {
         const s = wState.activeSession;
         const mins = String(Math.floor(s.elapsedSeconds / 60)).padStart(2, '0');
         const secs = String(s.elapsedSeconds % 60).padStart(2, '0');
         const liveVol = s.exercises.reduce((acc, ex) => acc + ex.sets.filter(st => st.isCompleted).reduce((v, st) => v + (Number(st.weightKg || 0) * Number(st.reps || 0)), 0), 0);
 
+        const setTypeBadge = (st, idx) => {
+            if (st.setType === 'W') return `<span class="text-amber-400 font-black">W</span>`;
+            if (st.setType === 'D') return `<span class="text-cyan-400 font-black">D</span>`;
+            if (st.setType === 'F') return `<span class="text-red-400 font-black">F</span>`;
+            return `<span class="text-white font-bold">${idx + 1}</span>`;
+        };
+
         container.innerHTML = `
-            <div class="sticky top-16 z-20 p-4 rounded-2xl bg-[#181824] border border-accent flex flex-wrap items-center justify-between gap-3 shadow-xl">
-                <div>
-                    <span class="text-[10px] font-bold uppercase text-accent">Sesión en Vivo · ${s.routineName}</span>
-                    <div class="flex items-center space-x-4 mt-0.5">
-                        <span id="live-workout-clock" class="text-xl font-black font-mono">${mins}:${secs}</span>
-                        <span class="text-xs text-gray-400">Volumen: <strong class="text-white">${liveVol.toFixed(0)} kg</strong></span>
-                        ${wState.restSecondsLeft > 0 ? `<span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">⏳ Descanso: ${wState.restSecondsLeft}s</span>` : ''}
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="openAddExerciseToActiveModal()" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">+ Ejercicio</button>
-                    <button onclick="attemptFinishWorkout()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold">Finalizar</button>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                ${s.exercises.map((ex, exIdx) => `
-                    <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <img src="${ex.imageUri}" class="w-12 h-12 rounded-xl object-contain bg-white p-1">
-                                <div>
-                                    <h4 class="text-sm font-extrabold">${ex.exerciseName}</h4>
-                                    <p class="text-[11px] text-gray-400">${ex.muscleGroup} · Descanso ${ex.restSeconds}s</p>
-                                </div>
+            <div class="space-y-6">
+                <div class="sticky top-16 z-20 p-4 sm:p-5 rounded-2xl bg-[#181824] border border-accent flex flex-wrap items-center justify-between gap-3 shadow-xl">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent text-xs font-bold" title="Minimizar y volver a Entrenamiento">
+                            ← Minimizar
+                        </button>
+                        <div>
+                            <span class="text-[10px] font-bold uppercase text-accent">${s.routineName}</span>
+                            <div class="flex items-center space-x-4 mt-0.5">
+                                <span id="live-workout-clock" class="text-xl font-black font-mono">${mins}:${secs}</span>
+                                <span class="text-xs text-gray-400">Volumen real: <strong class="text-white">${liveVol.toFixed(0)} kg</strong></span>
+                                ${wState.restSecondsLeft > 0 ? `<span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">⏳ ${wState.restSecondsLeft}s</span>` : ''}
                             </div>
-                            <button onclick="removeExerciseFromActive(${exIdx})" class="text-xs text-gray-500 hover:text-red-400">Eliminar</button>
-                        </div>
-
-                        <div class="grid grid-cols-12 gap-2 text-[10px] font-bold uppercase text-gray-400 px-2">
-                            <div class="col-span-2">Serie</div>
-                            <div class="col-span-3">Anterior</div>
-                            <div class="col-span-3">Peso (kg)</div>
-                            <div class="col-span-2">Reps</div>
-                            <div class="col-span-2 text-center">✓</div>
-                        </div>
-
-                        <div class="space-y-1.5">
-                            ${ex.sets.map((st, stIdx) => `
-                                <div class="grid grid-cols-12 gap-2 items-center p-2 rounded-xl ${st.isCompleted ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-gray-50 dark:bg-[#0A0A0F]'} text-xs">
-                                    <div class="col-span-2">
-                                        <button onclick="cycleSetType(${exIdx}, ${stIdx})" class="px-2 py-1 rounded bg-[#181824] border border-[#28283C] font-bold text-[11px]">${st.setType === 'NORMAL' ? stIdx + 1 : st.setType}</button>
-                                    </div>
-                                    <div class="col-span-3 text-[11px] text-gray-400">60kg × 10</div>
-                                    <div class="col-span-3">
-                                        <input type="number" step="0.5" value="${st.weightKg}" onchange="updateActiveSetVal(${exIdx}, ${stIdx}, 'weightKg', this.value)" class="w-full px-2 py-1 rounded bg-[#181824] border border-[#28283C] text-center font-bold">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <input type="number" value="${st.reps}" onchange="updateActiveSetVal(${exIdx}, ${stIdx}, 'reps', this.value)" class="w-full px-2 py-1 rounded bg-[#181824] border border-[#28283C] text-center font-bold">
-                                    </div>
-                                    <div class="col-span-2 flex justify-center">
-                                        <input type="checkbox" ${st.isCompleted ? 'checked' : ''} onchange="toggleActiveSetDone(${exIdx}, ${stIdx})" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-
-                        <div class="flex gap-2 pt-1">
-                            <button onclick="addSetToActive(${exIdx})" class="text-xs font-bold text-accent">+ Añadir Serie</button>
-                            <button onclick="removeLastSetFromActive(${exIdx})" class="text-xs text-gray-400 hover:text-red-400">- Quitar Serie</button>
                         </div>
                     </div>
-                `).join('')}
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="openAddExerciseToActiveModal()" class="px-3.5 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">+ Ejercicio</button>
+                        <button onclick="discardActiveWorkout()" class="px-3.5 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-bold">🗑️ Descartar</button>
+                        <button onclick="attemptFinishWorkout()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold">Finalizar</button>
+                    </div>
+                </div>
+
+                <div class="space-y-5">
+                    ${s.exercises.map((ex, exIdx) => `
+                        <div class="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3.5">
+                                    <img src="${ex.imageUri}" class="w-12 h-12 rounded-xl object-contain bg-white p-1">
+                                    <div>
+                                        <h4 class="text-sm font-extrabold">${ex.exerciseName}</h4>
+                                        <p class="text-[11px] text-gray-400">${ex.muscleGroup} · Descanso ${ex.restSeconds}s</p>
+                                    </div>
+                                </div>
+                                <button onclick="removeExerciseFromActive(${exIdx})" class="text-xs text-gray-500 hover:text-red-400">Quitar</button>
+                            </div>
+
+                            <div class="grid grid-cols-12 gap-2 text-[10px] font-bold uppercase text-gray-400 px-2">
+                                <div class="col-span-3">Tipo / Serie</div>
+                                <div class="col-span-3">Peso (kg)</div>
+                                <div class="col-span-3">Reps</div>
+                                <div class="col-span-3 text-center">Completar</div>
+                            </div>
+
+                            <div class="space-y-2">
+                                ${ex.sets.map((st, stIdx) => `
+                                    <div class="grid grid-cols-12 gap-2 items-center p-2.5 rounded-xl ${st.isCompleted ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-gray-50 dark:bg-[#0A0A0F]'} text-xs">
+                                        <div class="col-span-3">
+                                            <button onclick="openSetTypePickerModal(${exIdx}, ${stIdx})" class="w-full px-2.5 py-1.5 rounded-lg bg-[#181824] border border-[#28283C] hover:border-accent flex items-center justify-between text-xs">
+                                                ${setTypeBadge(st, stIdx)}
+                                                <span class="text-[9px] text-gray-400">▼</span>
+                                            </button>
+                                        </div>
+                                        <div class="col-span-3">
+                                            <input type="number" step="0.5" placeholder="0" value="${st.weightKg > 0 ? st.weightKg : ''}" oninput="updateActiveSetVal(${exIdx}, ${stIdx}, 'weightKg', this.value)" class="w-full px-2 py-1.5 rounded-lg bg-[#181824] border border-[#28283C] text-center font-bold">
+                                        </div>
+                                        <div class="col-span-3">
+                                            <input type="number" placeholder="0" value="${st.reps > 0 ? st.reps : ''}" oninput="updateActiveSetVal(${exIdx}, ${stIdx}, 'reps', this.value)" class="w-full px-2 py-1.5 rounded-lg bg-[#181824] border border-[#28283C] text-center font-bold">
+                                        </div>
+                                        <div class="col-span-3 flex justify-center">
+                                            <input type="checkbox" ${st.isCompleted ? 'checked' : ''} onchange="toggleActiveSetDone(${exIdx}, ${stIdx})" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <div class="flex gap-3 pt-1">
+                                <button onclick="addSetToActive(${exIdx})" class="text-xs font-bold text-accent">+ Añadir Serie</button>
+                                <button onclick="removeLastSetFromActive(${exIdx})" class="text-xs text-gray-400 hover:text-red-400">- Quitar Serie</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
         `;
         return;
     }
 
-    // 6. PASO 2 DE FINALIZACIÓN: DETALLES DEL ENTRENAMIENTO FINALIZADO (POR_FINALIZAR)
+    // 6. DETALLES DEL ENTRENAMIENTO FINALIZADO (CON SUBIDA DE FOTO DEL ENTRENAMIENTO)
     if (wState.subScreen === 'POR_FINALIZAR' && wState.finishDraft) {
         const d = wState.finishDraft;
         container.innerHTML = `
-            <div class="max-w-xl mx-auto p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-5">
-                <span class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400">Entrenamiento Finalizado · Cronómetro Detenido</span>
+            <div class="max-w-xl mx-auto p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400">Cronómetro Detenido · Revisión Final</span>
+                    <button onclick="openWorkoutSub('SESION_ACTIVA')" class="text-xs text-accent font-bold">← Volver a las series</button>
+                </div>
+
                 <div>
                     <label class="text-[11px] font-bold text-gray-400 uppercase">Título del entrenamiento</label>
                     <input id="fin-title" value="${d.title}" class="mt-1 w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] font-bold">
                 </div>
 
-                <!-- SELECTOR DE DURACIÓN CON RUEDAS NUMÉRICAS (HORAS, MINUTOS, SEGUNDOS) -->
+                <!-- SUBIR FOTO DEL ENTRENAMIENTO -->
+                <div>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase block mb-1.5">Foto del Entrenamiento (Opcional)</label>
+                    <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-dashed border-[#28283C] text-center space-y-2">
+                        ${d.photoDataUrl ? `<img src="${d.photoDataUrl}" class="max-h-48 mx-auto rounded-xl object-cover mb-2">` : ''}
+                        <label class="inline-block px-4 py-2 rounded-xl bg-accent/15 text-accent text-xs font-bold cursor-pointer">
+                            📷 Seleccionar o Subir Foto
+                            <input type="file" accept="image/*" class="hidden" onchange="handleWorkoutPhotoUpload(event)">
+                        </label>
+                    </div>
+                </div>
+
                 <div>
                     <label class="text-[11px] font-bold text-gray-400 uppercase">Duración Real (Horas : Minutos : Segundos)</label>
                     <div class="grid grid-cols-3 gap-3 mt-1.5">
@@ -654,23 +752,12 @@ export function renderWorkouts() {
                 </div>
 
                 <div>
-                    <label class="text-[11px] font-bold text-gray-400 uppercase">Tipo de Entrenamiento</label>
-                    <select id="fin-type" class="mt-1 w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">
-                        <option value="Pesas / Hipertrofia">Pesas / Hipertrofia</option>
-                        <option value="Fuerza">Fuerza</option>
-                        <option value="Calistenia">Calistenia</option>
-                        <option value="Cardio / HIIT">Cardio / HIIT</option>
-                        <option value="CrossFit">CrossFit</option>
-                    </select>
-                </div>
-
-                <div>
                     <label class="text-[11px] font-bold text-gray-400 uppercase">Notas de la sesión</label>
-                    <textarea id="fin-notes" rows="3" placeholder="¿Cómo fue? Comparte más acerca de tu entrenamiento." class="mt-1 w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-[#28283C] text-xs"></textarea>
+                    <textarea id="fin-notes" rows="3" placeholder="¿Cómo te sentiste hoy?" class="mt-1 w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-[#28283C] text-xs">${d.notes || ''}</textarea>
                 </div>
 
                 <div class="flex gap-3 pt-2">
-                    <button onclick="discardActiveWorkout()" class="flex-1 py-3 rounded-xl bg-red-500/15 text-red-400 font-bold text-xs">Descartar</button>
+                    <button onclick="discardActiveWorkout()" class="flex-1 py-3 rounded-xl bg-red-500/15 text-red-400 font-bold text-xs">🗑️ Descartar</button>
                     <button onclick="checkRoutineReconciliationBeforeSave()" class="flex-1 py-3 rounded-xl bg-accent text-white font-extrabold text-xs shadow-lg">Guardar Entrenamiento</button>
                 </div>
             </div>
@@ -678,45 +765,58 @@ export function renderWorkouts() {
         return;
     }
 
-    // 7. PASO 4: CARRUSEL DE 5 TARJETAS POST-ENTRENAMIENTO (ResumenSesionScreen)
+    // 7. CARRUSEL DE 5 TARJETAS POST-ENTRENAMIENTO (100% DATOS REALES DE SERIES MARCADAS ✓)
     if (wState.subScreen === 'RESUMEN_SESION' && wState.summaryData) {
         const sum = wState.summaryData;
         const idx = wState.summarySlideIdx;
         const slides = [
-            // Tarjeta 1: Racha y Marca
+            // Tarjeta 1: Racha y Foto
             `<div class="p-8 rounded-3xl bg-gradient-to-br from-[#181824] to-purple-900/40 border border-accent text-center space-y-3">
-                <div class="text-5xl">🔥</div>
+                ${sum.photoDataUrl ? `<img src="${sum.photoDataUrl}" class="w-32 h-32 mx-auto rounded-2xl object-cover border-2 border-accent">` : `<div class="text-5xl">🔥</div>`}
                 <h3 class="text-2xl font-black">¡Racha Semanal Activa!</h3>
-                <p class="text-sm text-gray-300">${sum.title} completado con éxito</p>
-                <div class="text-xs font-extrabold tracking-widest uppercase text-accent pt-4">WEAVAX LIFEOS · +60 XP</div>
+                <p class="text-sm text-gray-300">${sum.title}</p>
+                <div class="text-xs font-extrabold tracking-widest uppercase text-accent pt-3">WEAVAX LIFEOS · +60 XP</div>
             </div>`,
-            // Tarjeta 2: Récords Personales (1RM Estimado)
+            // Tarjeta 2: 1RM Real (solo de series completadas con peso > 0)
             `<div class="p-8 rounded-3xl bg-[#181824] border border-amber-500/40 text-center space-y-3">
                 <div class="text-4xl">🏆</div>
-                <h3 class="text-xl font-black text-amber-300">Récords y 1RM Estimado</h3>
-                <p class="text-xs text-gray-400">Fórmula Brzycki sobre tus mejores series de hoy:</p>
-                <div class="space-y-1.5 text-xs pt-2">${sum.prs.map(p => `<div class="p-2 rounded-lg bg-[#0A0A0F] font-bold">${p}</div>`).join('')}</div>
+                <h3 class="text-xl font-black text-amber-300">Récords y 1RM de Hoy</h3>
+                ${sum.prs.length === 0
+                    ? `<p class="text-xs text-gray-400 py-4">No registraste series completadas con peso en esta sesión.</p>`
+                    : `<div class="space-y-1.5 text-xs pt-2">${sum.prs.map(p => `<div class="p-2.5 rounded-lg bg-[#0A0A0F] font-bold">${p}</div>`).join('')}</div>`
+                }
             </div>`,
-            // Tarjeta 3: Métricas Clave y Músculos
+            // Tarjeta 3: Métricas Reales
             `<div class="p-8 rounded-3xl bg-[#181824] border border-[#28283C] space-y-4">
-                <h3 class="text-lg font-black text-center">Métricas y Anatomía Trabajada</h3>
+                <h3 class="text-lg font-black text-center">Métricas Reales Trabajadas</h3>
                 <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="p-3 rounded-xl bg-[#0A0A0F]"><div class="text-lg font-black text-accent">${sum.volume} kg</div><div class="text-[10px] text-gray-400">Volumen</div></div>
-                    <div class="p-3 rounded-xl bg-[#0A0A0F]"><div class="text-lg font-black text-emerald-400">${sum.sets}</div><div class="text-[10px] text-gray-400">Series</div></div>
+                    <div class="p-3 rounded-xl bg-[#0A0A0F]"><div class="text-lg font-black text-accent">${sum.volume} kg</div><div class="text-[10px] text-gray-400">Volumen Real</div></div>
+                    <div class="p-3 rounded-xl bg-[#0A0A0F]"><div class="text-lg font-black text-emerald-400">${sum.sets}</div><div class="text-[10px] text-gray-400">Series Hechas</div></div>
                     <div class="p-3 rounded-xl bg-[#0A0A0F]"><div class="text-lg font-black text-blue-400">${sum.durationMin}m</div><div class="text-[10px] text-gray-400">Duración</div></div>
                 </div>
-                <div class="flex flex-wrap justify-center gap-2">${sum.muscles.map(m => `<span class="px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-bold">${m}</span>`).join('')}</div>
+                <div class="flex flex-wrap justify-center gap-2">
+                    ${sum.muscles.length === 0 ? '<span class="text-xs text-gray-400">Sin músculos registrados</span>' : sum.muscles.map(m => `<span class="px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-bold">${m}</span>`).join('')}
+                </div>
             </div>`,
-            // Tarjeta 4: Comparación Divertida
+            // Tarjeta 4: Equivalencia Real
             `<div class="p-8 rounded-3xl bg-[#181824] border border-[#28283C] text-center space-y-3">
-                <div class="text-5xl">🛸</div>
-                <h3 class="text-xl font-black">¡Levantaste ${sum.volume} kg en total!</h3>
-                <p class="text-sm text-gray-300">${sum.volume > 5000 ? '¡Equivalente al peso de un barco vikingo completo!' : '¡Equivalente al peso de un auto deportivo de carreras!'}</p>
+                <div class="text-5xl">🏋️</div>
+                <h3 class="text-xl font-black">Volumen Efectivo: ${sum.volume} kg</h3>
+                <p class="text-sm text-gray-300">
+                    ${Number(sum.volume) === 0
+                        ? 'Sesión completada sin carga externa registrada.'
+                        : Number(sum.volume) > 5000
+                            ? '¡Equivalente al peso de un barco vikingo!'
+                            : '¡Gran trabajo de sobrecarga acumulada hoy!'}
+                </p>
             </div>`,
-            // Tarjeta 5: Desglose Completo
+            // Tarjeta 5: Desglose de series efectivamente marcadas
             `<div class="p-8 rounded-3xl bg-[#181824] border border-[#28283C] space-y-3">
-                <h3 class="text-base font-black">Desglose de Ejercicios</h3>
-                <div class="space-y-1.5 text-xs">${sum.breakdown.map(b => `<div class="flex justify-between p-2 rounded bg-[#0A0A0F]"><span>${b.name}</span><span class="font-bold text-accent">${b.sets} series</span></div>`).join('')}</div>
+                <h3 class="text-base font-black">Series Completadas por Ejercicio</h3>
+                ${sum.breakdown.length === 0
+                    ? `<p class="text-xs text-gray-400">Ninguna serie fue marcada como completada (✓).</p>`
+                    : `<div class="space-y-1.5 text-xs">${sum.breakdown.map(b => `<div class="flex justify-between p-2 rounded bg-[#0A0A0F]"><span>${b.name}</span><span class="font-bold text-accent">${b.sets} series (${b.vol} kg)</span></div>`).join('')}</div>`
+                }
             </div>`
         ];
 
@@ -728,13 +828,13 @@ export function renderWorkouts() {
                     <span class="text-xs font-bold text-gray-400">Tarjeta ${idx + 1} de 5</span>
                     <button onclick="stepSummarySlide(1)" class="px-4 py-2 rounded-xl bg-[#181824] text-xs font-bold">Siguiente →</button>
                 </div>
-                <button onclick="openWorkoutSub('PRINCIPAL')" class="w-full py-3 rounded-xl bg-accent text-white font-extrabold text-xs">Finalizar y Volver al Inicio</button>
+                <button onclick="openWorkoutSub('PRINCIPAL')" class="w-full py-3 rounded-xl bg-accent text-white font-extrabold text-xs">Cerrar Resumen</button>
             </div>
         `;
         return;
     }
 
-    // 8. BANCO DE EJERCICIOS (BancoEjerciciosScreen)
+    // 8. BANCO DE EJERCICIOS
     if (wState.subScreen === 'BANCO_EJERCICIOS') {
         const muscles = ['Todos', 'Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales/Glúteos', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Pantorrillas'];
         const filtered = EXERCISE_CATALOG.filter(e =>
@@ -743,89 +843,107 @@ export function renderWorkouts() {
         );
 
         container.innerHTML = `
-            <div class="flex items-center justify-between gap-3">
-                <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3 py-1.5 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
-                <input oninput="filterExerciseBank(this.value)" value="${wState.searchQuery}" placeholder="Buscar ejercicio..." class="flex-1 max-w-md px-4 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs">
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-                ${muscles.map(m => `<button onclick="setMuscleBankFilter('${m}')" class="px-3 py-1 rounded-full text-[11px] font-bold ${wState.muscleFilter === m ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">${m}</button>`).join('')}
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                ${filtered.map(ex => `
-                    <div onclick="showExerciseAnatomyModal(${ex.id})" class="p-3.5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex items-center space-x-3 cursor-pointer hover:border-accent">
-                        <img src="${ex.img}" class="w-14 h-14 rounded-xl object-contain bg-white p-1 shrink-0">
-                        <div>
-                            <p class="text-xs font-extrabold">${ex.name}</p>
-                            <p class="text-[10px] text-gray-400 mt-0.5">${ex.muscleGroup} · ${ex.equipment}</p>
+            <div class="space-y-6">
+                ${minimizedBannerHtml}
+                <div class="flex items-center justify-between gap-3">
+                    <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                    <input oninput="filterExerciseBank(this.value)" value="${wState.searchQuery}" placeholder="Buscar ejercicio..." class="flex-1 max-w-md px-4 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs">
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    ${muscles.map(m => `<button onclick="setMuscleBankFilter('${m}')" class="px-3.5 py-1.5 rounded-full text-[11px] font-bold ${wState.muscleFilter === m ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">${m}</button>`).join('')}
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${filtered.map(ex => `
+                        <div onclick="showExerciseAnatomyModal(${ex.id})" class="p-4 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex items-center space-x-3.5 cursor-pointer hover:border-accent">
+                            <img src="${ex.img}" class="w-14 h-14 rounded-xl object-contain bg-white p-1 shrink-0">
+                            <div>
+                                <p class="text-xs font-extrabold">${ex.name}</p>
+                                <p class="text-[10px] text-gray-400 mt-1">${ex.muscleGroup} · ${ex.equipment}</p>
+                            </div>
                         </div>
-                    </div>
-                `).join('')}
+                    `).join('')}
+                </div>
             </div>
         `;
         return;
     }
 
-    // 9. HISTORIAL DE ENTRENAMIENTOS (HistorialEntrenamientosScreen)
+    // 9. HISTORIAL
     if (wState.subScreen === 'HISTORIAL') {
         const list = window.state.workout_sessions || [];
         container.innerHTML = `
-            <div class="flex items-center justify-between">
-                <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3 py-1.5 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
-                <h3 class="text-lg font-black">Historial Completo (${list.length} sesiones)</h3>
-            </div>
-            <div class="space-y-2.5">
-                ${list.length === 0 ? '<p class="text-xs text-gray-400">Sin entrenamientos registrados.</p>' : list.map(s => `
-                    <div class="p-4 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex justify-between items-center">
-                        <div>
-                            <p class="text-sm font-extrabold">${s.routineName}</p>
-                            <p class="text-xs text-gray-400">${new Date(Number(s.startedAt || Date.now())).toLocaleDateString('es-BO')} · ${Math.round(Number(s.durationSeconds || 3600) / 60)} min · ${Number(s.totalVolumeKg || 0).toFixed(0)} kg · ${s.totalCompletedSets || 0} series</p>
+            <div class="space-y-6">
+                ${minimizedBannerHtml}
+                <div class="flex items-center justify-between">
+                    <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                    <h3 class="text-lg font-black">Historial (${list.length} sesiones)</h3>
+                </div>
+                <div class="space-y-3">
+                    ${list.length === 0 ? '<p class="text-xs text-gray-400">Sin entrenamientos registrados.</p>' : list.map(s => `
+                        <div class="p-4 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex justify-between items-center">
+                            <div class="flex items-center space-x-3.5">
+                                ${s.photoDataUrl ? `<img src="${s.photoDataUrl}" class="w-12 h-12 rounded-xl object-cover">` : ''}
+                                <div>
+                                    <p class="text-sm font-extrabold">${s.routineName}</p>
+                                    <p class="text-xs text-gray-400 mt-0.5">${new Date(Number(s.startedAt || Date.now())).toLocaleDateString('es-BO')} · ${Math.round(Number(s.durationSeconds || 0) / 60)} min · ${Number(s.totalVolumeKg || 0).toFixed(0)} kg · ${s.totalCompletedSets || 0} series</p>
+                                </div>
+                            </div>
+                            <button onclick="deleteDocItem('workout_sessions', '${s.docId}')" class="text-xs text-red-400">Eliminar</button>
                         </div>
-                        <button onclick="deleteDocItem('workout_sessions', '${s.docId}')" class="text-xs text-red-400">Eliminar</button>
-                    </div>
-                `).join('')}
+                    `).join('')}
+                </div>
             </div>
         `;
         return;
     }
 
-    // 10. COACH IA (WorkoutAiCoachScreen)
+    // 10. COACH IA
     if (wState.subScreen === 'COACH_IA') {
-        const nextDay = (primaryRoutine.days || [])[weekStats.count % (primaryRoutine.days?.length || 1)] || primaryRoutine.days[0];
+        const nextInfo = getTodayScheduledWorkoutInfo();
         container.innerHTML = `
-            <div class="flex items-center justify-between">
-                <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3 py-1.5 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
-                <h3 class="text-lg font-black">🤖 Vax Coach · Recomendación Inteligente</h3>
-            </div>
-            <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-accent/40 space-y-4">
-                <p class="text-xs text-gray-300 leading-relaxed">
-                    Llevas <strong>${weekStats.count} de ${targetDays} sesiones</strong> completadas esta semana en tu programa principal <strong>${primaryRoutine.name}</strong>.
-                    Según tu recuperación y balance muscular, hoy te corresponde entrenar:
-                </p>
-                <div class="p-4 rounded-2xl bg-[#0A0A0F] border border-[#28283C] flex items-center justify-between">
-                    <div>
-                        <span class="text-[10px] font-bold text-accent uppercase">Siguiente sesión sugerida</span>
-                        <h4 class="text-base font-black mt-0.5">${nextDay.dayName}</h4>
-                        <p class="text-xs text-gray-400">${(nextDay.exercises || []).length} ejercicios programados · Intenta subir +2.5 kg o +1 rep en el primer ejercicio compuesto.</p>
-                    </div>
-                    <button onclick="beginActiveWorkoutSession(${primaryRoutine.id}, ${nextDay.dayNumber})" class="px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold">▶ Iniciar Ahora</button>
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                    <h3 class="text-lg font-black">🤖 Vax Coach · Recomendación</h3>
+                </div>
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-accent/40 space-y-4">
+                    ${!nextInfo ? `
+                        <p class="text-xs text-gray-300">Primero copia una plantilla o crea una rutina en tu biblioteca para que Vax Coach programe tu sesión de hoy.</p>
+                    ` : `
+                        <p class="text-xs text-gray-300 leading-relaxed">
+                            Llevas <strong>${weekStats.count} de ${targetDays} sesiones</strong> completadas esta semana en tu rutina principal <strong>${nextInfo.routineName}</strong>.
+                        </p>
+                        <div class="p-4 rounded-2xl bg-[#0A0A0F] border border-[#28283C] flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-accent uppercase">Entrenamiento recomendado hoy</span>
+                                <h4 class="text-base font-black mt-0.5">${nextInfo.dayName}</h4>
+                                <p class="text-xs text-gray-400">${nextInfo.exercisesCount} ejercicios · ~${nextInfo.estimatedMin} min</p>
+                            </div>
+                            <button onclick="beginActiveWorkoutSession(${nextInfo.routineId}, ${nextInfo.dayNumber})" class="px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold">▶ Entrenar</button>
+                        </div>
+                    `}
                 </div>
             </div>
         `;
     }
 }
 
-function renderRoutineCard(r, mode = 'grid') {
+function renderRoutineCard(r, mode = 'grid', isSystemTemplateCard = false) {
+    const actionBtn = isSystemTemplateCard
+        ? `<button onclick="event.stopPropagation(); copyTemplateToLibrary(${r.id})" class="flex-1 py-2 px-3 rounded-xl bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white text-xs font-bold transition-all">📥 Copiar a mi biblioteca</button>`
+        : `<button onclick="event.stopPropagation(); selectPrimaryRoutine(${r.id})" class="flex-1 py-2 px-3 rounded-xl bg-accent/15 text-accent hover:bg-accent hover:text-white text-xs font-bold transition-all">★ Elegir Principal</button>`;
+
     if (mode === 'list') {
         return `
-            <div onclick="openRoutineDetailView(${r.id})" class="p-3.5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex items-center justify-between cursor-pointer hover:border-accent">
+            <div onclick="openRoutineDetailView(${r.id})" class="p-4 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex items-center justify-between gap-4 cursor-pointer hover:border-accent">
                 <div class="flex items-center space-x-3.5">
                     <img src="${r.imageUri || pPush}" class="w-16 h-16 rounded-xl object-cover">
                     <div>
                         <h5 class="text-sm font-extrabold">${r.name}</h5>
-                        <p class="text-xs text-gray-400">${(r.days || []).length} rutinas · ${r.focusCategory || 'Hipertrofia'}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">${(r.days || []).length} días · ${r.focusCategory || 'Hipertrofia'}</p>
                     </div>
                 </div>
-                <button onclick="event.stopPropagation(); selectPrimaryRoutine(${r.id})" class="px-3 py-1.5 rounded-xl bg-accent/15 text-accent text-xs font-bold">Elegir</button>
+                <div class="shrink-0">${actionBtn}</div>
             </div>
         `;
     }
@@ -835,20 +953,49 @@ function renderRoutineCard(r, mode = 'grid') {
                 <div class="absolute inset-0 bg-gradient-to-t from-[#181824] to-transparent"></div>
                 <span class="absolute bottom-2 left-3 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-accent text-white">${r.focusCategory || 'Hipertrofia'} · ${r.targetDaysPerWeek || 4}d</span>
             </div>
-            <div class="p-4 flex-1 flex flex-col justify-between">
+            <div class="p-5 flex-1 flex flex-col justify-between">
                 <div>
                     <h5 class="font-extrabold text-sm">${r.name}</h5>
                     <p class="text-[11px] text-gray-400 mt-1 line-clamp-2">${r.description || ''}</p>
                 </div>
                 <div class="flex gap-2 mt-4">
-                    <button onclick="event.stopPropagation(); selectPrimaryRoutine(${r.id})" class="flex-1 py-2 rounded-xl bg-accent/15 text-accent hover:bg-accent hover:text-white text-xs font-bold">Elegir Principal</button>
+                    ${actionBtn}
                 </div>
             </div>
         </div>
     `;
 }
 
-// FUNCIONES GLOBALES DE NAVEGACIÓN Y FLUJO DE ENTRENAMIENTO
+// COPIAR PLANTILLA WEAVAX A MIS RUTINAS GUARDADAS
+window.copyTemplateToLibrary = async (templateId) => {
+    const tpl = WEAVAX_30_TEMPLATES.find(t => Number(t.id) === Number(templateId));
+    if (!tpl) return;
+    const newId = Date.now();
+    const cloned = {
+        ...tpl,
+        id: newId,
+        isSystemTemplate: false,
+        createdAt: newId
+    };
+    await fsActions.setItem('workout_routines', newId, cloned);
+    wState.selectedRoutineId = newId;
+    localStorage.setItem('weavax_primary_routine_id', String(newId));
+    wState.libraryTab = 'MIS_RUTINAS';
+    wState.subScreen = 'PRINCIPAL';
+    renderWorkouts();
+};
+
+window.selectPrimaryRoutine = (routineId) => {
+    const existsInUserLib = getUserSavedRoutines().some(r => Number(r.id) === Number(routineId));
+    if (!existsInUserLib) {
+        return alert('Primero debes copiar esta plantilla a tu biblioteca para elegirla como principal.');
+    }
+    wState.selectedRoutineId = Number(routineId);
+    localStorage.setItem('weavax_primary_routine_id', String(routineId));
+    wState.subScreen = 'PRINCIPAL';
+    renderWorkouts();
+};
+
 window.openWorkoutSub = (sub, tab) => {
     wState.subScreen = sub;
     if (tab) wState.libraryTab = tab;
@@ -860,26 +1007,14 @@ window.setTemplateCategory = (c) => { wState.categoryFilter = c; renderWorkouts(
 window.setMuscleBankFilter = (m) => { wState.muscleFilter = m; renderWorkouts(); };
 window.filterExerciseBank = (q) => { wState.searchQuery = q; renderWorkouts(); };
 
-window.selectPrimaryRoutine = async (routineId) => {
-    wState.selectedRoutineId = Number(routineId);
-    localStorage.setItem('weavax_primary_routine_id', String(routineId));
-    // Si es una plantilla del sistema y aún no está en Mis Rutinas de Firestore, guardarla
-    const r = getAllAvailableRoutines().find(x => Number(x.id) === Number(routineId));
-    if (r) {
-        await fsActions.setItem('workout_routines', r.id, { ...r, isSystemTemplate: false });
-    }
-    wState.subScreen = 'PRINCIPAL';
-    renderWorkouts();
-};
-
 window.openRoutineDetailView = (routineId) => {
-    wState.viewingRoutine = getAllAvailableRoutines().find(r => Number(r.id) === Number(routineId));
+    wState.viewingRoutine = getAllRoutinesAndTemplates().find(r => Number(r.id) === Number(routineId));
     wState.subScreen = 'DETALLE_RUTINA';
     renderWorkouts();
 };
 
 window.openDayDetailView = (routineId, dayNumber) => {
-    const r = getAllAvailableRoutines().find(x => Number(x.id) === Number(routineId));
+    const r = getAllRoutinesAndTemplates().find(x => Number(x.id) === Number(routineId));
     if (!r) return;
     wState.viewingRoutine = r;
     wState.viewingDayPlan = (r.days || []).find(d => Number(d.dayNumber) === Number(dayNumber)) || r.days[0];
@@ -900,19 +1035,13 @@ window.showExerciseAnatomyModal = (exId) => {
     `);
 };
 
-window.publishRoutineCommunity = (routineId) => {
-    const r = getAllAvailableRoutines().find(x => Number(x.id) === Number(routineId));
-    if (!r || !r.imageUri || (r.days || []).some(d => !d.dayImageUri)) {
-        return alert('Para publicar en la comunidad, asegúrate de que el programa y todos sus días tengan una imagen de portada asignada.');
-    }
-    alert('¡Programa verificado y enviado a la comunidad WeaVax!');
-};
-
-// INICIAR SESIÓN ACTIVA
+// INICIAR SESIÓN ACTIVA (SIN DATOS BASURA: PESO Y REPS INICIAN EN 0)
 window.beginActiveWorkoutSession = (routineId, dayNumber) => {
-    const r = getAllAvailableRoutines().find(x => Number(x.id) === Number(routineId));
+    const r = getAllRoutinesAndTemplates().find(x => Number(x.id) === Number(routineId));
     const d = (r?.days || []).find(x => Number(x.dayNumber) === Number(dayNumber)) || r?.days?.[0];
     if (!r || !d) return;
+
+    window.navigate('workouts');
 
     const clonedExercises = (d.exercises || []).map(ex => {
         const cat = getExById(ex.exerciseId);
@@ -923,8 +1052,8 @@ window.beginActiveWorkoutSession = (routineId, dayNumber) => {
             sets: Array.from({ length: count }, (_, i) => ({
                 setNumber: i + 1,
                 setType: 'NORMAL',
-                weightKg: 40,
-                reps: 10,
+                weightKg: 0,
+                reps: 0,
                 isCompleted: false
             }))
         };
@@ -942,7 +1071,7 @@ window.beginActiveWorkoutSession = (routineId, dayNumber) => {
 
     if (wState.timerInterval) clearInterval(wState.timerInterval);
     wState.timerInterval = setInterval(() => {
-        if (wState.activeSession && wState.subScreen === 'SESION_ACTIVA') {
+        if (wState.activeSession) {
             wState.activeSession.elapsedSeconds++;
             const clock = document.getElementById('live-workout-clock');
             if (clock) {
@@ -957,15 +1086,36 @@ window.beginActiveWorkoutSession = (routineId, dayNumber) => {
     renderWorkouts();
 };
 
-window.updateActiveSetVal = (exIdx, stIdx, field, val) => {
-    wState.activeSession.exercises[exIdx].sets[stIdx][field] = Number(val);
+// MODAL CENTRADO PARA SELECCIONAR EL TIPO DE SERIE (NO SWITCH CIEGO)
+window.openSetTypePickerModal = (exIdx, stIdx) => {
+    const cur = wState.activeSession.exercises[exIdx].sets[stIdx].setType;
+    const types = [
+        { code: 'NORMAL', label: `Serie Normal (#${stIdx + 1})`, desc: 'Serie efectiva estándar de trabajo', color: 'text-white' },
+        { code: 'W', label: 'W · Serie de Calentamiento (Warmup)', desc: 'Aproximación sin fatiga muscular', color: 'text-amber-400' },
+        { code: 'D', label: 'D · Dropset (Serie Descendente)', desc: 'Reducción inmediata de peso sin descanso', color: 'text-cyan-400' },
+        { code: 'F', label: 'F · Serie al Fallo Muscular', desc: 'Máximo esfuerzo hasta no poder completar otra rep', color: 'text-red-400' }
+    ];
+
+    window.openUniversalModal('Seleccionar Tipo de Serie', `
+        <div class="space-y-2.5 text-xs">
+            ${types.map(t => `
+                <button onclick="selectSetTypeOption(${exIdx}, ${stIdx}, '${t.code}')" class="w-full p-3.5 rounded-2xl bg-[#0A0A0F] border ${cur === t.code ? 'border-accent bg-accent/10' : 'border-[#28283C]'} hover:border-accent text-left transition-all">
+                    <p class="font-extrabold ${t.color}">${t.label}</p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">${t.desc}</p>
+                </button>
+            `).join('')}
+        </div>
+    `);
 };
 
-window.cycleSetType = (exIdx, stIdx) => {
-    const order = ['NORMAL', 'W', 'D', 'F'];
-    const cur = wState.activeSession.exercises[exIdx].sets[stIdx].setType;
-    wState.activeSession.exercises[exIdx].sets[stIdx].setType = order[(order.indexOf(cur) + 1) % order.length];
+window.selectSetTypeOption = (exIdx, stIdx, code) => {
+    wState.activeSession.exercises[exIdx].sets[stIdx].setType = code;
+    window.closeUniversalModal();
     renderWorkouts();
+};
+
+window.updateActiveSetVal = (exIdx, stIdx, field, val) => {
+    wState.activeSession.exercises[exIdx].sets[stIdx][field] = Math.max(0, Number(val || 0));
 };
 
 window.toggleActiveSetDone = (exIdx, stIdx) => {
@@ -985,7 +1135,7 @@ window.toggleActiveSetDone = (exIdx, stIdx) => {
 
 window.addSetToActive = (exIdx) => {
     const sets = wState.activeSession.exercises[exIdx].sets;
-    sets.push({ setNumber: sets.length + 1, setType: 'NORMAL', weightKg: 40, reps: 10, isCompleted: false });
+    sets.push({ setNumber: sets.length + 1, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false });
     renderWorkouts();
 };
 
@@ -1023,28 +1173,28 @@ window.addExerciseToActiveSession = (exId) => {
         imageUri: cat.img,
         restSeconds: 90,
         sets: [
-            { setNumber: 1, setType: 'NORMAL', weightKg: 40, reps: 10, isCompleted: false },
-            { setNumber: 2, setType: 'NORMAL', weightKg: 40, reps: 10, isCompleted: false },
-            { setNumber: 3, setType: 'NORMAL', weightKg: 40, reps: 10, isCompleted: false }
+            { setNumber: 1, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false },
+            { setNumber: 2, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false },
+            { setNumber: 3, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false }
         ]
     });
     window.closeUniversalModal();
     renderWorkouts();
 };
 
-// PASO 1: VALIDAR SERIES INCOMPLETAS AL FINALIZAR
 window.attemptFinishWorkout = () => {
     const incompleteExercises = wState.activeSession.exercises.filter(ex => ex.sets.some(s => !s.isCompleted));
     if (incompleteExercises.length > 0) {
-        window.openUniversalModal('Series pendientes', `
+        window.openUniversalModal('Series sin marcar', `
             <div class="space-y-4 text-xs">
-                <p class="font-bold text-gray-200">No has completado todos los campos para los ejercicios:</p>
+                <p class="font-bold text-gray-200">Tienes series sin marcar con el check (✓) en:</p>
                 <ul class="space-y-1 text-gray-400 list-disc pl-5">
                     ${incompleteExercises.map(e => `<li>${e.exerciseName}</li>`).join('')}
                 </ul>
+                <p class="text-[11px] text-amber-300">Nota: Solo se contabilizarán en tus estadísticas las series que hayas marcado como completadas (✓).</p>
                 <div class="flex gap-2 pt-2">
-                    <button onclick="closeUniversalModal()" class="flex-1 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-bold">Reanudar entrenamiento</button>
-                    <button onclick="closeUniversalModal(); proceedToPorFinalizarScreen()" class="flex-1 py-2.5 rounded-xl bg-amber-500 text-black font-extrabold">Terminar de todas formas</button>
+                    <button onclick="closeUniversalModal()" class="flex-1 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-bold">Volver</button>
+                    <button onclick="closeUniversalModal(); proceedToPorFinalizarScreen()" class="flex-1 py-2.5 rounded-xl bg-amber-500 text-black font-extrabold">Continuar</button>
                 </div>
             </div>
         `);
@@ -1055,18 +1205,30 @@ window.attemptFinishWorkout = () => {
 
 window.proceedToPorFinalizarScreen = () => {
     if (wState.timerInterval) clearInterval(wState.timerInterval);
-    const totalSec = Math.max(60, wState.activeSession.elapsedSeconds);
+    const totalSec = Math.max(1, wState.activeSession.elapsedSeconds);
     wState.finishDraft = {
         title: wState.activeSession.routineName,
         hours: Math.floor(totalSec / 3600),
         minutes: Math.floor((totalSec % 3600) / 60),
-        seconds: totalSec % 60
+        seconds: totalSec % 60,
+        photoDataUrl: '',
+        notes: ''
     };
     wState.subScreen = 'POR_FINALIZAR';
     renderWorkouts();
 };
 
-// PASO 3: CONCILIACIÓN ESTRUCTURAL CONTRA EL DÍA ACTIVO
+window.handleWorkoutPhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !wState.finishDraft) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        wState.finishDraft.photoDataUrl = reader.result;
+        renderWorkouts();
+    };
+    reader.readAsDataURL(file);
+};
+
 window.checkRoutineReconciliationBeforeSave = () => {
     const s = wState.activeSession;
     const orig = s.originalExercisesSnapshot || [];
@@ -1084,16 +1246,15 @@ window.checkRoutineReconciliationBeforeSave = () => {
         }
     });
 
-    if (diffs.length > 0) {
-        window.openUniversalModal('Cambios en la plantilla del día', `
+    if (diffs.length > 0 && getUserSavedRoutines().some(r => Number(r.id) === Number(s.routineId))) {
+        window.openUniversalModal('Cambios en tu rutina', `
             <div class="space-y-4 text-xs text-center">
-                <div class="w-12 h-12 rounded-2xl bg-accent/20 text-accent font-black text-lg flex items-center justify-center mx-auto">${s.routineName.charAt(0)}</div>
-                <p class="text-gray-300">Detectamos modificaciones estructurales respecto al Día ${s.dayNumber}:</p>
+                <p class="text-gray-300">Detectamos cambios respecto a tu plantilla del Día ${s.dayNumber}:</p>
                 <div class="p-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-left space-y-1 text-gray-400">
                     ${diffs.map(d => `<p>• ${d}</p>`).join('')}
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="closeUniversalModal(); finalizeAndSaveWorkoutSession(false)" class="flex-1 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-bold">Mantener Rutina Original</button>
+                    <button onclick="closeUniversalModal(); finalizeAndSaveWorkoutSession(false)" class="flex-1 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-bold">Mantener Original</button>
                     <button onclick="closeUniversalModal(); finalizeAndSaveWorkoutSession(true)" class="flex-1 py-2.5 rounded-xl bg-accent text-white font-extrabold">Actualizar Rutina</button>
                 </div>
             </div>
@@ -1103,34 +1264,48 @@ window.checkRoutineReconciliationBeforeSave = () => {
     }
 };
 
+// GUARDADO FINAL CON ESTADÍSTICAS 100% REALES (SOLO SERIES CON isCompleted === true)
 window.finalizeAndSaveWorkoutSession = async (updateTemplate) => {
     const s = wState.activeSession;
     const title = document.getElementById('fin-title')?.value || s.routineName;
     const h = Number(document.getElementById('fin-h')?.value || 0);
-    const m = Number(document.getElementById('fin-m')?.value || 45);
+    const m = Number(document.getElementById('fin-m')?.value || 0);
     const sec = Number(document.getElementById('fin-s')?.value || 0);
     const notes = document.getElementById('fin-notes')?.value || '';
-    const durationSeconds = (h * 3600) + (m * 60) + sec;
+    const photoDataUrl = wState.finishDraft?.photoDataUrl || '';
+    const durationSeconds = Math.max(1, (h * 3600) + (m * 60) + sec);
 
     let totalVolumeKg = 0;
     let totalCompletedSets = 0;
     const prs = [];
     const breakdown = [];
+    const workedMuscles = new Set();
 
     s.exercises.forEach(ex => {
-        const doneSets = ex.sets.filter(st => st.isCompleted);
-        const setsToCount = doneSets.length > 0 ? doneSets : ex.sets;
-        totalCompletedSets += setsToCount.length;
+        // SOLO contar series donde el usuario marcó explícitamente el check ✓
+        const doneSets = ex.sets.filter(st => st.isCompleted === true);
+        if (doneSets.length === 0) return;
+
+        workedMuscles.add(ex.muscleGroup);
+        totalCompletedSets += doneSets.length;
+        let exVol = 0;
         let best1RM = 0;
-        setsToCount.forEach(st => {
-            const w = Number(st.weightKg || 0);
-            const r = Number(st.reps || 0);
-            totalVolumeKg += w * r;
-            const est1rm = w * (1 + r / 30);
-            if (est1rm > best1RM) best1RM = est1rm;
+
+        doneSets.forEach(st => {
+            const w = Math.max(0, Number(st.weightKg || 0));
+            const r = Math.max(0, Number(st.reps || 0));
+            exVol += (w * r);
+            if (w > 0 && r > 0) {
+                const est1rm = w * (1 + r / 30);
+                if (est1rm > best1RM) best1RM = est1rm;
+            }
         });
-        if (best1RM > 0) prs.push(`${ex.exerciseName}: 1RM est. ${best1RM.toFixed(1)} kg`);
-        breakdown.push({ name: ex.exerciseName, sets: setsToCount.length });
+
+        totalVolumeKg += exVol;
+        if (best1RM > 0) {
+            prs.push(`${ex.exerciseName}: 1RM real ${best1RM.toFixed(1)} kg`);
+        }
+        breakdown.push({ name: ex.exerciseName, sets: doneSets.length, vol: exVol.toFixed(0) });
     });
 
     const id = Date.now();
@@ -1143,13 +1318,14 @@ window.finalizeAndSaveWorkoutSession = async (updateTemplate) => {
         durationSeconds,
         totalVolumeKg,
         totalCompletedSets,
+        photoDataUrl,
         xpEarned: 60,
         notes,
         isCompleted: true
     });
 
     if (updateTemplate) {
-        const routine = getAllAvailableRoutines().find(r => Number(r.id) === Number(s.routineId));
+        const routine = getUserSavedRoutines().find(r => Number(r.id) === Number(s.routineId));
         if (routine) {
             const updatedDays = (routine.days || []).map(d => {
                 if (Number(d.dayNumber) !== Number(s.dayNumber)) return d;
@@ -1177,11 +1353,12 @@ window.finalizeAndSaveWorkoutSession = async (updateTemplate) => {
 
     wState.summaryData = {
         title,
+        photoDataUrl,
         volume: totalVolumeKg.toFixed(0),
         sets: totalCompletedSets,
         durationMin: Math.max(1, Math.round(durationSeconds / 60)),
-        muscles: Array.from(new Set(s.exercises.map(e => e.muscleGroup))),
-        prs: prs.slice(0, 4),
+        muscles: Array.from(workedMuscles),
+        prs,
         breakdown
     };
     wState.summarySlideIdx = 0;
@@ -1196,17 +1373,19 @@ window.stepSummarySlide = (delta) => {
 };
 
 window.discardActiveWorkout = () => {
-    if (!confirm('¿Descartar sesión actual sin guardar?')) return;
+    if (!confirm('¿Estás seguro de descartar este entrenamiento? No se guardará ningún dato.')) return;
     if (wState.timerInterval) clearInterval(wState.timerInterval);
+    if (wState.restInterval) clearInterval(wState.restInterval);
     wState.activeSession = null;
+    wState.finishDraft = null;
     wState.subScreen = 'PRINCIPAL';
     renderWorkouts();
 };
 
 window.openRoutineCreatorModal = () => {
-    window.openUniversalModal('Crear Programa Personalizado', `
+    window.openUniversalModal('Crear Nueva Rutina', `
         <form onsubmit="saveNewUserRoutine(event)" class="space-y-3 text-xs">
-            <input id="nr-name" required placeholder="Nombre del programa (ej. Mi Split Hipertrofia)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+            <input id="nr-name" required placeholder="Nombre de tu rutina" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             <input id="nr-desc" placeholder="Descripción" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             <div class="grid grid-cols-2 gap-2">
                 <select id="nr-focus" class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
@@ -1214,7 +1393,7 @@ window.openRoutineCreatorModal = () => {
                 </select>
                 <input id="nr-days" type="number" min="1" max="7" value="4" placeholder="Días/sem" class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             </div>
-            <input id="nr-day1" value="Día 1: Torso / Empuje" placeholder="Nombre del Día 1" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+            <input id="nr-day1" value="Día 1: Entrenamiento A" placeholder="Nombre del Día 1" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold">Guardar en Mis Rutinas</button>
         </form>
     `);
@@ -1236,4 +1415,5 @@ window.saveNewUserRoutine = async (e) => {
     window.closeUniversalModal();
     wState.selectedRoutineId = id;
     localStorage.setItem('weavax_primary_routine_id', String(id));
+    renderWorkouts();
 };
