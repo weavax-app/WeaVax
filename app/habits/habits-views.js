@@ -46,7 +46,7 @@ export function getSortedHabits() {
     });
 }
 
-// 1. LISTA COMPACTA EN MI DÍA (Estética 100% limpia sin chips de colores por importancia)
+// 1. LISTA COMPACTA EN MI DÍA (100% limpia, sin badges ni colores distintos al tema)
 export function renderMiDiaHabitsCard() {
     const box = document.getElementById('dashboard-habits-list');
     if (!box) return;
@@ -81,19 +81,19 @@ function renderHabitCompactRow(h) {
     if (isQuant) {
         const pct = Math.min(100, Math.round((cur / tar) * 100));
         return `
-            <div onclick="openHabitDetailScreen('${h.docId}')" class="p-3 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] hover:border-accent cursor-pointer transition-all space-y-2">
+            <div onclick="openHabitDetailScreen('${h.docId}')" class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] hover:border-accent cursor-pointer transition-all space-y-2.5">
                 <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center space-x-2.5 min-w-0">
-                        <span class="w-8 h-8 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-sm shrink-0">${icon}</span>
+                        <span class="w-9 h-9 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-sm shrink-0">${icon}</span>
                         <div class="min-w-0">
                             <p class="text-xs font-extrabold truncate ${h.isCompleted ? 'line-through text-gray-500' : ''}">${h.name}</p>
-                            <span class="text-[10px] text-gray-400">🔥 ${h.streak || 0}d · +${h.xpReward || 20} XP</span>
+                            <span class="text-[10px] text-gray-400 block">🔥 ${h.streak || 0}d · +${h.xpReward || 20} XP</span>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-1 shrink-0" onclick="event.stopPropagation()">
-                        <button onclick="stepHabitVal('${h.docId}', -1)" class="w-6 h-6 rounded-lg bg-[#181824] border border-[#28283C] text-xs font-bold hover:border-accent">-</button>
-                        <span class="text-[11px] font-mono font-bold px-1">${cur}/${tar} ${h.unit || (h.type === 'duration' ? 'min' : '')}</span>
-                        <button onclick="stepHabitVal('${h.docId}', 1)" class="w-6 h-6 rounded-lg bg-accent text-white text-xs font-bold">+</button>
+                    <div class="flex items-center space-x-1.5 shrink-0" onclick="event.stopPropagation()">
+                        <button onclick="stepHabitVal('${h.docId}', -1)" class="w-7 h-7 rounded-lg bg-[#181824] border border-[#28283C] text-xs font-bold hover:border-accent">-</button>
+                        <span class="text-[11px] font-mono font-bold px-1 whitespace-nowrap">${cur}/${tar} ${h.unit || (h.type === 'duration' ? 'min' : '')}</span>
+                        <button onclick="stepHabitVal('${h.docId}', 1)" class="w-7 h-7 rounded-lg bg-accent text-white text-xs font-bold">+</button>
                     </div>
                 </div>
                 <div class="w-full h-1.5 bg-[#181824] rounded-full overflow-hidden">
@@ -104,12 +104,12 @@ function renderHabitCompactRow(h) {
     }
 
     return `
-        <div onclick="openHabitDetailScreen('${h.docId}')" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] hover:border-accent cursor-pointer transition-all">
+        <div onclick="openHabitDetailScreen('${h.docId}')" class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] hover:border-accent cursor-pointer transition-all">
             <div class="flex items-center space-x-2.5 min-w-0">
-                <span class="w-8 h-8 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-sm shrink-0">${icon}</span>
+                <span class="w-9 h-9 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-sm shrink-0">${icon}</span>
                 <div class="min-w-0">
                     <p class="text-xs ${h.isCompleted ? 'line-through text-gray-500' : 'font-extrabold'} truncate">${h.name}</p>
-                    <span class="text-[10px] text-gray-400">🔥 ${h.streak || 0}d · +${h.xpReward || 20} XP</span>
+                    <span class="text-[10px] text-gray-400 block">🔥 ${h.streak || 0}d · +${h.xpReward || 20} XP</span>
                 </div>
             </div>
             <div onclick="event.stopPropagation()">
@@ -119,7 +119,7 @@ function renderHabitCompactRow(h) {
     `;
 }
 
-// Renderizar una tarjeta limpia dentro de la pantalla de Hábitos
+// Tarjeta individual limpia dentro de la pantalla Mis Hábitos (sin chip de Esencial/Normal/Ligero porque ya está en su sección)
 function renderCleanHabitCard(h) {
     const reminders = getReminderTimesList(h);
     const isQuant = ['quantity', 'duration', 'counter', 'numeric'].includes(h.type) || Number(h.targetValue || 1) > 1;
@@ -135,7 +135,7 @@ function renderCleanHabitCard(h) {
                 <div class="min-w-0">
                     <h4 class="text-sm font-extrabold truncate ${h.isCompleted ? 'line-through text-gray-500' : ''}">${h.name}</h4>
                     <p class="text-[11px] text-gray-400 mt-0.5">
-                        ${h.frequency || 'Diario'} · 🔥 ${h.streak || 0}d ${isQuant ? `· ${cur}/${tar} ${h.unit || ''}` : ''}
+                        ${h.frequency || 'Diario'} (${h.frequencyDays || 'L,M,X,J,V,S,D'}) · 🔥 ${h.streak || 0} días ${isQuant ? `· ${cur}/${tar} ${h.unit || ''}` : ''}
                     </p>
                     ${reminders.length > 0 ? `<p class="text-[10px] text-accent mt-0.5">🔔 ${reminders.join(', ')}</p>` : ''}
                 </div>
@@ -149,7 +149,7 @@ function renderCleanHabitCard(h) {
     `;
 }
 
-// 2. PANTALLA COMPLETA DE HÁBITOS (Dividida limpiamente por categorías) Y DETALLE DE HÁBITO
+// 2. PANTALLA COMPLETA DE HÁBITOS (Dividida por secciones de Categoría) Y DETALLE
 export function renderHabitsFullScreenOverlay() {
     let overlay = document.getElementById('habits-fullscreen-view');
     const dashView = document.getElementById('view-dashboard');
@@ -179,11 +179,10 @@ export function renderHabitsFullScreenOverlay() {
         const all = getSortedHabits();
         const baseList = hState.filter === 'HOY' ? all.filter(isHabitScheduledToday) : all;
 
-        // Dividir por categorías de importancia manteniendo la estética limpia
         const groups = [
-            { title: 'Esenciales', subtitle: 'Prioridad máxima diaria', items: baseList.filter(h => h.importance === 'Esencial') },
-            { title: 'Normales', subtitle: 'Constancia y ritmo diario', items: baseList.filter(h => !h.importance || h.importance === 'Normal') },
-            { title: 'Ligeros', subtitle: 'Complementarios', items: baseList.filter(h => h.importance === 'Ligero') }
+            { title: 'Hábitos Esenciales', subtitle: 'Prioridad máxima diaria', items: baseList.filter(h => h.importance === 'Esencial') },
+            { title: 'Hábitos Normales', subtitle: 'Constancia y ritmo diario', items: baseList.filter(h => !h.importance || h.importance === 'Normal') },
+            { title: 'Hábitos Ligeros', subtitle: 'Complementarios', items: baseList.filter(h => h.importance === 'Ligero') }
         ].filter(g => g.items.length > 0);
 
         overlay.innerHTML = `
@@ -192,27 +191,27 @@ export function renderHabitsFullScreenOverlay() {
                     <button onclick="closeHabitsFullScreen()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver a Mi Día</button>
                     <div>
                         <h3 class="text-xl font-black">Mis Hábitos (${all.length})</h3>
-                        <p class="text-xs text-gray-400">Organizados por categoría de importancia</p>
+                        <p class="text-xs text-gray-400">Divididos por categoría · Toca cualquier hábito para ver su detalle</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <button onclick="setHabitsScreenFilter('TODOS')" class="px-3.5 py-2 rounded-xl text-xs font-bold ${hState.filter === 'TODOS' ? 'bg-accent text-white' : 'bg-[#181824] border border-[#28283C] text-gray-400'}">Todos (${all.length})</button>
-                    <button onclick="setHabitsScreenFilter('HOY')" class="px-3.5 py-2 rounded-xl text-xs font-bold ${hState.filter === 'HOY' ? 'bg-accent text-white' : 'bg-[#181824] border border-[#28283C] text-gray-400'}">Hoy (${all.filter(isHabitScheduledToday).length})</button>
-                    <button onclick="openHabitModal(null)" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-extrabold shadow-lg">+ Nuevo Hábito</button>
+                    <button onclick="setHabitsScreenFilter('HOY')" class="px-3.5 py-2 rounded-xl text-xs font-bold ${hState.filter === 'HOY' ? 'bg-accent text-white' : 'bg-[#181824] border border-[#28283C] text-gray-400'}">Programados Hoy (${all.filter(isHabitScheduledToday).length})</button>
+                    <button onclick="openHabitModal(null)" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-extrabold shadow-lg">+ Crear Hábito</button>
                 </div>
             </div>
 
             ${groups.length === 0 ? `
                 <div class="p-8 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] text-center">
-                    <p class="text-xs text-gray-400">No hay hábitos registrados en esta vista.</p>
+                    <p class="text-xs text-gray-400">No hay hábitos en esta vista.</p>
                 </div>
             ` : `
-                <div class="space-y-6">
+                <div class="space-y-7">
                     ${groups.map(g => `
                         <div class="space-y-3">
                             <div class="flex items-baseline justify-between border-b border-gray-200 dark:border-[#28283C] pb-2">
                                 <div class="flex items-center space-x-2">
-                                    <h4 class="text-sm font-extrabold uppercase tracking-wider text-accent">${g.title}</h4>
+                                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-accent">${g.title}</h4>
                                     <span class="text-xs text-gray-400">(${g.items.length})</span>
                                 </div>
                                 <span class="text-[11px] text-gray-400">${g.subtitle}</span>
@@ -228,7 +227,6 @@ export function renderHabitsFullScreenOverlay() {
         return;
     }
 
-    // 3. PANTALLA DE DETALLE DE HÁBITO (Estética uniforme con el tema activo)
     if (hState.mode === 'DETAIL') {
         const h = (window.state.habits || []).find(x => String(x.docId) === String(hState.selectedHabitDocId));
         if (!h) {
@@ -283,7 +281,6 @@ export function renderHabitsFullScreenOverlay() {
                     </div>
                 </div>
 
-                <!-- Progreso de Hoy -->
                 <div class="p-6 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] space-y-4">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-extrabold uppercase tracking-wider text-gray-400">Progreso de Hoy</span>
@@ -319,7 +316,6 @@ export function renderHabitsFullScreenOverlay() {
                     `}
                 </div>
 
-                <!-- Frecuencia y Recordatorios -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="p-5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] space-y-3">
                         <div class="flex justify-between items-center">
