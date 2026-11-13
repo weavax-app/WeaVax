@@ -201,7 +201,7 @@
                 </section>
 
                 <!-- 4. ENTRENAMIENTO (SIN MENCIONES EXTERNAS) -->
-                <section id="view-workouts" class="app-view hidden space-y-6">
+                <section id="view-workouts" class="app-view hidden space-y-6"></section>
                     <div class="flex flex-wrap justify-between items-center gap-3">
                         <div>
                             <h3 class="text-xl font-black">WeaVax Gym · Librería & Sesiones</h3>
@@ -255,7 +255,6 @@
     </div>
 
     <script type="module">
-        // 1. Destrabar la pantalla de carga máximo en 2.5 segundos pase lo que pase
         setTimeout(() => {
             const loader = document.getElementById('loading-screen');
             if (loader && !loader.classList.contains('hidden')) {
@@ -268,7 +267,7 @@
                     authBox.classList.remove('hidden');
                 }
             }
-        }, 2500);
+        }, 2000);
 
         window.toggleSidebar = () => {
             const sb = document.getElementById('app-sidebar');
@@ -284,26 +283,32 @@
         };
         window.closeUniversalModal = () => document.getElementById('universal-modal').classList.add('hidden');
 
-        window.navigate = (v) => {
-            document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
-            const target = document.getElementById('view-' + v);
-            if (target) target.classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                const active = btn.dataset.nav === v;
-                btn.classList.toggle('bg-accent/15', active);
-                btn.classList.toggle('text-accent', active);
-                btn.classList.toggle('font-bold', active);
-            });
-        };
-
-        // 2. Importar módulos con control de errores individual
         try {
-            const syncMod = await import('./firebase-sync.js?v=4');
-            const dashMod = await import('./ui-dashboard.js?v=4');
-            const planMod = await import('./ui-plan.js?v=4');
-            const finMod  = await import('./ui-finances.js?v=4');
-            const workMod = await import('./ui-workouts.js?v=4');
-            const setMod  = await import('./ui-settings.js?v=4');
+            const ts = Date.now(); // Rompe cualquier caché de GitHub Pages al instante
+            const syncMod = await import(`./firebase-sync.js?v=${ts}`);
+            const dashMod = await import(`./ui-dashboard.js?v=${ts}`);
+            const planMod = await import(`./ui-plan.js?v=${ts}`);
+            const finMod  = await import(`./ui-finances.js?v=${ts}`);
+            const workMod = await import(`./ui-workouts.js?v=${ts}`);
+            const setMod  = await import(`./ui-settings.js?v=${ts}`);
+
+            window.navigate = (v) => {
+                document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+                const target = document.getElementById('view-' + v);
+                if (target) target.classList.remove('hidden');
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    const active = btn.dataset.nav === v;
+                    btn.classList.toggle('bg-accent/15', active);
+                    btn.classList.toggle('text-accent', active);
+                    btn.classList.toggle('font-bold', active);
+                });
+                // Forzar renderizado del módulo al abrir su pestaña
+                if (v === 'dashboard') dashMod.renderDashboard();
+                if (v === 'plan') planMod.renderPlanModule();
+                if (v === 'finances') finMod.renderFinances();
+                if (v === 'workouts') workMod.renderWorkouts();
+                if (v === 'settings') setMod.renderSettings();
+            };
 
             window.toggleBalancePrivacy = () => {
                 window.state.isBalanceVisible = !window.state.isBalanceVisible;
@@ -315,53 +320,48 @@
             };
             window.toggleTaskCheck = (docId, s) => syncMod.fsActions.updateItem('tasks', docId, { isCompleted: s });
 
+            // Render inicial inmediato para que Entrenamiento y Ajustes estén listos desde el segundo 0
+            workMod.renderWorkouts();
+
             syncMod.initSync(() => {
-                try {
-                    const p = window.state.profile || {};
-                    const u = window.state.user || {};
-                    const xp = Number(p.xp || 0);
-                    const displayName = p.name || u.displayName || 'Marce';
+                const p = window.state.profile || {};
+                const u = window.state.user || {};
+                const xp = Number(p.xp || 0);
+                const displayName = p.name || u.displayName || 'Marce';
 
-                    const nameEl = document.getElementById('user-name');
-                    const greetEl = document.getElementById('header-greeting');
-                    const xpEl = document.getElementById('user-level-xp');
-                    const streakEl = document.getElementById('streak-count');
+                const nameEl = document.getElementById('user-name');
+                const greetEl = document.getElementById('header-greeting');
+                const xpEl = document.getElementById('user-level-xp');
+                const streakEl = document.getElementById('streak-count');
 
-                    if (nameEl) nameEl.textContent = displayName;
-                    if (greetEl) greetEl.textContent = `Hola, ${displayName.split(' ')[0]}`;
-                    if (xpEl) xpEl.textContent = `Nivel ${Math.floor(xp / 100) + 1} · ${xp} XP`;
-                    if (streakEl) streakEl.textContent = `${p.streak || 0} d`;
+                if (nameEl) nameEl.textContent = displayName;
+                if (greetEl) greetEl.textContent = `Hola, ${displayName.split(' ')[0]}`;
+                if (xpEl) xpEl.textContent = `Nivel ${Math.floor(xp / 100) + 1} · ${xp} XP`;
+                if (streakEl) streakEl.textContent = `${p.streak || 0} d`;
 
-                    const rawAvatar = (p.avatar && p.avatar.trim() !== '') ? p.avatar.trim() : (u.photoURL || '');
-                    const avatarBox = document.getElementById('user-avatar-box');
-                    if (avatarBox) {
-                        if (rawAvatar.startsWith('http') || rawAvatar.startsWith('data:image') || rawAvatar.startsWith('../')) {
-                            avatarBox.innerHTML = `<img src="${rawAvatar}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
-                        } else if (rawAvatar.length > 0 && rawAvatar.length <= 4) {
-                            avatarBox.innerHTML = `<span>${rawAvatar}</span>`;
-                        } else if (u.photoURL) {
-                            avatarBox.innerHTML = `<img src="${u.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
-                        }
+                const rawAvatar = (p.avatar && p.avatar.trim() !== '') ? p.avatar.trim() : (u.photoURL || '');
+                const avatarBox = document.getElementById('user-avatar-box');
+                if (avatarBox) {
+                    if (rawAvatar.startsWith('http') || rawAvatar.startsWith('data:image') || rawAvatar.startsWith('../')) {
+                        avatarBox.innerHTML = `<img src="${rawAvatar}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
+                    } else if (rawAvatar.length > 0 && rawAvatar.length <= 4) {
+                        avatarBox.innerHTML = `<span>${rawAvatar}</span>`;
+                    } else if (u.photoURL) {
+                        avatarBox.innerHTML = `<img src="${u.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
                     }
-
-                    if (p.themeColor) document.documentElement.style.setProperty('--color-primary', p.themeColor);
-
-                    dashMod.renderDashboard();
-                    planMod.renderPlanModule();
-                    finMod.renderFinances();
-                    workMod.renderWorkouts();
-                    setMod.renderSettings();
-                } catch (renderErr) {
-                    console.error("Error al renderizar vista:", renderErr);
                 }
+
+                if (p.themeColor) document.documentElement.style.setProperty('--color-primary', p.themeColor);
+
+                // Ejecutar cada render en su propio bloque seguro para que ninguno bloquee a otro
+                try { dashMod.renderDashboard(); } catch (e) { console.error("Error dash:", e); }
+                try { planMod.renderPlanModule(); } catch (e) { console.error("Error plan:", e); }
+                try { finMod.renderFinances(); } catch (e) { console.error("Error fin:", e); }
+                try { workMod.renderWorkouts(); } catch (e) { console.error("Error work:", e); }
+                try { setMod.renderSettings(); } catch (e) { console.error("Error set:", e); }
             });
         } catch (err) {
-            console.error("Fallo crítico al importar módulos:", err);
-            document.getElementById('loading-screen').innerHTML = `
-                <div class="p-6 rounded-2xl bg-[#181824] border border-red-500 text-center max-w-md">
-                    <p class="text-sm font-bold text-red-400 mb-2">Falta un archivo JS o hay un error de sintaxis</p>
-                    <p class="text-xs font-mono text-gray-300 break-all">${err.message}</p>
-                </div>
-            `;
+            console.error("Fallo al importar módulos:", err);
+            alert("Error en un módulo JS: " + err.message);
         }
     </script>
