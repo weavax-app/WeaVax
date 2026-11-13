@@ -21,7 +21,6 @@
         .bg-accent { background-color: var(--color-primary); }
         .text-accent { color: var(--color-primary); }
         .border-accent { border-color: var(--color-primary); }
-        /* Modo Sidebar Contraído */
         #app-sidebar.collapsed { width: 5rem; }
         #app-sidebar.collapsed .sidebar-label { display: none; }
         #app-sidebar.collapsed .nav-btn { justify-content: center; padding-left: 0; padding-right: 0; }
@@ -30,11 +29,13 @@
 </head>
 <body class="min-h-screen antialiased">
 
+    <!-- PANTALLA DE CARGA -->
     <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0A0A0F]">
         <img src="../weavax_logo.png" class="w-14 h-14 object-contain animate-pulse mb-4">
         <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Sincronizando WeaVax LifeOS...</p>
     </div>
 
+    <!-- PANTALLA DE LOGIN -->
     <div id="auth-screen" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-[#0A0A0F]">
         <div class="w-full max-w-md p-8 rounded-3xl bg-[#181824] border border-[#28283C] text-center">
             <img src="../weavax_logo.png" class="w-14 h-14 object-contain mx-auto mb-3">
@@ -48,7 +49,9 @@
         </div>
     </div>
 
+    <!-- CONTENEDOR PRINCIPAL -->
     <div id="app-container" class="hidden min-h-screen flex flex-col md:flex-row">
+        
         <!-- SIDEBAR EXPANDIBLE / CONTRAÍBLE -->
         <aside id="app-sidebar" class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 dark:border-[#28283C] bg-white dark:bg-[#181824] transition-all duration-200 z-30">
             <div class="h-16 px-4 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
@@ -61,7 +64,6 @@
                 </button>
             </div>
 
-            <!-- PERFIL CON AVATAR REAL -->
             <div class="p-3.5 border-b border-gray-200 dark:border-[#28283C] flex items-center space-x-3">
                 <div id="user-avatar-box" class="w-10 h-10 rounded-full overflow-hidden border-2 border-accent shrink-0 flex items-center justify-center bg-[#0A0A0F] text-base font-bold">
                     <img id="user-avatar-img" src="../weavax_logo.png" class="w-full h-full object-cover">
@@ -72,15 +74,14 @@
                 </div>
             </div>
 
-            <!-- NAVEGACIÓN -->
             <nav class="flex-1 px-3 py-4 space-y-1.5 text-sm font-medium">
                 <button onclick="navigate('dashboard')" data-nav="dashboard" title="Inicio / Mi Día" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-accent/15 text-accent font-bold">
                     <span class="text-lg">🏠</span><span class="sidebar-label">Inicio / Mi Día</span>
                 </button>
-                <button onclick="navigate('plan')" data-nav="plan" title="Plan, Agenda & Proyectos" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button onclick="navigate('plan')" data-nav="plan" title="Plan & Agenda" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span class="text-lg">📅</span><span class="sidebar-label">Plan & Agenda</span>
                 </button>
-                <button onclick="navigate('finances')" data-nav="finances" title="Finanzas & Escáner IA" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button onclick="navigate('finances')" data-nav="finances" title="Finanzas & IA" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span class="text-lg">💳</span><span class="sidebar-label">Finanzas & IA</span>
                 </button>
                 <button onclick="navigate('workouts')" data-nav="workouts" title="Entrenamiento" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
@@ -89,7 +90,7 @@
                 <button onclick="navigate('progress')" data-nav="progress" title="Progreso" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span class="text-lg">📊</span><span class="sidebar-label">Progreso</span>
                 </button>
-                <button onclick="navigate('settings')" data-nav="settings" title="Ajustes y Configuración" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button onclick="navigate('settings')" data-nav="settings" title="Ajustes" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span class="text-lg">⚙️</span><span class="sidebar-label">Ajustes</span>
                 </button>
             </nav>
@@ -106,7 +107,8 @@
             </header>
 
             <div class="max-w-6xl mx-auto p-6">
-                <!-- 1. MI DÍA -->
+
+                <!-- 1. SECCIÓN MI DÍA -->
                 <section id="view-dashboard" class="app-view grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <div class="flex justify-between items-center mb-2">
@@ -139,9 +141,12 @@
                         </div>
                         <div id="dashboard-agenda-list" class="space-y-2.5"></div>
                     </div>
+
+                    <!-- Tarjeta de qué entrenamiento toca hoy -->
+                    <div id="dashboard-today-workout-box" class="lg:col-span-3"></div>
                 </section>
 
-                <!-- 2. PLAN & AGENDA -->
+                <!-- 2. SECCIÓN PLAN & AGENDA -->
                 <section id="view-plan" class="app-view hidden space-y-6">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div class="flex flex-wrap gap-2">
@@ -177,8 +182,9 @@
                     <div id="plan-sub-projects" class="hidden"><div id="plan-projects-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div>
                 </section>
 
-                <!-- 3. FINANZAS -->
+                <!-- 3. SECCIÓN FINANZAS (BIEN ENCAPSULADA CON SU ETIQUETA SECTION) -->
                 <section id="view-finances" class="app-view hidden space-y-6">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
                         <h3 class="text-xl font-black">Finanzas Multi-Moneda</h3>
                         <div class="flex flex-wrap gap-2">
                             <button onclick="openReceiptScannerModal()" class="px-3.5 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-bold">📷 Escanear QR / Recibo IA</button>
@@ -189,11 +195,26 @@
                         </div>
                     </div>
                     <div id="accounts-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                            <h4 class="text-sm font-extrabold mb-3">Presupuestos</h4>
+                            <div id="finances-budgets-list" class="space-y-2.5"></div>
+                        </div>
+                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                            <h4 class="text-sm font-extrabold mb-3">Metas de Ahorro</h4>
+                            <div id="finances-goals-list" class="space-y-2.5"></div>
+                        </div>
+                    </div>
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                        <h4 class="text-sm font-extrabold mb-4">Historial de Movimientos</h4>
+                        <div id="transactions-list" class="space-y-2"></div>
+                    </div>
                 </section>
 
-                
+                <!-- 4. SECCIÓN ENTRENAMIENTO (CONTENEDOR LIMPIO PARA ui-workouts.js) -->
+                <section id="view-workouts" class="app-view hidden space-y-6"></section>
 
-                <!-- 5. PROGRESO -->
+                <!-- 5. SECCIÓN PROGRESO -->
                 <section id="view-progress" class="app-view hidden space-y-6">
                     <h3 class="text-xl font-black">Progreso y Distribución Diaria</h3>
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
@@ -201,11 +222,12 @@
                     </div>
                 </section>
 
-                <!-- 6. AJUSTES COMPLETOS -->
+                <!-- 6. SECCIÓN AJUSTES -->
                 <section id="view-settings" class="app-view hidden space-y-6">
                     <h3 class="text-xl font-black">Ajustes y Configuración General</h3>
                     <div id="settings-full-container"></div>
                 </section>
+
             </div>
         </main>
     </div>
@@ -251,7 +273,7 @@
         window.closeUniversalModal = () => document.getElementById('universal-modal').classList.add('hidden');
 
         try {
-            const ts = Date.now(); // Rompe cualquier caché de GitHub Pages al instante
+            const ts = Date.now();
             const syncMod = await import(`./firebase-sync.js?v=${ts}`);
             const dashMod = await import(`./ui-dashboard.js?v=${ts}`);
             const planMod = await import(`./ui-plan.js?v=${ts}`);
@@ -269,26 +291,24 @@
                     btn.classList.toggle('text-accent', active);
                     btn.classList.toggle('font-bold', active);
                 });
-                // Forzar renderizado del módulo al abrir su pestaña
-                if (v === 'dashboard') dashMod.renderDashboard();
-                if (v === 'plan') planMod.renderPlanModule();
-                if (v === 'finances') finMod.renderFinances();
-                if (v === 'workouts') workMod.renderWorkouts();
-                if (v === 'settings') setMod.renderSettings();
+                if (v === 'dashboard' && dashMod.renderDashboard) dashMod.renderDashboard();
+                if (v === 'plan' && planMod.renderPlanModule) planMod.renderPlanModule();
+                if (v === 'finances' && finMod.renderFinances) finMod.renderFinances();
+                if (v === 'workouts' && workMod.renderWorkouts) workMod.renderWorkouts();
+                if (v === 'settings' && setMod.renderSettings) setMod.renderSettings();
             };
 
             window.toggleBalancePrivacy = () => {
                 window.state.isBalanceVisible = !window.state.isBalanceVisible;
-                finMod.renderFinances();
-                setMod.renderSettings();
+                if (finMod.renderFinances) finMod.renderFinances();
+                if (setMod.renderSettings) setMod.renderSettings();
             };
             window.deleteDocItem = async (col, docId) => {
                 if (confirm('¿Eliminar registro de Firestore?')) await syncMod.fsActions.removeItem(col, docId);
             };
             window.toggleTaskCheck = (docId, s) => syncMod.fsActions.updateItem('tasks', docId, { isCompleted: s });
 
-            // Render inicial inmediato para que Entrenamiento y Ajustes estén listos desde el segundo 0
-            workMod.renderWorkouts();
+            if (workMod.renderWorkouts) workMod.renderWorkouts();
 
             syncMod.initSync(() => {
                 const p = window.state.profile || {};
@@ -320,15 +340,15 @@
 
                 if (p.themeColor) document.documentElement.style.setProperty('--color-primary', p.themeColor);
 
-                // Ejecutar cada render en su propio bloque seguro para que ninguno bloquee a otro
-                try { dashMod.renderDashboard(); } catch (e) { console.error("Error dash:", e); }
-                try { planMod.renderPlanModule(); } catch (e) { console.error("Error plan:", e); }
-                try { finMod.renderFinances(); } catch (e) { console.error("Error fin:", e); }
-                try { workMod.renderWorkouts(); } catch (e) { console.error("Error work:", e); }
-                try { setMod.renderSettings(); } catch (e) { console.error("Error set:", e); }
+                try { if (dashMod.renderDashboard) dashMod.renderDashboard(); } catch (e) { console.error(e); }
+                try { if (planMod.renderPlanModule) planMod.renderPlanModule(); } catch (e) { console.error(e); }
+                try { if (finMod.renderFinances) finMod.renderFinances(); } catch (e) { console.error(e); }
+                try { if (workMod.renderWorkouts) workMod.renderWorkouts(); } catch (e) { console.error(e); }
+                try { if (setMod.renderSettings) setMod.renderSettings(); } catch (e) { console.error(e); }
             });
         } catch (err) {
             console.error("Fallo al importar módulos:", err);
-            alert("Error en un módulo JS: " + err.message);
         }
     </script>
+</body>
+</html>
