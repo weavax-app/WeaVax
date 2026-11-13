@@ -1,3 +1,4 @@
+import { isUserPro, openProPaywall, FREE_LIMITS } from './weavax-pro.js?v=1';
 import { fsActions } from './firebase-sync.js?v=2';
 
 export const WEAVAX_THEMES = [
