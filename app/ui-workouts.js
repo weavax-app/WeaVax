@@ -1,7 +1,6 @@
-import { wState, getTodayScheduledWorkoutInfo } from './workout/workout-state.js';
-import { renderLibraryAndHub } from './workout/workout-library.js';
-import { renderActiveAndFinishViews } from './workout/workout-session.js';
-
+import { wState, getTodayScheduledWorkoutInfo } from './workout/workout-state.js?v=2';
+import { renderLibraryAndHub } from './workout/workout-library.js?v=2';
+import { renderActiveAndFinishViews } from './workout/workout-session.js?v=2';
 export { getTodayScheduledWorkoutInfo };
 
 export function renderWorkouts() {
