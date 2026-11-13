@@ -333,12 +333,12 @@ export function openProPaywall(customReason = '') {
                 ${isPro ? `<p class="text-[11px] text-gray-300">Vencimiento: <strong>${expDateStr}</strong></p>` : ''}
             </div>
 
-            <div class="space-y-2 p-3.5 rounded-2xl bg-[#0A0A0F] border border-[#28283C]">
+           <div class="space-y-2 p-3.5 rounded-2xl bg-[#0A0A0F] border border-[#28283C]">
                 <p class="font-extrabold text-white mb-1">Beneficios incluidos en WeaVax Pro:</p>
                 <div class="flex justify-between text-[11px]"><span class="text-gray-400">📷 Escáner IA de recibos y QR</span><span class="font-bold text-emerald-400">Ilimitado (Gratis: 5/mes)</span></div>
                 <div class="flex justify-between text-[11px]"><span class="text-gray-400">🤖 Entrenador Personal IA (Vax Coach)</span><span class="font-bold text-emerald-400">Desbloqueado</span></div>
                 <div class="flex justify-between text-[11px]"><span class="text-gray-400">🎨 Colores Esmeralda, Ámbar, Frambuesa y Cian</span><span class="font-bold text-emerald-400">Desbloqueados</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400">🔥 Hábitos, Cuentas, Metas y Rutinas</span><span class="font-bold text-emerald-400">Sin límites</span></div>
+                <div class="flex justify-between text-[11px]"><span class="text-gray-400">🏦 Cuentas, Presupuestos, Metas y Proyectos</span><span class="font-bold text-emerald-400">Sin límites</span></div>
             </div>
 
             <form onsubmit="handleRedeemProSubmit(event)" class="space-y-2">
