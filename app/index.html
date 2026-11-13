@@ -26,13 +26,13 @@
 <body class="min-h-screen antialiased">
 
     <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0A0A0F]">
-        <img src="../weavax_logo.png" alt="WeaVax" class="w-14 h-14 object-contain animate-pulse mb-4">
-        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Cargando LifeOS...</p>
+        <img src="../weavax_logo.png" class="w-14 h-14 object-contain animate-pulse mb-4">
+        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Sincronizando WeaVax LifeOS...</p>
     </div>
 
     <div id="auth-screen" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-[#0A0A0F]">
-        <div class="w-full max-w-md p-8 rounded-3xl bg-[#181824] border border-[#28283C] shadow-2xl text-center">
-            <img src="../weavax_logo.png" alt="WeaVax" class="w-14 h-14 object-contain mx-auto mb-3">
+        <div class="w-full max-w-md p-8 rounded-3xl bg-[#181824] border border-[#28283C] text-center">
+            <img src="../weavax_logo.png" class="w-14 h-14 object-contain mx-auto mb-3">
             <h1 class="text-2xl font-black text-white">WeaVax <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">LifeOS</span></h1>
             <button id="btn-google-login" class="mt-6 w-full py-3.5 px-4 rounded-xl bg-white text-gray-900 font-bold text-sm">Continuar con Google</button>
             <form id="email-login-form" class="mt-4 space-y-3">
@@ -44,6 +44,7 @@
     </div>
 
     <div id="app-container" class="hidden min-h-screen flex flex-col md:flex-row">
+        <!-- SIDEBAR -->
         <aside class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 dark:border-[#28283C] bg-white dark:bg-[#181824]">
             <div class="h-16 px-6 flex items-center space-x-2.5 border-b border-gray-200 dark:border-[#28283C]">
                 <img src="../weavax_logo.png" class="w-7 h-7 object-contain">
@@ -55,11 +56,15 @@
             </div>
             <nav class="flex-1 px-3 py-4 space-y-1 text-sm font-medium">
                 <button onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-accent/15 text-accent font-bold"><span>🏠</span><span>Inicio / Mi Día</span></button>
-                <button onclick="navigate('finances')" data-nav="finances" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>💳</span><span>Finanzas</span></button>
+                <button onclick="navigate('plan')" data-nav="plan" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>📅</span><span>Plan, Agenda & Proyectos</span></button>
+                <button onclick="navigate('finances')" data-nav="finances" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>💳</span><span>Finanzas & Escáner IA</span></button>
+                <button onclick="navigate('workouts')" data-nav="workouts" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>🏋️</span><span>Entrenamiento (Lyfta)</span></button>
+                <button onclick="navigate('progress')" data-nav="progress" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>📊</span><span>Progreso</span></button>
                 <button onclick="navigate('settings')" data-nav="settings" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>⚙️</span><span>Ajustes & Limpieza</span></button>
             </nav>
         </aside>
 
+        <!-- MAIN -->
         <main class="flex-1 md:pl-64 pb-20">
             <header class="h-16 px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
                 <h2 id="header-greeting" class="text-lg font-extrabold">Hola, Marce</h2>
@@ -70,7 +75,7 @@
             </header>
 
             <div class="max-w-6xl mx-auto p-6">
-                <!-- DASHBOARD -->
+                <!-- 1. MI DÍA -->
                 <section id="view-dashboard" class="app-view grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <div class="flex justify-between items-center mb-2">
@@ -78,6 +83,11 @@
                             <button onclick="toggleBalancePrivacy()" class="text-sm">👁️‍🗨️</button>
                         </div>
                         <div id="dashboard-total-balance" class="text-3xl font-black my-2">Bs •••••</div>
+                        <div class="flex gap-2 mt-4">
+                            <button onclick="openTxModal('gasto')" class="flex-1 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-bold">+ Gasto</button>
+                            <button onclick="openTxModal('ingreso')" class="flex-1 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-bold">+ Ingreso</button>
+                            <button onclick="openReceiptScannerModal()" class="py-2 px-3 rounded-xl bg-accent/20 text-accent text-xs font-bold" title="Escanear QR/Recibo">📷 IA</button>
+                        </div>
                     </div>
 
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
@@ -89,25 +99,114 @@
                     </div>
 
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                        <h3 class="text-sm font-extrabold mb-4">Agenda de Hoy</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-extrabold">Agenda de Hoy</h3>
+                            <div class="space-x-2">
+                                <button onclick="openTaskModal(false)" class="text-xs font-bold text-accent">+ Tarea</button>
+                                <button onclick="openTaskModal(true)" class="text-xs font-bold text-blue-400">+ Evento</button>
+                            </div>
+                        </div>
                         <div id="dashboard-agenda-list" class="space-y-2.5"></div>
                     </div>
                 </section>
 
-                <!-- FINANZAS -->
+                <!-- 2. PLAN, CALENDARIO, TAREAS, EVENTOS & PROYECTOS -->
+                <section id="view-plan" class="app-view hidden space-y-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="setPlanSubTab('calendar')" id="btn-plan-calendar" class="px-3.5 py-2 rounded-xl bg-accent text-white text-xs font-bold">📅 Calendario</button>
+                            <button onclick="setPlanSubTab('tasks')" id="btn-plan-tasks" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">✅ Tareas</button>
+                            <button onclick="setPlanSubTab('events')" id="btn-plan-events" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">🗓️ Eventos</button>
+                            <button onclick="setPlanSubTab('inbox')" id="btn-plan-inbox" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">📥 Inbox</button>
+                            <button onclick="setPlanSubTab('projects')" id="btn-plan-projects" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">📁 Proyectos</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openProjectModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Proyecto</button>
+                            <button onclick="openTaskModal(false)" class="px-3.5 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Tarea</button>
+                            <button onclick="openTaskModal(true)" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold">+ Evento</button>
+                        </div>
+                    </div>
+
+                    <div id="plan-sub-calendar" class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                        <div class="flex justify-between items-center mb-4">
+                            <button onclick="changeCalendarMonth(-1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs">←</button>
+                            <h4 id="calendar-month-label" class="text-base font-extrabold capitalize"></h4>
+                            <button onclick="changeCalendarMonth(1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs">→</button>
+                        </div>
+                        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-gray-400 mb-2">
+                            <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
+                        </div>
+                        <div id="calendar-grid-days" class="grid grid-cols-7 gap-1.5"></div>
+                        <div id="calendar-selected-day-items" class="mt-6 pt-4 border-t border-[#28283C] space-y-2"></div>
+                    </div>
+
+                    <div id="plan-sub-tasks" class="hidden p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-2"><div id="plan-tasks-container" class="space-y-2"></div></div>
+                    <div id="plan-sub-events" class="hidden p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-2"><div id="plan-events-container" class="space-y-2"></div></div>
+                    <div id="plan-sub-inbox" class="hidden p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-2"><div id="plan-inbox-container" class="space-y-2"></div></div>
+                    <div id="plan-sub-projects" class="hidden"><div id="plan-projects-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div>
+                </section>
+
+                <!-- 3. FINANZAS -->
                 <section id="view-finances" class="app-view hidden space-y-6">
-                    <h3 class="text-xl font-black">Finanzas Multi-Moneda</h3>
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <h3 class="text-xl font-black">Finanzas Multi-Moneda</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="openReceiptScannerModal()" class="px-3.5 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-bold">📷 Escanear QR / Recibo IA</button>
+                            <button onclick="openAccountModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Cuenta</button>
+                            <button onclick="openBudgetModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Presupuesto</button>
+                            <button onclick="openGoalModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Meta</button>
+                            <button onclick="openTxModal('gasto')" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Movimiento</button>
+                        </div>
+                    </div>
                     <div id="accounts-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]"><h4 class="text-sm font-extrabold mb-3">Presupuestos</h4><div id="finances-budgets-list" class="space-y-2.5"></div></div>
+                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]"><h4 class="text-sm font-extrabold mb-3">Metas de Ahorro</h4><div id="finances-goals-list" class="space-y-2.5"></div></div>
+                    </div>
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <h4 class="text-sm font-extrabold mb-4">Historial de Movimientos</h4>
                         <div id="transactions-list" class="space-y-2"></div>
                     </div>
                 </section>
 
-                <!-- AJUSTES & LIMPIEZA -->
+                <!-- 4. ENTRENAMIENTO (LYFTA + CATÁLOGO ANIME/FITNESS) -->
+                <section id="view-workouts" class="app-view hidden space-y-6">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <div>
+                            <h3 class="text-xl font-black">WeaVax Gym · Librería & Sesiones</h3>
+                            <p class="text-xs text-gray-400">Tus rutinas de Firestore + Catálogo Oficial WeaVax & Anime Aesthetic</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="startLiveWorkout('Entrenamiento Libre')" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">▶ Entrenamiento Libre</button>
+                            <button onclick="openRoutineModal()" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Crear Rutina</button>
+                        </div>
+                    </div>
+                    <div id="routines-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                            <h4 class="text-sm font-extrabold mb-4">Banco de Ejercicios (Gráficos Anatómicos Lyfta)</h4>
+                            <div id="exercises-bank-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+                        </div>
+                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                            <h4 class="text-sm font-extrabold mb-4">Historial de Entrenamientos</h4>
+                            <div id="sessions-list" class="space-y-2"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. PROGRESO -->
+                <section id="view-progress" class="app-view hidden space-y-6">
+                    <h3 class="text-xl font-black">Progreso y Distribución Diaria</h3>
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                        <div id="progress-bars-container" class="space-y-4"></div>
+                    </div>
+                </section>
+
+                <!-- 6. AJUSTES & LIMPIEZA -->
                 <section id="view-settings" class="app-view hidden space-y-6">
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
-                        <h3 class="text-base font-extrabold">Mantenimiento de Base de Datos</h3>
+                        <h3 class="text-base font-extrabold">Mantenimiento y Sincronización Firestore</h3>
                         <p class="text-xs text-gray-400">Ruta activa: <code id="diag-active-path" class="text-accent"></code></p>
                         <div class="flex flex-wrap gap-3">
                             <button onclick="cleanFirestoreDuplicates()" class="px-4 py-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold">
@@ -135,7 +234,9 @@
     <script type="module">
         import { initSync, fsActions } from './firebase-sync.js';
         import { renderDashboard } from './ui-dashboard.js';
+        import { renderPlanModule } from './ui-plan.js';
         import { renderFinances } from './ui-finances.js';
+        import { renderWorkouts } from './ui-workouts.js';
 
         window.openUniversalModal = (title, html) => {
             document.getElementById('modal-title').textContent = title;
@@ -144,12 +245,18 @@
         };
         window.closeUniversalModal = () => document.getElementById('universal-modal').classList.add('hidden');
         window.toggleBalancePrivacy = () => { window.state.isBalanceVisible = !window.state.isBalanceVisible; renderFinances(); };
-        window.deleteDocItem = async (col, id) => { if (confirm('¿Eliminar?')) await fsActions.remove(col, id); };
-        window.toggleTask = (id, s) => fsActions.update('tasks', id, { isCompleted: s });
+        window.deleteDocItem = async (col, docId) => { if (confirm('¿Eliminar registro de Firestore?')) await fsActions.removeItem(col, docId); };
+        window.toggleTaskCheck = (docId, s) => fsActions.updateItem('tasks', docId, { isCompleted: s });
 
         window.navigate = (v) => {
             document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-' + v).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const active = btn.dataset.nav === v;
+                btn.classList.toggle('bg-accent/15', active);
+                btn.classList.toggle('text-accent', active);
+                btn.classList.toggle('font-bold', active);
+            });
         };
 
         initSync(() => {
@@ -158,7 +265,9 @@
             document.getElementById('user-level-xp').textContent = `Nivel ${Math.floor(xp / 100) + 1} · ${xp} XP`;
             document.getElementById('streak-count').textContent = `${p.streak || 0} d`;
             renderDashboard();
+            renderPlanModule();
             renderFinances();
+            renderWorkouts();
         });
     </script>
 </body>
