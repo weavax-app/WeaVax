@@ -134,7 +134,19 @@ export function initSync(onUpdate) {
         }
     });
 
-    document.getElementById('btn-google-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+    const googleBtn = document.getElementById('btn-google-login');
+    if (googleBtn) {
+        googleBtn.onclick = async () => {
+            try {
+                const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                await signInWithPopup(auth, provider);
+            } catch (err) {
+                console.error("Error Google Sign-In:", err);
+                alert("No se pudo abrir la ventana de Google: " + err.message);
+            }
+        };
+    }
     document.getElementById('email-login-form').onsubmit = (e) => {
         e.preventDefault();
         signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
