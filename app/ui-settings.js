@@ -2,16 +2,27 @@ import { isUserPro, openProPaywall, FREE_LIMITS } from './weavax-pro.js?v=1';
 import { fsActions } from './firebase-sync.js?v=2';
 
 export const WEAVAX_THEMES = [
-    { name: 'Morado WeaVax', hex: '#8B5CF6' },
-    { name: 'Azul Océano', hex: '#3B82F6' },
-    { name: 'Verde Esmeralda', hex: '#10B981' },
-    { name: 'Ámbar Solar', hex: '#F59E0B' },
-    { name: 'Rosa Frambuesa', hex: '#EC4899' },
-    { name: 'Rojo Carmesí', hex: '#EF4444' },
-    { name: 'Turquesa Cian', hex: '#06B6D4' }
+    { name: 'Morado WeaVax', hex: '#8B5CF6', isFree: true },
+    { name: 'Azul Océano', hex: '#3B82F6', isFree: true },
+    { name: 'Rojo Carmesí', hex: '#EF4444', isFree: true },
+    { name: 'Verde Esmeralda', hex: '#10B981', isFree: false },
+    { name: 'Ámbar Solar', hex: '#F59E0B', isFree: false },
+    { name: 'Rosa Frambuesa', hex: '#EC4899', isFree: false },
+    { name: 'Turquesa Cian', hex: '#06B6D4', isFree: false }
 ];
 
 export function renderSettings() {
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2">
+                    ${WEAVAX_THEMES.map(t => `
+                        <button onclick="applyWeavaxColor('${t.hex}')" class="flex items-center justify-between p-2 rounded-xl border ${currentColor.toLowerCase() === t.hex.toLowerCase() ? 'border-accent bg-accent/10' : 'border-gray-200 dark:border-[#28283C]'} hover:opacity-90 transition-all text-left">
+                            <div class="flex items-center space-x-2 min-w-0">
+                                <span class="w-5 h-5 rounded-full shrink-0" style="background-color:${t.hex}"></span>
+                                <span class="text-[11px] font-bold truncate">${t.name}</span>
+                            </div>
+                            ${(!t.isFree && !isUserPro()) ? '<span class="text-[10px] ml-1 shrink-0" title="Exclusivo WeaVax Pro">👑</span>' : ''}
+                        </button>
+                    `).join('')}
+                </div>
     const p = window.state.profile || {};
     const u = window.state.user || {};
     const container = document.getElementById('settings-full-container');
@@ -227,9 +238,12 @@ window.saveProfileSettings = async (e) => {
     alert('Perfil actualizado y sincronizado.');
 };
 
+const FREE_THEME_COLORS = ['#8b5cf6', '#3b82f6', '#ef4444'];
+
 window.applyWeavaxColor = async (hex) => {
-    if (hex.toLowerCase() !== '#8b5cf6' && !isUserPro()) {
-        return window.openProPaywall('Los temas de acento personalizados (Azul Océano, Esmeralda, Ámbar, Frambuesa, Carmesí y Cian) son exclusivos de WeaVax Pro.');
+    const cleanHex = String(hex || '').trim().toLowerCase();
+    if (!FREE_THEME_COLORS.includes(cleanHex) && !isUserPro()) {
+        return window.openProPaywall('Los tonos Verde Esmeralda, Ámbar Solar, Rosa Frambuesa y Turquesa Cian son exclusivos de WeaVax Pro. (Morado, Azul y Rojo son gratuitos).');
     }
     document.documentElement.style.setProperty('--color-primary', hex);
     localStorage.setItem('weavax_theme_color', hex);
