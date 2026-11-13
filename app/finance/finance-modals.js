@@ -1,4 +1,5 @@
 import { fsActions } from '../firebase-sync.js?v=5';
+import { consumeAiScanQuota, requireProOrCheckLimit, FREE_LIMITS } from '../weavax-pro.js?v=1';
 import {
     finState,
     getCategoriesByType,
@@ -229,6 +230,7 @@ window.deleteTxWithReversal = async (docId) => {
 
 // 5. CREAR / EDITAR CUENTAS
 window.openAccountModal = () => {
+    if (!requireProOrCheckLimit('ACCOUNTS', (window.state.accounts || []).length, FREE_LIMITS.MAX_ACCOUNTS, 'El plan Gratuito permite hasta 2 cuentas activas. Desbloquea cuentas ilimitadas con WeaVax Pro.')) return;
     window.openUniversalModal('🏦 Nueva Cuenta', `
         <form onsubmit="saveAccountForm(event, null)" class="space-y-3 text-xs">
             <input id="a-name" required placeholder="Nombre (ej. BCP, Efectivo, Yape)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
@@ -290,6 +292,7 @@ window.saveAccountForm = async (e, existingDocId = null) => {
 
 // 6. PRESUPUESTOS (CrearPresupuestoSheet)
 window.openBudgetModal = (docId = null) => {
+    if (!docId && !requireProOrCheckLimit('BUDGETS', (window.state.budgets || []).length, FREE_LIMITS.MAX_BUDGETS, 'El plan Gratuito permite hasta 2 presupuestos. Hazte Pro para presupuestos ilimitados.')) return;
     const b = docId ? (window.state.budgets || []).find(x => String(x.docId) === String(docId)) : null;
     const cats = getAllExpenseCategories();
     window.openUniversalModal(b ? '✎ Editar Presupuesto' : '🎯 Nuevo Presupuesto', `
@@ -331,6 +334,7 @@ window.saveBudgetForm = async (e, existingDocId = null) => {
 
 // 7. METAS DE AHORRO Y APORTES/RETIROS (CrearMetaSheet & GoalDetailDialog)
 window.openGoalModal = () => {
+    if (!requireProOrCheckLimit('GOALS', (window.state.goals || []).length, FREE_LIMITS.MAX_GOALS, 'El plan Gratuito permite hasta 2 metas de ahorro. Hazte Pro para metas ilimitadas.')) return;
     window.openUniversalModal('🏆 Nueva Meta de Ahorro', `
         <form onsubmit="saveGoalForm(event)" class="space-y-3 text-xs">
             <input id="g-name" required placeholder="Nombre de la meta (ej. Nuevo Monitor, Viaje)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
@@ -497,6 +501,8 @@ window.openReceiptScannerModal = () => {
 };
 
 window.processReceiptWithGroq = async () => {
+    const allowed = await consumeAiScanQuota();
+if (!allowed) return;
     const file = document.getElementById('receipt-file')?.files?.[0];
     if (!file) return alert('Selecciona una imagen primero');
     document.getElementById('scan-status').classList.remove('hidden');
