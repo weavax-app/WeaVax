@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyB7exiNH2ncLbwJ7TVIQ6-Dl3Lh9sDFcVo",
@@ -16,7 +16,6 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Estado global compartido
 window.state = {
     user: null,
     activeUserDocId: null,
@@ -24,6 +23,7 @@ window.state = {
     habits: [],
     rawHabits: [],
     tasks: [],
+    projects: [],
     accounts: [],
     rawAccounts: [],
     transactions: [],
@@ -31,14 +31,17 @@ window.state = {
     goals: [],
     workout_routines: [],
     workout_sessions: [],
-    isBalanceVisible: false,
+    isBalanceVisible: false, // Oculto por defecto como en MainViewModel.kt
     calYear: new Date().getFullYear(),
     calMonth: new Date().getMonth(),
-    selectedDay: new Date().getDate()
+    selectedDay: new Date().getDate(),
+    planSubTab: 'calendar', // 'calendar' | 'tasks' | 'events' | 'inbox' | 'projects'
+    workoutViewMode: 'grid', // 'grid' | 'list'
+    activeWorkoutSession: null
 };
 
-// Deduplicar registros por nombre normalizado (conserva el de mayor saldo o actualización más reciente)
-function deduplicateByName(items, isAccount = false) {
+// Deduplicador inteligente: conserva la cuenta con mayor saldo y el hábito más actualizado
+function deduplicateItems(items, isAccount = false) {
     const map = new Map();
     items.forEach(item => {
         const key = String(item.name || item.title || '').trim().toLowerCase();
@@ -51,77 +54,78 @@ function deduplicateByName(items, isAccount = false) {
                 if (Math.abs(Number(item.balance || 0)) > Math.abs(Number(existing.balance || 0))) {
                     map.set(key, item);
                 }
-            } else if ((item.updatedAt || '') > (existing.updatedAt || '') || item.isCompleted) {
-                map.set(key, item);
+            } else {
+                const tNew = Number(item.updatedAt || 0);
+                const tOld = Number(existing.updatedAt || 0);
+                if (item.isCompleted || tNew > tOld) map.set(key, item);
             }
         }
     });
     return Array.from(map.values());
 }
 
-// Limpieza física en Firestore de documentos duplicados
+// Botón para borrar físicamente de Firestore las copias repetidas
 window.cleanFirestoreDuplicates = async () => {
-    const docId = window.state.activeUserDocId;
-    if (!docId) return;
+    const uid = window.state.activeUserDocId;
+    if (!uid) return;
+    const keepHabits = new Set(window.state.habits.map(h => String(h.docId)));
+    const dupHabits = window.state.rawHabits.filter(h => !keepHabits.has(String(h.docId)));
 
-    const keepHabitIds = new Set(window.state.habits.map(h => h.id));
-    const dupHabits = window.state.rawHabits.filter(h => !keepHabitIds.has(h.id));
+    const keepAccs = new Set(window.state.accounts.map(a => String(a.docId)));
+    const dupAccs = window.state.rawAccounts.filter(a => !keepAccs.has(String(a.docId)));
 
-    const keepAccIds = new Set(window.state.accounts.map(a => a.id));
-    const dupAccounts = window.state.rawAccounts.filter(a => !keepAccIds.has(a.id));
-
-    const totalDups = dupHabits.length + dupAccounts.length;
-    if (totalDups === 0) {
-        alert('No hay documentos duplicados pendientes de limpiar.');
+    if (dupHabits.length === 0 && dupAccs.length === 0) {
+        alert('No hay duplicados pendientes en Firestore.');
         return;
     }
+    if (!confirm(`Se eliminarán de Firestore ${dupHabits.length} hábitos repetidos y ${dupAccs.length} cuentas duplicadas en 0.00. ¿Confirmar?`)) return;
 
-    if (!confirm(`Se eliminarán ${dupHabits.length} hábitos repetidos y ${dupAccounts.length} cuentas duplicadas (en Bs 0.00) de Firestore. ¿Continuar?`)) return;
-
-    for (const h of dupHabits) {
-        await deleteDoc(doc(db, 'users', docId, 'habits', h.id));
-    }
-    for (const a of dupAccounts) {
-        await deleteDoc(doc(db, 'users', docId, 'accounts', a.id));
-    }
-    alert('¡Duplicados eliminados de Firestore!');
+    for (const h of dupHabits) await deleteDoc(doc(db, 'users', uid, 'habits', String(h.docId)));
+    for (const a of dupAccs) await deleteDoc(doc(db, 'users', uid, 'accounts', String(a.docId)));
+    alert('¡Base de datos depurada con éxito!');
 };
 
-export function initSync(onDataUpdated) {
+export function initSync(onUpdate) {
     onAuthStateChanged(auth, async (user) => {
         document.getElementById('loading-screen').classList.add('hidden');
         if (user) {
             window.state.user = user;
+            window.state.activeUserDocId = user.uid;
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('app-container').classList.remove('hidden');
+            const diagPath = document.getElementById('diag-active-path');
+            if (diagPath) diagPath.textContent = `users/${user.uid}`;
 
-            const docId = user.uid;
-            window.state.activeUserDocId = docId;
-            document.getElementById('diag-active-path').textContent = `users/${docId}`;
-
-            onSnapshot(doc(db, 'users', docId), (snap) => {
+            onSnapshot(doc(db, 'users', user.uid), (snap) => {
                 if (snap.exists()) {
                     window.state.profile = snap.data();
-                    onDataUpdated();
+                    onUpdate();
                 }
             });
 
-            const cols = ['habits', 'tasks', 'accounts', 'transactions', 'budgets', 'goals', 'workout_routines', 'workout_sessions'];
-            cols.forEach(colName => {
-                onSnapshot(collection(db, 'users', docId, colName), (snap) => {
-                    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    if (colName === 'habits') {
-                        window.state.rawHabits = docs;
-                        window.state.habits = deduplicateByName(docs, false);
-                    } else if (colName === 'accounts') {
-                        window.state.rawAccounts = docs;
-                        window.state.accounts = deduplicateByName(docs, true);
-                    } else if (colName === 'transactions') {
-                        window.state.transactions = docs.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+            const collections = [
+                'habits', 'tasks', 'projects', 'accounts',
+                'transactions', 'budgets', 'goals',
+                'workout_routines', 'workout_sessions'
+            ];
+
+            collections.forEach(col => {
+                onSnapshot(collection(db, 'users', user.uid, col), (snap) => {
+                    const list = snap.docs.map(d => ({ ...d.data(), docId: d.id, id: d.data().id ?? d.id }));
+                    if (col === 'habits') {
+                        window.state.rawHabits = list;
+                        window.state.habits = deduplicateItems(list, false);
+                    } else if (col === 'accounts') {
+                        window.state.rawAccounts = list;
+                        window.state.accounts = deduplicateItems(list, true).filter(a => !a.isArchived);
+                    } else if (col === 'transactions') {
+                        window.state.transactions = list.sort((a, b) => Number(b.date || 0) - Number(a.date || 0));
+                    } else if (col === 'workout_sessions') {
+                        window.state.workout_sessions = list.sort((a, b) => Number(b.startedAt || 0) - Number(a.startedAt || 0));
                     } else {
-                        window.state[colName] = docs;
+                        window.state[col] = list;
                     }
-                    onDataUpdated();
+                    onUpdate();
                 });
             });
         } else {
@@ -138,10 +142,23 @@ export function initSync(onDataUpdated) {
     window.logoutUser = () => signOut(auth);
 }
 
-// Helpers CRUD exportados
+// Escritura compatible con el formato Long ID de Room en FirestoreSyncService.kt
 export const fsActions = {
-    add: (col, data) => addDoc(collection(db, 'users', window.state.activeUserDocId, col), data),
-    update: (col, id, data) => updateDoc(doc(db, 'users', window.state.activeUserDocId, col, id), data),
-    updateProfile: (data) => updateDoc(doc(db, 'users', window.state.activeUserDocId), data),
-    remove: (col, id) => deleteDoc(doc(db, 'users', window.state.activeUserDocId, col, id))
+    setItem: async (col, id, data) => {
+        const uid = window.state.activeUserDocId;
+        const docId = String(id || Date.now());
+        await setDoc(doc(db, 'users', uid, col, docId), { ...data, id: Number(id || Date.now()), updatedAt: Date.now() }, { merge: true });
+    },
+    updateItem: async (col, docId, data) => {
+        const uid = window.state.activeUserDocId;
+        await setDoc(doc(db, 'users', uid, col, String(docId)), { ...data, updatedAt: Date.now() }, { merge: true });
+    },
+    updateProfile: async (data) => {
+        const uid = window.state.activeUserDocId;
+        await setDoc(doc(db, 'users', uid), { ...data, updatedAt: Date.now() }, { merge: true });
+    },
+    removeItem: async (col, docId) => {
+        const uid = window.state.activeUserDocId;
+        await deleteDoc(doc(db, 'users', uid, col, String(docId)));
+    }
 };
