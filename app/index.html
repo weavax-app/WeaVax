@@ -21,6 +21,11 @@
         .bg-accent { background-color: var(--color-primary); }
         .text-accent { color: var(--color-primary); }
         .border-accent { border-color: var(--color-primary); }
+        /* Modo Sidebar Contraído */
+        #app-sidebar.collapsed { width: 5rem; }
+        #app-sidebar.collapsed .sidebar-label { display: none; }
+        #app-sidebar.collapsed .nav-btn { justify-content: center; padding-left: 0; padding-right: 0; }
+        #app-main.sidebar-collapsed { padding-left: 5rem; }
     </style>
 </head>
 <body class="min-h-screen antialiased">
@@ -44,32 +49,58 @@
     </div>
 
     <div id="app-container" class="hidden min-h-screen flex flex-col md:flex-row">
-        <!-- SIDEBAR -->
-        <aside class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 dark:border-[#28283C] bg-white dark:bg-[#181824]">
-            <div class="h-16 px-6 flex items-center space-x-2.5 border-b border-gray-200 dark:border-[#28283C]">
-                <img src="../weavax_logo.png" class="w-7 h-7 object-contain">
-                <span class="font-black text-lg">WeaVax</span>
+        <!-- SIDEBAR EXPANDIBLE / CONTRAÍBLE -->
+        <aside id="app-sidebar" class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 dark:border-[#28283C] bg-white dark:bg-[#181824] transition-all duration-200 z-30">
+            <div class="h-16 px-4 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
+                <div class="flex items-center space-x-2.5 overflow-hidden">
+                    <img src="../weavax_logo.png" class="w-7 h-7 object-contain shrink-0">
+                    <span class="sidebar-label font-black text-lg tracking-tight">WeaVax</span>
+                </div>
+                <button onclick="toggleSidebar()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#0A0A0F] text-gray-400 hover:text-white text-xs" title="Expandir / Contraer barra">
+                    ⇔
+                </button>
             </div>
-            <div class="p-4 border-b border-gray-200 dark:border-[#28283C]">
-                <p id="user-name" class="text-sm font-bold truncate">Marce</p>
-                <p id="user-level-xp" class="text-[11px] text-gray-400">Nivel 1 · 0 XP</p>
+
+            <!-- PERFIL CON AVATAR REAL -->
+            <div class="p-3.5 border-b border-gray-200 dark:border-[#28283C] flex items-center space-x-3">
+                <div id="user-avatar-box" class="w-10 h-10 rounded-full overflow-hidden border-2 border-accent shrink-0 flex items-center justify-center bg-[#0A0A0F] text-base font-bold">
+                    <img id="user-avatar-img" src="../weavax_logo.png" class="w-full h-full object-cover">
+                </div>
+                <div class="sidebar-label min-w-0 flex-1">
+                    <p id="user-name" class="text-sm font-bold truncate">Marce</p>
+                    <p id="user-level-xp" class="text-[11px] text-gray-400">Nivel 1 · 0 XP</p>
+                </div>
             </div>
-            <nav class="flex-1 px-3 py-4 space-y-1 text-sm font-medium">
-                <button onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-accent/15 text-accent font-bold"><span>🏠</span><span>Inicio / Mi Día</span></button>
-                <button onclick="navigate('plan')" data-nav="plan" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>📅</span><span>Plan, Agenda & Proyectos</span></button>
-                <button onclick="navigate('finances')" data-nav="finances" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>💳</span><span>Finanzas & Escáner IA</span></button>
-                <button onclick="navigate('workouts')" data-nav="workouts" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>🏋️</span><span>Entrenamiento (Lyfta)</span></button>
-                <button onclick="navigate('progress')" data-nav="progress" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>📊</span><span>Progreso</span></button>
-                <button onclick="navigate('settings')" data-nav="settings" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>⚙️</span><span>Ajustes & Limpieza</span></button>
+
+            <!-- NAVEGACIÓN -->
+            <nav class="flex-1 px-3 py-4 space-y-1.5 text-sm font-medium">
+                <button onclick="navigate('dashboard')" data-nav="dashboard" title="Inicio / Mi Día" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-accent/15 text-accent font-bold">
+                    <span class="text-lg">🏠</span><span class="sidebar-label">Inicio / Mi Día</span>
+                </button>
+                <button onclick="navigate('plan')" data-nav="plan" title="Plan, Agenda & Proyectos" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                    <span class="text-lg">📅</span><span class="sidebar-label">Plan & Agenda</span>
+                </button>
+                <button onclick="navigate('finances')" data-nav="finances" title="Finanzas & Escáner IA" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                    <span class="text-lg">💳</span><span class="sidebar-label">Finanzas & IA</span>
+                </button>
+                <button onclick="navigate('workouts')" data-nav="workouts" title="Entrenamiento" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                    <span class="text-lg">🏋️</span><span class="sidebar-label">Entrenamiento</span>
+                </button>
+                <button onclick="navigate('progress')" data-nav="progress" title="Progreso" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                    <span class="text-lg">📊</span><span class="sidebar-label">Progreso</span>
+                </button>
+                <button onclick="navigate('settings')" data-nav="settings" title="Ajustes y Configuración" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                    <span class="text-lg">⚙️</span><span class="sidebar-label">Ajustes</span>
+                </button>
             </nav>
         </aside>
 
         <!-- MAIN -->
-        <main class="flex-1 md:pl-64 pb-20">
+        <main id="app-main" class="flex-1 md:pl-64 pb-20 transition-all duration-200">
             <header class="h-16 px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
                 <h2 id="header-greeting" class="text-lg font-extrabold">Hola, Marce</h2>
                 <div class="flex items-center space-x-2.5">
-                    <span class="px-3 py-1 rounded-full bg-[#181824] border border-[#28283C] text-xs font-bold">🔥 <span id="streak-count">0 d</span></span>
+                    <span class="px-3 py-1 rounded-full bg-gray-100 dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] text-xs font-bold">🔥 <span id="streak-count">0 d</span></span>
                     <span class="px-3.5 py-1 rounded-full bg-accent/15 border border-accent/40 text-accent text-xs font-extrabold">Día <span id="daily-score-pct">0</span>%</span>
                 </div>
             </header>
@@ -110,7 +141,7 @@
                     </div>
                 </section>
 
-                <!-- 2. PLAN, CALENDARIO, TAREAS, EVENTOS & PROYECTOS -->
+                <!-- 2. PLAN & AGENDA -->
                 <section id="view-plan" class="app-view hidden space-y-6">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div class="flex flex-wrap gap-2">
@@ -169,12 +200,12 @@
                     </div>
                 </section>
 
-                <!-- 4. ENTRENAMIENTO (LYFTA + CATÁLOGO ANIME/FITNESS) -->
+                <!-- 4. ENTRENAMIENTO (SIN MENCIONES EXTERNAS) -->
                 <section id="view-workouts" class="app-view hidden space-y-6">
                     <div class="flex flex-wrap justify-between items-center gap-3">
                         <div>
                             <h3 class="text-xl font-black">WeaVax Gym · Librería & Sesiones</h3>
-                            <p class="text-xs text-gray-400">Tus rutinas de Firestore + Catálogo Oficial WeaVax & Anime Aesthetic</p>
+                            <p class="text-xs text-gray-400">Tus rutinas sincronizadas + Catálogo Oficial WeaVax & Anime Aesthetic</p>
                         </div>
                         <div class="flex gap-2">
                             <button onclick="startLiveWorkout('Entrenamiento Libre')" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">▶ Entrenamiento Libre</button>
@@ -185,7 +216,7 @@
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                            <h4 class="text-sm font-extrabold mb-4">Banco de Ejercicios (Gráficos Anatómicos Lyfta)</h4>
+                            <h4 class="text-sm font-extrabold mb-4">Banco de Ejercicios (Gráficos Anatómicos)</h4>
                             <div id="exercises-bank-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
                         </div>
                         <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
@@ -203,18 +234,10 @@
                     </div>
                 </section>
 
-                <!-- 6. AJUSTES & LIMPIEZA -->
+                <!-- 6. AJUSTES COMPLETOS -->
                 <section id="view-settings" class="app-view hidden space-y-6">
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
-                        <h3 class="text-base font-extrabold">Mantenimiento y Sincronización Firestore</h3>
-                        <p class="text-xs text-gray-400">Ruta activa: <code id="diag-active-path" class="text-accent"></code></p>
-                        <div class="flex flex-wrap gap-3">
-                            <button onclick="cleanFirestoreDuplicates()" class="px-4 py-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold">
-                                🧹 Limpiar Duplicados de Firestore
-                            </button>
-                            <button onclick="logoutUser()" class="px-4 py-2.5 rounded-xl bg-red-500/15 text-red-400 text-xs font-bold">Cerrar Sesión</button>
-                        </div>
-                    </div>
+                    <h3 class="text-xl font-black">Ajustes y Configuración General</h3>
+                    <div id="settings-full-container"></div>
                 </section>
             </div>
         </main>
@@ -231,75 +254,54 @@
         </div>
     </div>
 
-   <script type="module">
-        // Seguro anti-bloqueo: si en 4 segundos algún módulo falla, quita la pantalla de carga y muestra el diagnóstico
-        const safetyTimer = setTimeout(() => {
-            const loader = document.getElementById('loading-screen');
-            if (loader && !loader.classList.contains('hidden')) {
-                loader.innerHTML = `
-                    <div class="max-w-md p-6 rounded-2xl bg-[#181824] border border-red-500/40 text-center space-y-3">
-                        <p class="text-sm font-bold text-red-400">⚠️ No se pudieron cargar todos los módulos JS</p>
-                        <p id="module-error-detail" class="text-xs text-gray-300 font-mono">Verifica que existan en GitHub dentro de la carpeta app/: firebase-sync.js, ui-dashboard.js, ui-plan.js, ui-finances.js y ui-workouts.js</p>
-                        <button onclick="location.reload(true)" class="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold">Reintentar (Recargar)</button>
-                    </div>
-                `;
-            }
-        }, 4000);
+    <script type="module">
+        const { initSync, fsActions } = await import('./firebase-sync.js?v=3');
+        const { renderDashboard } = await import('./ui-dashboard.js?v=3');
+        const { renderPlanModule } = await import('./ui-plan.js?v=3');
+        const { renderFinances } = await import('./ui-finances.js?v=3');
+        const { renderWorkouts } = await import('./ui-workouts.js?v=3');
+        const { renderSettings } = await import('./ui-settings.js?v=3');
 
-        try {
-            const { initSync, fsActions } = await import('./firebase-sync.js?v=2');
-        const { renderDashboard } = await import('./ui-dashboard.js?v=2');
-        const { renderPlanModule } = await import('./ui-plan.js?v=2');
-        const { renderFinances } = await import('./ui-finances.js?v=2');
-        const { renderWorkouts } = await import('./ui-workouts.js?v=2');
+        window.toggleSidebar = () => {
+            const sb = document.getElementById('app-sidebar');
+            const main = document.getElementById('app-main');
+            sb.classList.toggle('collapsed');
+            main.classList.toggle('sidebar-collapsed');
+        };
 
-            clearTimeout(safetyTimer);
+        window.openUniversalModal = (title, html) => {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = html;
+            document.getElementById('universal-modal').classList.remove('hidden');
+        };
+        window.closeUniversalModal = () => document.getElementById('universal-modal').classList.add('hidden');
+        window.toggleBalancePrivacy = () => { window.state.isBalanceVisible = !window.state.isBalanceVisible; renderFinances(); renderSettings(); };
+        window.deleteDocItem = async (col, docId) => { if (confirm('¿Eliminar registro de Firestore?')) await fsActions.removeItem(col, docId); };
+        window.toggleTaskCheck = (docId, s) => fsActions.updateItem('tasks', docId, { isCompleted: s });
 
-            window.openUniversalModal = (title, html) => {
-                document.getElementById('modal-title').textContent = title;
-                document.getElementById('modal-body').innerHTML = html;
-                document.getElementById('universal-modal').classList.remove('hidden');
-            };
-            window.closeUniversalModal = () => document.getElementById('universal-modal').classList.add('hidden');
-            window.toggleBalancePrivacy = () => { window.state.isBalanceVisible = !window.state.isBalanceVisible; renderFinances(); };
-            window.deleteDocItem = async (col, docId) => { if (confirm('¿Eliminar registro de Firestore?')) await fsActions.removeItem(col, docId); };
-            window.toggleTaskCheck = (docId, s) => fsActions.updateItem('tasks', docId, { isCompleted: s });
-
-            window.navigate = (v) => {
-                document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
-                document.getElementById('view-' + v).classList.remove('hidden');
-                document.querySelectorAll('.nav-btn').forEach(btn => {
-                    const active = btn.dataset.nav === v;
-                    btn.classList.toggle('bg-accent/15', active);
-                    btn.classList.toggle('text-accent', active);
-                    btn.classList.toggle('font-bold', active);
-                });
-            };
-
-            initSync(() => {
-                const p = window.state.profile || {};
-                const xp = Number(p.xp || 0);
-                document.getElementById('user-level-xp').textContent = `Nivel ${Math.floor(xp / 100) + 1} · ${xp} XP`;
-                document.getElementById('streak-count').textContent = `${p.streak || 0} d`;
-                renderDashboard();
-                renderPlanModule();
-                renderFinances();
-                renderWorkouts();
+        window.navigate = (v) => {
+            document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + v).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const active = btn.dataset.nav === v;
+                btn.classList.toggle('bg-accent/15', active);
+                btn.classList.toggle('text-accent', active);
+                btn.classList.toggle('font-bold', active);
             });
-        } catch (err) {
-            clearTimeout(safetyTimer);
-            console.error("Error cargando módulos:", err);
-            const loader = document.getElementById('loading-screen');
-            if (loader) {
-                loader.innerHTML = `
-                    <div class="max-w-md p-6 rounded-2xl bg-[#181824] border border-red-500/40 text-center space-y-3">
-                        <p class="text-sm font-bold text-red-400">Error al cargar módulo JavaScript</p>
-                        <p class="text-xs text-gray-300 font-mono break-all">${err.message}</p>
-                        <button onclick="location.reload(true)" class="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold">Recargar página</button>
-                    </div>
-                `;
-            }
-        }
-    </script>
-</body>
-</html>
+        };
+
+        initSync(() => {
+            const p = window.state.profile || {};
+            const u = window.state.user || {};
+            const xp = Number(p.xp || 0);
+            const displayName = p.name || u.displayName || 'Marce';
+
+            document.getElementById('user-name').textContent = displayName;
+            document.getElementById('header-greeting').textContent = `Hola, ${displayName.split(' ')[0]}`;
+            document.getElementById('user-level-xp').textContent = `Nivel ${Math.floor(xp / 100) + 1} · ${xp} XP`;
+            document.getElementById('streak-count').textContent = `${p.streak || 0} d`;
+
+            // Mostrar Foto de Perfil Real (Google photoURL, URL guardada o Emoji)
+            const rawAvatar = (p.avatar && p.avatar.trim() !== '') ? p.avatar.trim() : (u.photoURL || '');
+            const avatarBox = document.getElementById('user-avatar-box');
+            if (rawAvatar.startsWith('http') || rawAvatar.startsWith('data:image') || rawAvatar.startsWith
