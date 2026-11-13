@@ -77,6 +77,7 @@ function renderHabitCompactRow(h) {
     const cur = Number(h.currentValue || 0);
     const tar = Math.max(1, Number(h.targetValue || 1));
     const icon = getHabitIcon(h.icon);
+    const softAccentBox = `background-color: color-mix(in srgb, var(--color-primary) 12%, transparent); border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);`;
 
     if (isQuant) {
         const pct = Math.min(100, Math.round((cur / tar) * 100));
@@ -84,7 +85,7 @@ function renderHabitCompactRow(h) {
             <div onclick="openHabitDetailScreen('${h.docId}')" class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] hover:border-accent cursor-pointer transition-all space-y-2.5">
                 <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center space-x-2.5 min-w-0">
-                        <span class="w-9 h-9 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-sm shrink-0">${icon}</span>
+                        <span class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0" style="${softAccentBox}">${icon}</span>
                         <div class="min-w-0">
                             <p class="text-xs font-extrabold truncate ${h.isCompleted ? 'line-through text-gray-500' : ''}">${h.name}</p>
                             <span class="text-[10px] text-gray-400 block">🔥 ${h.streak || 0}d · +${h.xpReward || 20} XP</span>
@@ -106,7 +107,7 @@ function renderHabitCompactRow(h) {
     return `
         <div onclick="openHabitDetailScreen('${h.docId}')" class="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] hover:border-accent cursor-pointer transition-all">
             <div class="flex items-center space-x-2.5 min-w-0">
-                <span class="w-9 h-9 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-sm shrink-0">${icon}</span>
+                <span class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0" style="${softAccentBox}">${icon}</span>
                 <div class="min-w-0">
                     <p class="text-xs ${h.isCompleted ? 'line-through text-gray-500' : 'font-extrabold'} truncate">${h.name}</p>
                     <span class="text-[10px] text-gray-400 block">🔥 ${h.streak || 0}d · +${h.xpReward || 20} XP</span>
@@ -119,17 +120,19 @@ function renderHabitCompactRow(h) {
     `;
 }
 
-// Tarjeta individual limpia dentro de la pantalla Mis Hábitos (sin chip de Esencial/Normal/Ligero porque ya está en su sección)
+
+// Tarjeta limpia en la pantalla Mis Hábitos (sin flechas y con marco suave del tono del tema)
 function renderCleanHabitCard(h) {
     const reminders = getReminderTimesList(h);
     const isQuant = ['quantity', 'duration', 'counter', 'numeric'].includes(h.type) || Number(h.targetValue || 1) > 1;
     const cur = Number(h.currentValue || 0);
     const tar = Math.max(1, Number(h.targetValue || 1));
+    const softAccentBox = `background-color: color-mix(in srgb, var(--color-primary) 12%, transparent); border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);`;
 
     return `
         <div onclick="openHabitDetailScreen('${h.docId}')" class="p-4 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] hover:border-accent cursor-pointer transition-all flex items-center justify-between gap-3">
             <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-2xl bg-accent/15 border border-accent/30 flex items-center justify-center text-lg shrink-0">
+                <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-lg shrink-0" style="${softAccentBox}">
                     ${getHabitIcon(h.icon)}
                 </div>
                 <div class="min-w-0">
@@ -140,14 +143,13 @@ function renderCleanHabitCard(h) {
                     ${reminders.length > 0 ? `<p class="text-[10px] text-accent mt-0.5">🔔 ${reminders.join(', ')}</p>` : ''}
                 </div>
             </div>
-            <div class="flex items-center space-x-1.5 shrink-0" onclick="event.stopPropagation()">
-                <button onclick="moveHabitOrder('${h.docId}', -1)" class="p-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-[10px] hover:border-accent" title="Subir">↑</button>
-                <button onclick="moveHabitOrder('${h.docId}', 1)" class="p-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-[10px] hover:border-accent" title="Bajar">↓</button>
-                <button onclick="openHabitModal('${h.docId}')" class="p-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs hover:border-accent" title="Editar">✎</button>
+            <div class="shrink-0" onclick="event.stopPropagation()">
+                <button onclick="openHabitModal('${h.docId}')" class="p-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs text-gray-400 hover:text-white hover:border-accent transition-all" title="Editar">✎</button>
             </div>
         </div>
     `;
 }
+
 
 // 2. PANTALLA COMPLETA DE HÁBITOS (Dividida por secciones de Categoría) Y DETALLE
 export function renderHabitsFullScreenOverlay() {
