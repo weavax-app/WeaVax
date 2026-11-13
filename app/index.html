@@ -231,44 +231,75 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initSync, fsActions } from './firebase-sync.js';
-        import { renderDashboard } from './ui-dashboard.js';
-        import { renderPlanModule } from './ui-plan.js';
-        import { renderFinances } from './ui-finances.js';
-        import { renderWorkouts } from './ui-workouts.js';
+   <script type="module">
+        // Seguro anti-bloqueo: si en 4 segundos algún módulo falla, quita la pantalla de carga y muestra el diagnóstico
+        const safetyTimer = setTimeout(() => {
+            const loader = document.getElementById('loading-screen');
+            if (loader && !loader.classList.contains('hidden')) {
+                loader.innerHTML = `
+                    <div class="max-w-md p-6 rounded-2xl bg-[#181824] border border-red-500/40 text-center space-y-3">
+                        <p class="text-sm font-bold text-red-400">⚠️ No se pudieron cargar todos los módulos JS</p>
+                        <p id="module-error-detail" class="text-xs text-gray-300 font-mono">Verifica que existan en GitHub dentro de la carpeta app/: firebase-sync.js, ui-dashboard.js, ui-plan.js, ui-finances.js y ui-workouts.js</p>
+                        <button onclick="location.reload(true)" class="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold">Reintentar (Recargar)</button>
+                    </div>
+                `;
+            }
+        }, 4000);
 
-        window.openUniversalModal = (title, html) => {
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-body').innerHTML = html;
-            document.getElementById('universal-modal').classList.remove('hidden');
-        };
-        window.closeUniversalModal = () => document.getElementById('universal-modal').classList.add('hidden');
-        window.toggleBalancePrivacy = () => { window.state.isBalanceVisible = !window.state.isBalanceVisible; renderFinances(); };
-        window.deleteDocItem = async (col, docId) => { if (confirm('¿Eliminar registro de Firestore?')) await fsActions.removeItem(col, docId); };
-        window.toggleTaskCheck = (docId, s) => fsActions.updateItem('tasks', docId, { isCompleted: s });
+        try {
+            const { initSync, fsActions } = await import('./firebase-sync.js');
+            const { renderDashboard } = await import('./ui-dashboard.js');
+            const { renderPlanModule } = await import('./ui-plan.js');
+            const { renderFinances } = await import('./ui-finances.js');
+            const { renderWorkouts } = await import('./ui-workouts.js');
 
-        window.navigate = (v) => {
-            document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
-            document.getElementById('view-' + v).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                const active = btn.dataset.nav === v;
-                btn.classList.toggle('bg-accent/15', active);
-                btn.classList.toggle('text-accent', active);
-                btn.classList.toggle('font-bold', active);
+            clearTimeout(safetyTimer);
+
+            window.openUniversalModal = (title, html) => {
+                document.getElementById('modal-title').textContent = title;
+                document.getElementById('modal-body').innerHTML = html;
+                document.getElementById('universal-modal').classList.remove('hidden');
+            };
+            window.closeUniversalModal = () => document.getElementById('universal-modal').classList.add('hidden');
+            window.toggleBalancePrivacy = () => { window.state.isBalanceVisible = !window.state.isBalanceVisible; renderFinances(); };
+            window.deleteDocItem = async (col, docId) => { if (confirm('¿Eliminar registro de Firestore?')) await fsActions.removeItem(col, docId); };
+            window.toggleTaskCheck = (docId, s) => fsActions.updateItem('tasks', docId, { isCompleted: s });
+
+            window.navigate = (v) => {
+                document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+                document.getElementById('view-' + v).classList.remove('hidden');
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    const active = btn.dataset.nav === v;
+                    btn.classList.toggle('bg-accent/15', active);
+                    btn.classList.toggle('text-accent', active);
+                    btn.classList.toggle('font-bold', active);
+                });
+            };
+
+            initSync(() => {
+                const p = window.state.profile || {};
+                const xp = Number(p.xp || 0);
+                document.getElementById('user-level-xp').textContent = `Nivel ${Math.floor(xp / 100) + 1} · ${xp} XP`;
+                document.getElementById('streak-count').textContent = `${p.streak || 0} d`;
+                renderDashboard();
+                renderPlanModule();
+                renderFinances();
+                renderWorkouts();
             });
-        };
-
-        initSync(() => {
-            const p = window.state.profile;
-            const xp = Number(p.xp || 0);
-            document.getElementById('user-level-xp').textContent = `Nivel ${Math.floor(xp / 100) + 1} · ${xp} XP`;
-            document.getElementById('streak-count').textContent = `${p.streak || 0} d`;
-            renderDashboard();
-            renderPlanModule();
-            renderFinances();
-            renderWorkouts();
-        });
+        } catch (err) {
+            clearTimeout(safetyTimer);
+            console.error("Error cargando módulos:", err);
+            const loader = document.getElementById('loading-screen');
+            if (loader) {
+                loader.innerHTML = `
+                    <div class="max-w-md p-6 rounded-2xl bg-[#181824] border border-red-500/40 text-center space-y-3">
+                        <p class="text-sm font-bold text-red-400">Error al cargar módulo JavaScript</p>
+                        <p class="text-xs text-gray-300 font-mono break-all">${err.message}</p>
+                        <button onclick="location.reload(true)" class="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold">Recargar página</button>
+                    </div>
+                `;
+            }
+        }
     </script>
 </body>
 </html>
