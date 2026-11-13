@@ -1,10 +1,10 @@
-import { getTodayScheduledWorkoutInfo } from './ui-workouts.js?v=5';
+import { getTodayScheduledWorkoutInfo } from './ui-workouts.js?v=2';
 import {
     isHabitScheduledToday,
     renderMiDiaHabitsCard,
     renderHabitsFullScreenOverlay
-} from './habits/habits-views.js';
-import './habits/habits-modals.js';
+} from './habits/habits-views.js?v=2';
+import './habits/habits-modals.js?v=2';
 
 const today = new Date();
 const todayDay = today.getDate();
