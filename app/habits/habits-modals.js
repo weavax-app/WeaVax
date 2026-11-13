@@ -1,12 +1,9 @@
 import { fsActions } from '../firebase-sync.js?v=5';
 import { HABIT_ICONS, getReminderTimesList } from './habits-views.js';
 
-const HABIT_COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#EF4444', '#06B6D4'];
-
 let modalTempReminders = [];
 let modalSelectedDays = new Set(['L', 'M', 'X', 'J', 'V', 'S', 'D']);
 
-// CREAR O EDITAR HÁBITO (CrearHabitoSheet.kt)
 window.openHabitModal = (docId = null) => {
     const h = docId ? (window.state.habits || []).find(x => String(x.docId) === String(docId)) : null;
 
@@ -16,19 +13,17 @@ window.openHabitModal = (docId = null) => {
 
     const curType = h?.type || 'simple';
     const curFreq = h?.frequency || 'Diario';
-    const curColor = h?.colorHex || '#8B5CF6';
     const curIcon = h?.icon || 'star';
     const visibleMiDia = h ? h.visibleInMiDia !== false : true;
 
-    window.openUniversalModal(h ? '✎ Editar Hábito' : '🔥 Crear Nuevo Hábito', `
+    window.openUniversalModal(h ? '✎ Editar Hábito' : 'Nuevo Hábito', `
         <form onsubmit="saveHabitFullForm(event, ${h ? `'${h.docId}'` : 'null'})" class="space-y-3.5 text-xs max-h-[78vh] overflow-y-auto pr-1">
             <div>
                 <label class="text-[10px] font-bold uppercase text-gray-400">Nombre del Hábito</label>
                 <input id="h-name" required value="${h?.name || ''}" placeholder="Ej. Tomar creatina, Tomar agua, Meditar" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-bold">
             </div>
 
-            <!-- Icono y Color -->
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-3 gap-2">
                 <div>
                     <label class="text-[10px] font-bold uppercase text-gray-400">Icono</label>
                     <select id="h-icon" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
@@ -36,35 +31,24 @@ window.openHabitModal = (docId = null) => {
                     </select>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold uppercase text-gray-400">Color del Hábito</label>
-                    <select id="h-color" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                        ${HABIT_COLORS.map(c => `<option value="${c}" ${curColor.toLowerCase() === c.toLowerCase() ? 'selected' : ''}>${c}</option>`).join('')}
-                    </select>
-                </div>
-            </div>
-
-            <!-- Tipo e Importancia -->
-            <div class="grid grid-cols-2 gap-2">
-                <div>
-                    <label class="text-[10px] font-bold uppercase text-gray-400">Tipo de Hábito</label>
+                    <label class="text-[10px] font-bold uppercase text-gray-400">Tipo</label>
                     <select id="h-type" onchange="onHabitTypeChange(this.value)" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                        <option value="simple" ${curType === 'simple' ? 'selected' : ''}>✓ Simple (Check diario)</option>
-                        <option value="quantity" ${curType === 'quantity' ? 'selected' : ''}>🔢 Cantidad (Vasos, pág)</option>
-                        <option value="duration" ${curType === 'duration' ? 'selected' : ''}>⏱️ Duración (Minutos)</option>
-                        <option value="counter" ${curType === 'counter' ? 'selected' : ''}>➕ Contador libre</option>
+                        <option value="simple" ${curType === 'simple' ? 'selected' : ''}>Simple (Check)</option>
+                        <option value="quantity" ${curType === 'quantity' ? 'selected' : ''}>Cantidad</option>
+                        <option value="duration" ${curType === 'duration' ? 'selected' : ''}>Duración (Min)</option>
+                        <option value="counter" ${curType === 'counter' ? 'selected' : ''}>Contador</option>
                     </select>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold uppercase text-gray-400">Importancia</label>
+                    <label class="text-[10px] font-bold uppercase text-gray-400">Categoría</label>
                     <select id="h-importance" onchange="onHabitImportanceChange(this.value)" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                        <option value="Esencial" ${h?.importance === 'Esencial' ? 'selected' : ''}>🔴 Esencial (x3 · 30 XP)</option>
-                        <option value="Normal" ${(!h || h?.importance === 'Normal') ? 'selected' : ''}>🟣 Normal (x2 · 20 XP)</option>
-                        <option value="Ligero" ${h?.importance === 'Ligero' ? 'selected' : ''}>🔵 Ligero (x1 · 10 XP)</option>
+                        <option value="Esencial" ${h?.importance === 'Esencial' ? 'selected' : ''}>Esencial</option>
+                        <option value="Normal" ${(!h || h?.importance === 'Normal') ? 'selected' : ''}>Normal</option>
+                        <option value="Ligero" ${h?.importance === 'Ligero' ? 'selected' : ''}>Ligero</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Meta y Unidad (para quantity, duration, counter) -->
             <div id="h-quant-box" class="${curType === 'simple' ? 'hidden' : ''} grid grid-cols-2 gap-2">
                 <div>
                     <label class="text-[10px] font-bold uppercase text-gray-400">Meta Diaria</label>
@@ -76,7 +60,6 @@ window.openHabitModal = (docId = null) => {
                 </div>
             </div>
 
-            <!-- Frecuencia y Días -->
             <div>
                 <label class="text-[10px] font-bold uppercase text-gray-400">Frecuencia</label>
                 <select id="h-freq" onchange="onHabitFreqChange(this.value)" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
@@ -88,7 +71,6 @@ window.openHabitModal = (docId = null) => {
                 <div id="h-days-picker" class="grid grid-cols-7 gap-1.5 mt-2"></div>
             </div>
 
-            <!-- Múltiples Recordatorios (reminderTime separado por comas) -->
             <div class="p-3 rounded-2xl bg-[#0A0A0F] border border-[#28283C] space-y-2">
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] font-bold text-gray-300">🔔 Horarios de Recordatorio</span>
@@ -100,7 +82,6 @@ window.openHabitModal = (docId = null) => {
                 <div id="h-rem-chips" class="flex flex-wrap gap-1.5"></div>
             </div>
 
-            <!-- Visible en Mi Día y XP -->
             <div class="flex items-center justify-between p-3 rounded-2xl bg-[#0A0A0F] border border-[#28283C]">
                 <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="checkbox" id="h-visible-midia" ${visibleMiDia ? 'checked' : ''} class="w-4 h-4 rounded">
@@ -200,7 +181,7 @@ window.saveHabitFullForm = async (e, existingDocId = null) => {
     await fsActions.setItem('habits', id, {
         name: document.getElementById('h-name').value.trim(),
         icon: document.getElementById('h-icon').value,
-        colorHex: document.getElementById('h-color').value,
+        colorHex: '#8B5CF6',
         type,
         importance: document.getElementById('h-importance').value,
         frequency: document.getElementById('h-freq').value,
