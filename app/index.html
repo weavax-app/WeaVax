@@ -247,11 +247,11 @@
         }, 4000);
 
         try {
-            const { initSync, fsActions } = await import('./firebase-sync.js');
-            const { renderDashboard } = await import('./ui-dashboard.js');
-            const { renderPlanModule } = await import('./ui-plan.js');
-            const { renderFinances } = await import('./ui-finances.js');
-            const { renderWorkouts } = await import('./ui-workouts.js');
+            const { initSync, fsActions } = await import('./firebase-sync.js?v=2');
+        const { renderDashboard } = await import('./ui-dashboard.js?v=2');
+        const { renderPlanModule } = await import('./ui-plan.js?v=2');
+        const { renderFinances } = await import('./ui-finances.js?v=2');
+        const { renderWorkouts } = await import('./ui-workouts.js?v=2');
 
             clearTimeout(safetyTimer);
 
