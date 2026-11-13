@@ -260,21 +260,7 @@
         </div>
     </div>
 
-    <script type="module">
-        setTimeout(() => {
-            const loader = document.getElementById('loading-screen');
-            if (loader && !loader.classList.contains('hidden')) {
-                loader.classList.add('hidden');
-                const appBox = document.getElementById('app-container');
-                const authBox = document.getElementById('auth-screen');
-                if (window.state && window.state.user) {
-                    appBox.classList.remove('hidden');
-                } else {
-                    authBox.classList.remove('hidden');
-                }
-            }
-        }, 2000);
-
+   <script type="module">
         window.toggleSidebar = () => {
             const sb = document.getElementById('app-sidebar');
             const main = document.getElementById('app-main');
@@ -289,45 +275,66 @@
         };
         window.closeUniversalModal = () => document.getElementById('universal-modal').classList.add('hidden');
 
+        const ts = Date.now();
+        const modules = {};
+
+        // 1. Cargar Firebase Sync PRIMERO y activar de inmediato el Login de Google
         try {
-            const ts = Date.now();
-            const syncMod = await import(`./firebase-sync.js?v=${ts}`);
-            const dashMod = await import(`./ui-dashboard.js?v=${ts}`);
-            const planMod = await import(`./ui-plan.js?v=${ts}`);
-            const finMod  = await import(`./ui-finances.js?v=${ts}`);
-            const workMod = await import(`./ui-workouts.js?v=${ts}`);
-            const setMod  = await import(`./ui-settings.js?v=${ts}`);
+            modules.sync = await import(`./firebase-sync.js?v=${ts}`);
+        } catch (e) {
+            console.error("Error cargando firebase-sync.js:", e);
+            alert("Error en firebase-sync.js: " + e.message);
+        }
 
-            window.navigate = (v) => {
-                document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
-                const target = document.getElementById('view-' + v);
-                if (target) target.classList.remove('hidden');
-                document.querySelectorAll('.nav-btn').forEach(btn => {
-                    const active = btn.dataset.nav === v;
-                    btn.classList.toggle('bg-accent/15', active);
-                    btn.classList.toggle('text-accent', active);
-                    btn.classList.toggle('font-bold', active);
-                });
-                if (v === 'dashboard' && dashMod.renderDashboard) dashMod.renderDashboard();
-                if (v === 'plan' && planMod.renderPlanModule) planMod.renderPlanModule();
-                if (v === 'finances' && finMod.renderFinances) finMod.renderFinances();
-                if (v === 'workouts' && workMod.renderWorkouts) workMod.renderWorkouts();
-                if (v === 'settings' && setMod.renderSettings) setMod.renderSettings();
-            };
+        // 2. Cargar cada módulo visual de forma aislada (si uno falla, no rompe a los demás ni al Login)
+        const loadSafe = async (key, path) => {
+            try {
+                modules[key] = await import(`${path}?v=${ts}`);
+            } catch (e) {
+                console.error(`Error cargando ${path}:`, e);
+            }
+        };
 
-            window.toggleBalancePrivacy = () => {
-                window.state.isBalanceVisible = !window.state.isBalanceVisible;
-                if (finMod.renderFinances) finMod.renderFinances();
-                if (setMod.renderSettings) setMod.renderSettings();
-            };
-            window.deleteDocItem = async (col, docId) => {
-                if (confirm('¿Eliminar registro de Firestore?')) await syncMod.fsActions.removeItem(col, docId);
-            };
-            window.toggleTaskCheck = (docId, s) => syncMod.fsActions.updateItem('tasks', docId, { isCompleted: s });
+        await Promise.all([
+            loadSafe('pro', './weavax-pro.js'),
+            loadSafe('dash', './ui-dashboard.js'),
+            loadSafe('plan', './ui-plan.js'),
+            loadSafe('fin', './ui-finances.js'),
+            loadSafe('work', './ui-workouts.js'),
+            loadSafe('set', './ui-settings.js')
+        ]);
 
-            if (workMod.renderWorkouts) workMod.renderWorkouts();
+        window.navigate = (v) => {
+            document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('view-' + v);
+            if (target) target.classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const active = btn.dataset.nav === v;
+                btn.classList.toggle('bg-accent/15', active);
+                btn.classList.toggle('text-accent', active);
+                btn.classList.toggle('font-bold', active);
+            });
+            if (v === 'dashboard' && modules.dash?.renderDashboard) modules.dash.renderDashboard();
+            if (v === 'plan' && modules.plan?.renderPlanModule) modules.plan.renderPlanModule();
+            if (v === 'finances' && modules.fin?.renderFinances) modules.fin.renderFinances();
+            if (v === 'workouts' && modules.work?.renderWorkouts) modules.work.renderWorkouts();
+            if (v === 'settings' && modules.set?.renderSettings) modules.set.renderSettings();
+        };
 
-            syncMod.initSync(() => {
+        window.toggleBalancePrivacy = () => {
+            window.state.isBalanceVisible = !window.state.isBalanceVisible;
+            if (modules.fin?.renderFinances) modules.fin.renderFinances();
+            if (modules.set?.renderSettings) modules.set.renderSettings();
+        };
+
+        window.deleteDocItem = async (col, docId) => {
+            if (confirm('¿Eliminar registro de Firestore?')) await modules.sync?.fsActions.removeItem(col, docId);
+        };
+        window.toggleTaskCheck = (docId, s) => modules.sync?.fsActions.updateItem('tasks', docId, { isCompleted: s });
+
+        // 3. Iniciar sincronización y sesión
+        if (modules.sync?.initSync) {
+            modules.sync.initSync(() => {
                 const p = window.state.profile || {};
                 const u = window.state.user || {};
                 const xp = Number(p.xp || 0);
@@ -357,14 +364,13 @@
 
                 if (p.themeColor) document.documentElement.style.setProperty('--color-primary', p.themeColor);
 
-                try { if (dashMod.renderDashboard) dashMod.renderDashboard(); } catch (e) { console.error(e); }
-                try { if (planMod.renderPlanModule) planMod.renderPlanModule(); } catch (e) { console.error(e); }
-                try { if (finMod.renderFinances) finMod.renderFinances(); } catch (e) { console.error(e); }
-                try { if (workMod.renderWorkouts) workMod.renderWorkouts(); } catch (e) { console.error(e); }
-                try { if (setMod.renderSettings) setMod.renderSettings(); } catch (e) { console.error(e); }
+                try { modules.pro?.initProState(); } catch (e) { console.error(e); }
+                try { modules.dash?.renderDashboard(); } catch (e) { console.error(e); }
+                try { modules.plan?.renderPlanModule(); } catch (e) { console.error(e); }
+                try { modules.fin?.renderFinances(); } catch (e) { console.error(e); }
+                try { modules.work?.renderWorkouts(); } catch (e) { console.error(e); }
+                try { modules.set?.renderSettings(); } catch (e) { console.error(e); }
             });
-        } catch (err) {
-            console.error("Fallo al importar módulos:", err);
         }
     </script>
 </body>
