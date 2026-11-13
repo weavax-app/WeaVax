@@ -2,12 +2,10 @@ import { fsActions } from './firebase-sync.js?v=5';
 
 export const FREE_LIMITS = {
     MAX_AI_SCANS_MONTH: 5,
-    MAX_HABITS: 15,
     MAX_ACCOUNTS: 10,
     MAX_BUDGETS: 10,
     MAX_GOALS: 10,
-    MAX_PROJECTS: 10,
-    MAX_ROUTINES: 15
+    MAX_PROJECTS: 5
 };
 
 function getCurrentMonthKey() {
