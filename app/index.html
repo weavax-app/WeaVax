@@ -255,18 +255,26 @@
     </div>
 
     <script type="module">
-        const { initSync, fsActions } = await import('./firebase-sync.js?v=3');
-        const { renderDashboard } = await import('./ui-dashboard.js?v=3');
-        const { renderPlanModule } = await import('./ui-plan.js?v=3');
-        const { renderFinances } = await import('./ui-finances.js?v=3');
-        const { renderWorkouts } = await import('./ui-workouts.js?v=3');
-        const { renderSettings } = await import('./ui-settings.js?v=3');
+        // 1. Destrabar la pantalla de carga máximo en 2.5 segundos pase lo que pase
+        setTimeout(() => {
+            const loader = document.getElementById('loading-screen');
+            if (loader && !loader.classList.contains('hidden')) {
+                loader.classList.add('hidden');
+                const appBox = document.getElementById('app-container');
+                const authBox = document.getElementById('auth-screen');
+                if (window.state && window.state.user) {
+                    appBox.classList.remove('hidden');
+                } else {
+                    authBox.classList.remove('hidden');
+                }
+            }
+        }, 2500);
 
         window.toggleSidebar = () => {
             const sb = document.getElementById('app-sidebar');
             const main = document.getElementById('app-main');
-            sb.classList.toggle('collapsed');
-            main.classList.toggle('sidebar-collapsed');
+            if (sb) sb.classList.toggle('collapsed');
+            if (main) main.classList.toggle('sidebar-collapsed');
         };
 
         window.openUniversalModal = (title, html) => {
@@ -275,13 +283,11 @@
             document.getElementById('universal-modal').classList.remove('hidden');
         };
         window.closeUniversalModal = () => document.getElementById('universal-modal').classList.add('hidden');
-        window.toggleBalancePrivacy = () => { window.state.isBalanceVisible = !window.state.isBalanceVisible; renderFinances(); renderSettings(); };
-        window.deleteDocItem = async (col, docId) => { if (confirm('¿Eliminar registro de Firestore?')) await fsActions.removeItem(col, docId); };
-        window.toggleTaskCheck = (docId, s) => fsActions.updateItem('tasks', docId, { isCompleted: s });
 
         window.navigate = (v) => {
             document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
-            document.getElementById('view-' + v).classList.remove('hidden');
+            const target = document.getElementById('view-' + v);
+            if (target) target.classList.remove('hidden');
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 const active = btn.dataset.nav === v;
                 btn.classList.toggle('bg-accent/15', active);
@@ -290,18 +296,72 @@
             });
         };
 
-        initSync(() => {
-            const p = window.state.profile || {};
-            const u = window.state.user || {};
-            const xp = Number(p.xp || 0);
-            const displayName = p.name || u.displayName || 'Marce';
+        // 2. Importar módulos con control de errores individual
+        try {
+            const syncMod = await import('./firebase-sync.js?v=4');
+            const dashMod = await import('./ui-dashboard.js?v=4');
+            const planMod = await import('./ui-plan.js?v=4');
+            const finMod  = await import('./ui-finances.js?v=4');
+            const workMod = await import('./ui-workouts.js?v=4');
+            const setMod  = await import('./ui-settings.js?v=4');
 
-            document.getElementById('user-name').textContent = displayName;
-            document.getElementById('header-greeting').textContent = `Hola, ${displayName.split(' ')[0]}`;
-            document.getElementById('user-level-xp').textContent = `Nivel ${Math.floor(xp / 100) + 1} · ${xp} XP`;
-            document.getElementById('streak-count').textContent = `${p.streak || 0} d`;
+            window.toggleBalancePrivacy = () => {
+                window.state.isBalanceVisible = !window.state.isBalanceVisible;
+                finMod.renderFinances();
+                setMod.renderSettings();
+            };
+            window.deleteDocItem = async (col, docId) => {
+                if (confirm('¿Eliminar registro de Firestore?')) await syncMod.fsActions.removeItem(col, docId);
+            };
+            window.toggleTaskCheck = (docId, s) => syncMod.fsActions.updateItem('tasks', docId, { isCompleted: s });
 
-            // Mostrar Foto de Perfil Real (Google photoURL, URL guardada o Emoji)
-            const rawAvatar = (p.avatar && p.avatar.trim() !== '') ? p.avatar.trim() : (u.photoURL || '');
-            const avatarBox = document.getElementById('user-avatar-box');
-            if (rawAvatar.startsWith('http') || rawAvatar.startsWith('data:image') || rawAvatar.startsWith
+            syncMod.initSync(() => {
+                try {
+                    const p = window.state.profile || {};
+                    const u = window.state.user || {};
+                    const xp = Number(p.xp || 0);
+                    const displayName = p.name || u.displayName || 'Marce';
+
+                    const nameEl = document.getElementById('user-name');
+                    const greetEl = document.getElementById('header-greeting');
+                    const xpEl = document.getElementById('user-level-xp');
+                    const streakEl = document.getElementById('streak-count');
+
+                    if (nameEl) nameEl.textContent = displayName;
+                    if (greetEl) greetEl.textContent = `Hola, ${displayName.split(' ')[0]}`;
+                    if (xpEl) xpEl.textContent = `Nivel ${Math.floor(xp / 100) + 1} · ${xp} XP`;
+                    if (streakEl) streakEl.textContent = `${p.streak || 0} d`;
+
+                    const rawAvatar = (p.avatar && p.avatar.trim() !== '') ? p.avatar.trim() : (u.photoURL || '');
+                    const avatarBox = document.getElementById('user-avatar-box');
+                    if (avatarBox) {
+                        if (rawAvatar.startsWith('http') || rawAvatar.startsWith('data:image') || rawAvatar.startsWith('../')) {
+                            avatarBox.innerHTML = `<img src="${rawAvatar}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
+                        } else if (rawAvatar.length > 0 && rawAvatar.length <= 4) {
+                            avatarBox.innerHTML = `<span>${rawAvatar}</span>`;
+                        } else if (u.photoURL) {
+                            avatarBox.innerHTML = `<img src="${u.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
+                        }
+                    }
+
+                    if (p.themeColor) document.documentElement.style.setProperty('--color-primary', p.themeColor);
+
+                    dashMod.renderDashboard();
+                    planMod.renderPlanModule();
+                    finMod.renderFinances();
+                    workMod.renderWorkouts();
+                    setMod.renderSettings();
+                } catch (renderErr) {
+                    console.error("Error al renderizar vista:", renderErr);
+                }
+            });
+        } catch (err) {
+            console.error("Fallo crítico al importar módulos:", err);
+            document.getElementById('loading-screen').innerHTML = `
+                <div class="p-6 rounded-2xl bg-[#181824] border border-red-500 text-center max-w-md">
+                    <p class="text-sm font-bold text-red-400 mb-2">Falta un archivo JS o hay un error de sintaxis</p>
+                    <p class="text-xs font-mono text-gray-300 break-all">${err.message}</p>
+                </div>
+            `;
+        }
+    </script>
