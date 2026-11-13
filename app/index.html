@@ -5,28 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WeaVax · LifeOS Web & Desktop</title>
     <meta name="theme-color" content="#0A0A0F">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="../weavax_logo.png">
-    <link rel="apple-touch-icon" href="../weavax_logo.png">
-
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        darkBg: '#0A0A0F',
-                        darkCard: '#181824',
-                        darkBorder: '#28283C',
-                        accent: 'var(--color-primary, #8B5CF6)',
-                    }
-                }
-            }
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { accent: 'var(--color-primary, #8B5CF6)' } } }
         }
     </script>
     <style>
@@ -36,1083 +21,144 @@
         .bg-accent { background-color: var(--color-primary); }
         .text-accent { color: var(--color-primary); }
         .border-accent { border-color: var(--color-primary); }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #28283C; border-radius: 9999px; }
     </style>
 </head>
-<body class="min-h-screen antialiased selection:bg-accent selection:text-white">
+<body class="min-h-screen antialiased">
 
-    <!-- PANTALLA DE CARGA -->
     <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0A0A0F]">
         <img src="../weavax_logo.png" alt="WeaVax" class="w-14 h-14 object-contain animate-pulse mb-4">
-        <p class="text-xs font-semibold tracking-widest uppercase text-gray-400">Verificando ruta en Cloud Firestore (lifeos-575b9)...</p>
+        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Cargando LifeOS...</p>
     </div>
 
-    <!-- PANTALLA DE LOGIN -->
     <div id="auth-screen" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-[#0A0A0F]">
-        <div class="w-full max-w-md p-8 rounded-3xl bg-[#181824] border border-[#28283C] shadow-2xl">
-            <div class="flex flex-col items-center text-center mb-8">
-                <img src="../weavax_logo.png" alt="WeaVax" class="w-14 h-14 object-contain mb-3">
-                <h1 class="text-2xl font-black text-white tracking-tight">WeaVax <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">LifeOS</span></h1>
-                <p class="text-xs text-gray-400 mt-2">Inicia sesión con la misma cuenta de <strong>com.Arax.LifeOs</strong> para sincronizar tus datos en tiempo real.</p>
-            </div>
-
-            <button id="btn-google-login" class="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-sm flex items-center justify-center space-x-3 transition-all shadow-lg mb-4">
-                <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"/></svg>
-                <span>Continuar con Google</span>
-            </button>
-
-            <div class="relative my-5">
-                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-[#28283C]"></div></div>
-                <div class="relative flex justify-center text-xs"><span class="px-2 bg-[#181824] text-gray-500">o con correo y contraseña</span></div>
-            </div>
-
-            <form id="email-login-form" class="space-y-3">
-                <input type="email" id="login-email" required placeholder="Correo electrónico" class="w-full px-4 py-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm text-white focus:outline-none focus:border-purple-500">
-                <input type="password" id="login-password" required placeholder="Contraseña" class="w-full px-4 py-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm text-white focus:outline-none focus:border-purple-500">
-                <p id="auth-error" class="text-xs text-red-400 hidden"></p>
-                <button type="submit" class="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm transition-all">Entrar a LifeOS</button>
+        <div class="w-full max-w-md p-8 rounded-3xl bg-[#181824] border border-[#28283C] shadow-2xl text-center">
+            <img src="../weavax_logo.png" alt="WeaVax" class="w-14 h-14 object-contain mx-auto mb-3">
+            <h1 class="text-2xl font-black text-white">WeaVax <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">LifeOS</span></h1>
+            <button id="btn-google-login" class="mt-6 w-full py-3.5 px-4 rounded-xl bg-white text-gray-900 font-bold text-sm">Continuar con Google</button>
+            <form id="email-login-form" class="mt-4 space-y-3">
+                <input type="email" id="login-email" required placeholder="Correo" class="w-full px-4 py-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
+                <input type="password" id="login-password" required placeholder="Contraseña" class="w-full px-4 py-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
+                <button type="submit" class="w-full py-3 rounded-xl bg-purple-600 text-white font-bold text-sm">Entrar</button>
             </form>
         </div>
     </div>
 
-    <!-- APLICACIÓN PRINCIPAL -->
     <div id="app-container" class="hidden min-h-screen flex flex-col md:flex-row">
-
-        <!-- SIDEBAR ESCRITORIO -->
-        <aside class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 dark:border-[#28283C] bg-white dark:bg-[#181824]/95 backdrop-blur-md z-30">
-            <div class="h-16 px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
-                <div class="flex items-center space-x-2.5">
-                    <img src="../weavax_logo.png" alt="WeaVax" class="w-7 h-7 object-contain">
-                    <span class="font-black text-lg tracking-tight">WeaVax</span>
-                </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent/15 text-accent">LifeOS</span>
+        <aside class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 dark:border-[#28283C] bg-white dark:bg-[#181824]">
+            <div class="h-16 px-6 flex items-center space-x-2.5 border-b border-gray-200 dark:border-[#28283C]">
+                <img src="../weavax_logo.png" class="w-7 h-7 object-contain">
+                <span class="font-black text-lg">WeaVax</span>
             </div>
-
-            <!-- Perfil & XP -->
             <div class="p-4 border-b border-gray-200 dark:border-[#28283C]">
-                <div class="flex items-center space-x-3">
-                    <img id="user-avatar" src="../weavax_logo.png" class="w-10 h-10 rounded-full object-cover border border-accent/40">
-                    <div class="min-w-0 flex-1">
-                        <p id="user-name" class="text-sm font-bold truncate">Usuario</p>
-                        <p id="user-level-xp" class="text-[11px] text-gray-400">Nivel 1 · 0 XP</p>
-                    </div>
-                </div>
-                <div class="w-full h-1.5 bg-gray-200 dark:bg-[#0A0A0F] rounded-full mt-3 overflow-hidden">
-                    <div id="xp-progress-bar" class="h-full bg-accent transition-all duration-500" style="width: 0%"></div>
-                </div>
+                <p id="user-name" class="text-sm font-bold truncate">Marce</p>
+                <p id="user-level-xp" class="text-[11px] text-gray-400">Nivel 1 · 0 XP</p>
             </div>
-
-            <!-- Navegación -->
             <nav class="flex-1 px-3 py-4 space-y-1 text-sm font-medium">
-                <button onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-accent/15 text-accent font-bold">
-                    <span>🏠</span><span>Inicio / Mi Día</span>
-                </button>
-                <button onclick="navigate('plan')" data-nav="plan" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
-                    <span>📅</span><span>Plan & Agenda</span>
-                </button>
-                <button onclick="navigate('finances')" data-nav="finances" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
-                    <span>💳</span><span>Finanzas</span>
-                </button>
-                <button onclick="navigate('workouts')" data-nav="workouts" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
-                    <span>🏋️</span><span>Entrenamiento</span>
-                </button>
-                <button onclick="navigate('progress')" data-nav="progress" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
-                    <span>📊</span><span>Progreso</span>
-                </button>
-                <button onclick="navigate('settings')" data-nav="settings" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
-                    <span>⚙️</span><span>Ajustes & Diagnóstico</span>
-                </button>
+                <button onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-accent/15 text-accent font-bold"><span>🏠</span><span>Inicio / Mi Día</span></button>
+                <button onclick="navigate('finances')" data-nav="finances" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>💳</span><span>Finanzas</span></button>
+                <button onclick="navigate('settings')" data-nav="settings" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400"><span>⚙️</span><span>Ajustes & Limpieza</span></button>
             </nav>
-
-            <div class="p-4 border-t border-gray-200 dark:border-[#28283C]">
-                <button onclick="openQuickModal()" class="w-full py-2.5 px-4 rounded-xl bg-accent hover:opacity-90 text-white font-bold text-xs shadow-lg transition-all">
-                    + Acción Rápida (Ctrl+K)
-                </button>
-            </div>
         </aside>
 
-        <!-- BARRA INFERIOR MÓVIL -->
-        <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 h-16 bg-white dark:bg-[#181824] border-t border-gray-200 dark:border-[#28283C] flex items-center justify-around px-2">
-            <button onclick="navigate('dashboard')" class="flex flex-col items-center text-[10px] font-bold text-accent"><span>🏠</span><span>Hoy</span></button>
-            <button onclick="navigate('plan')" class="flex flex-col items-center text-[10px] text-gray-400"><span>📅</span><span>Plan</span></button>
-            <button onclick="openQuickModal()" class="w-11 h-11 rounded-full bg-accent text-white font-black text-xl shadow-lg -mt-4 flex items-center justify-center">+</button>
-            <button onclick="navigate('finances')" class="flex flex-col items-center text-[10px] text-gray-400"><span>💳</span><span>Finanzas</span></button>
-            <button onclick="navigate('settings')" class="flex flex-col items-center text-[10px] text-gray-400"><span>⚙️</span><span>Ajustes</span></button>
-        </nav>
-
-        <!-- CONTENIDO PRINCIPAL -->
-        <main class="flex-1 md:pl-64 pb-24 md:pb-10">
-            <!-- Topbar -->
-            <header class="sticky top-0 z-20 h-16 px-4 sm:px-8 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C] bg-white/80 dark:bg-[#0A0A0F]/80 backdrop-blur-md">
-                <div>
-                    <h2 id="header-greeting" class="text-base sm:text-lg font-extrabold">Mi Día</h2>
-                    <p id="header-date" class="text-[11px] text-gray-400 capitalize"></p>
-                </div>
-
+        <main class="flex-1 md:pl-64 pb-20">
+            <header class="h-16 px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
+                <h2 id="header-greeting" class="text-lg font-extrabold">Hola, Marce</h2>
                 <div class="flex items-center space-x-2.5">
-                    <div id="badge-streak" class="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] text-xs font-bold flex items-center space-x-1">
-                        <span>🔥</span><span id="streak-count">0 d</span>
-                    </div>
-                    <button onclick="openDailyScoreModal()" class="px-3.5 py-1.5 rounded-full bg-accent/15 border border-accent/40 text-accent text-xs font-extrabold hover:bg-accent/25 transition-all">
-                        Día <span id="daily-score-pct">0</span>%
-                    </button>
+                    <span class="px-3 py-1 rounded-full bg-[#181824] border border-[#28283C] text-xs font-bold">🔥 <span id="streak-count">0 d</span></span>
+                    <span class="px-3.5 py-1 rounded-full bg-accent/15 border border-accent/40 text-accent text-xs font-extrabold">Día <span id="daily-score-pct">0</span>%</span>
                 </div>
             </header>
 
-            <!-- BANNER DE ALERTA DE PERMISOS FIRESTORE (SOLO VISIBLE SI HAY ERROR) -->
-            <div id="firestore-error-banner" class="hidden mx-4 sm:mx-8 mt-4 p-4 rounded-2xl bg-red-500/15 border border-red-500/40 text-xs text-red-300">
-                <strong class="font-bold block mb-1">⚠️ Alerta de conexión con Firestore:</strong>
-                <span id="firestore-error-text"></span>
-            </div>
-
-            <div class="max-w-6xl mx-auto p-4 sm:p-8">
-
-                <!-- 1. DASHBOARD (MI DÍA) -->
-                <section id="view-dashboard" class="app-view space-y-6">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
-                        <!-- Balance Total -->
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Balance Consolidado</span>
-                                <button onclick="toggleBalancePrivacy()" id="btn-toggle-eye" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#0A0A0F] text-gray-400 text-sm" title="Mostrar/Ocultar saldos">
-                                    👁️‍🗨️
-                                </button>
-                            </div>
-                            <div id="dashboard-total-balance" class="text-3xl font-black tracking-tight my-2">Bs •••••</div>
-                            <div class="flex gap-2 mt-4">
-                                <button onclick="openTxModal('expense')" class="flex-1 py-2 px-3 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 text-xs font-bold transition-all">+ Gasto</button>
-                                <button onclick="openTxModal('income')" class="flex-1 py-2 px-3 rounded-xl bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs font-bold transition-all">+ Ingreso</button>
-                            </div>
+            <div class="max-w-6xl mx-auto p-6">
+                <!-- DASHBOARD -->
+                <section id="view-dashboard" class="app-view grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold uppercase text-gray-400">Balance Consolidado</span>
+                            <button onclick="toggleBalancePrivacy()" class="text-sm">👁️‍🗨️</button>
                         </div>
-
-                        <!-- Hábitos de Hoy -->
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-sm font-extrabold">Hábitos de Hoy</h3>
-                                <button onclick="openHabitModal()" class="text-xs font-bold text-accent hover:underline">+ Nuevo</button>
-                            </div>
-                            <div id="dashboard-habits-list" class="space-y-2.5 text-sm"></div>
-                        </div>
-
-                        <!-- Agenda de Hoy -->
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-sm font-extrabold">Agenda de Hoy</h3>
-                                <button onclick="openTaskModal()" class="text-xs font-bold text-accent hover:underline">+ Tarea</button>
-                            </div>
-                            <div id="dashboard-agenda-list" class="space-y-2.5 text-sm"></div>
-                        </div>
-                    </div>
-
-                    <!-- Presupuestos y Metas -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-sm font-extrabold">Presupuestos Activos</h3>
-                                <button onclick="openBudgetModal()" class="text-xs font-bold text-accent hover:underline">+ Presupuesto</button>
-                            </div>
-                            <div id="dashboard-budgets-list" class="space-y-3"></div>
-                        </div>
-
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-sm font-extrabold">Metas de Ahorro</h3>
-                                <button onclick="openGoalModal()" class="text-xs font-bold text-accent hover:underline">+ Meta</button>
-                            </div>
-                            <div id="dashboard-goals-list" class="space-y-3"></div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 2. PLAN & AGENDA -->
-                <section id="view-plan" class="app-view hidden space-y-6">
-                    <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                            <h3 class="text-xl font-black">Plan & Agenda</h3>
-                            <p id="plan-active-path" class="text-xs font-mono text-gray-400"></p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="setPlanTab('calendar')" id="tab-plan-cal" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">Calendario</button>
-                            <button onclick="setPlanTab('list')" id="tab-plan-list" class="px-4 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">Lista Completa</button>
-                            <button onclick="openTaskModal()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">+ Nuevo</button>
-                        </div>
-                    </div>
-
-                    <div id="plan-calendar-view" class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                        <div class="flex items-center justify-between mb-4">
-                            <button onclick="changeCalendarMonth(-1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">← Anterior</button>
-                            <h4 id="calendar-month-label" class="text-base font-extrabold capitalize"></h4>
-                            <button onclick="changeCalendarMonth(1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">Siguiente →</button>
-                        </div>
-                        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-gray-400 mb-2">
-                            <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
-                        </div>
-                        <div id="calendar-grid-days" class="grid grid-cols-7 gap-1.5"></div>
-                        <div id="calendar-selected-day-items" class="mt-6 pt-4 border-t border-[#28283C] space-y-2"></div>
-                    </div>
-
-                    <div id="plan-list-view" class="hidden p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                        <div id="all-tasks-list" class="space-y-2"></div>
-                    </div>
-                </section>
-
-                <!-- 3. FINANZAS -->
-                <section id="view-finances" class="app-view hidden space-y-6">
-                    <div class="flex flex-wrap items-center justify-between gap-4">
-                        <h3 class="text-xl font-black">Finanzas Multi-Moneda</h3>
-                        <div class="flex flex-wrap gap-2">
-                            <button onclick="openAccountModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Cuenta</button>
-                            <button onclick="openBudgetModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Presupuesto</button>
-                            <button onclick="openGoalModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Meta Ahorro</button>
-                            <button onclick="openTxModal('expense')" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Movimiento</button>
-                        </div>
-                    </div>
-
-                    <div id="accounts-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                            <h4 class="text-sm font-extrabold mb-4">Presupuestos Mensuales</h4>
-                            <div id="finances-budgets-list" class="space-y-3"></div>
-                        </div>
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                            <h4 class="text-sm font-extrabold mb-4">Metas de Ahorro</h4>
-                            <div id="finances-goals-list" class="space-y-3"></div>
-                        </div>
+                        <div id="dashboard-total-balance" class="text-3xl font-black my-2">Bs •••••</div>
                     </div>
 
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                        <h4 class="text-sm font-extrabold mb-4">Historial de Transacciones</h4>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-extrabold">Hábitos de Hoy</h3>
+                            <button onclick="openHabitModal()" class="text-xs font-bold text-accent">+ Nuevo</button>
+                        </div>
+                        <div id="dashboard-habits-list" class="space-y-2.5"></div>
+                    </div>
+
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                        <h3 class="text-sm font-extrabold mb-4">Agenda de Hoy</h3>
+                        <div id="dashboard-agenda-list" class="space-y-2.5"></div>
+                    </div>
+                </section>
+
+                <!-- FINANZAS -->
+                <section id="view-finances" class="app-view hidden space-y-6">
+                    <h3 class="text-xl font-black">Finanzas Multi-Moneda</h3>
+                    <div id="accounts-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                        <h4 class="text-sm font-extrabold mb-4">Historial de Movimientos</h4>
                         <div id="transactions-list" class="space-y-2"></div>
                     </div>
                 </section>
 
-                <!-- 4. ENTRENAMIENTO -->
-                <section id="view-workouts" class="app-view hidden space-y-6">
-                    <div class="flex flex-wrap items-center justify-between gap-4">
-                        <h3 class="text-xl font-black">Rutinas y Sesiones</h3>
-                        <button onclick="openRoutineModal()" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Crear Rutina</button>
-                    </div>
-                    <div id="routines-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                        <h4 class="text-sm font-extrabold mb-4">Historial de Sesiones</h4>
-                        <div id="sessions-list" class="space-y-2"></div>
-                    </div>
-                </section>
-
-                <!-- 5. PROGRESO -->
-                <section id="view-progress" class="app-view hidden space-y-6">
-                    <h3 class="text-xl font-black">Distribución del Daily Score</h3>
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                        <p class="text-xs text-gray-400 mb-4">Módulos activos hoy (se ocultan automáticamente los que estén en 0%):</p>
-                        <div id="progress-bars-container" class="space-y-4"></div>
-                    </div>
-                </section>
-
-                <!-- 6. AJUSTES & DIAGNÓSTICO DE FIRESTORE -->
+                <!-- AJUSTES & LIMPIEZA -->
                 <section id="view-settings" class="app-view hidden space-y-6">
-                    <h3 class="text-xl font-black">Ajustes y Diagnóstico de Sincronización</h3>
-                    
-                    <!-- Monitor en Tiempo Real de Firestore -->
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h4 class="text-sm font-extrabold">Monitor de Colecciones Cloud Firestore</h4>
-                                <p class="text-xs text-gray-400">Ruta activa detectada: <code id="diag-active-path" class="text-accent font-mono"></code></p>
-                            </div>
-                            <span id="diag-status-badge" class="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold">Escuchando (onSnapshot)</span>
-                        </div>
-
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs" id="diag-counts-grid"></div>
-                        <p class="text-[11px] text-gray-400">
-                            <strong>Nota:</strong> Si los contadores marcan <code>0</code>, verifica en tu app Android (<code>com.Arax.LifeOs</code>) que se haya ejecutado la subida inicial desde Room hacia Firestore tras habilitar la base de datos hoy.
-                        </p>
-                    </div>
-
-                    <!-- Tema y Respaldo -->
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-bold">Apariencia (Oscuro / Claro)</p>
-                                <p class="text-xs text-gray-400">Alternar tema visual</p>
-                            </div>
-                            <button onclick="toggleTheme()" class="px-4 py-2 rounded-xl border border-[#28283C] text-xs font-bold">Alternar Tema</button>
-                        </div>
-
-                        <div>
-                            <p class="text-sm font-bold mb-2">Color de Acento</p>
-                            <div class="flex gap-3">
-                                <button onclick="setAccentColor('#8B5CF6')" class="w-8 h-8 rounded-full bg-[#8B5CF6] border-2 border-white"></button>
-                                <button onclick="setAccentColor('#06B6D4')" class="w-8 h-8 rounded-full bg-[#06B6D4]"></button>
-                                <button onclick="setAccentColor('#10B981')" class="w-8 h-8 rounded-full bg-[#10B981]"></button>
-                                <button onclick="setAccentColor('#EF4444')" class="w-8 h-8 rounded-full bg-[#EF4444]"></button>
-                                <button onclick="setAccentColor('#F59E0B')" class="w-8 h-8 rounded-full bg-[#F59E0B]"></button>
-                            </div>
-                        </div>
-
-                        <div class="pt-4 border-t border-gray-200 dark:border-[#28283C] flex flex-wrap gap-3">
-                            <button onclick="exportBackupJSON()" class="px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-bold">
-                                ⬇️ Exportar Respaldo JSON
+                        <h3 class="text-base font-extrabold">Mantenimiento de Base de Datos</h3>
+                        <p class="text-xs text-gray-400">Ruta activa: <code id="diag-active-path" class="text-accent"></code></p>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="cleanFirestoreDuplicates()" class="px-4 py-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold">
+                                🧹 Limpiar Duplicados de Firestore
                             </button>
-                            <button onclick="logoutUser()" class="px-4 py-2.5 rounded-xl bg-red-500/15 text-red-400 text-xs font-bold">
-                                Cerrar Sesión
-                            </button>
+                            <button onclick="logoutUser()" class="px-4 py-2.5 rounded-xl bg-red-500/15 text-red-400 text-xs font-bold">Cerrar Sesión</button>
                         </div>
                     </div>
                 </section>
-
             </div>
         </main>
     </div>
 
     <!-- MODAL UNIVERSAL -->
-    <div id="universal-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-        <div class="w-full max-w-md p-6 rounded-3xl bg-[#181824] border border-[#28283C] shadow-2xl">
-            <div class="flex items-center justify-between mb-4">
-                <h3 id="modal-title" class="text-base font-extrabold text-white">Acción</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
+    <div id="universal-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75">
+        <div class="w-full max-w-md p-6 rounded-3xl bg-[#181824] border border-[#28283C]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="text-base font-extrabold"></h3>
+                <button onclick="closeUniversalModal()">✕</button>
             </div>
-            <div id="modal-body" class="space-y-4"></div>
+            <div id="modal-body"></div>
         </div>
     </div>
 
-    <!-- FIREBASE SDK v11 -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { initSync, fsActions } from './firebase-sync.js';
+        import { renderDashboard } from './ui-dashboard.js';
+        import { renderFinances } from './ui-finances.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyB7exiNH2ncLbwJ7TVIQ6-Dl3Lh9sDFcVo",
-            authDomain: "lifeos-575b9.firebaseapp.com",
-            projectId: "lifeos-575b9",
-            storageBucket: "lifeos-575b9.firebasestorage.app",
-            messagingSenderId: "723633495460",
-            appId: "1:723633495460:web:60e823631ca6290a6eb531",
-            measurementId: "G-ST2472GPZL"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        window.state = {
-            user: null,
-            activeUserDocId: null, // Puede ser user.uid o email.replace(/\./g, "_")
-            profile: {},
-            habits: [],
-            tasks: [],
-            accounts: [],
-            transactions: [],
-            budgets: [],
-            goals: [],
-            workout_routines: [],
-            workout_sessions: [],
-            isBalanceVisible: false,
-            calYear: new Date().getFullYear(),
-            calMonth: new Date().getMonth(),
-            selectedDay: new Date().getDate()
-        };
-
-        const todayObj = new Date();
-        const todayDay = todayObj.getDate();
-        const todayMonth = todayObj.getMonth() + 1;
-        const todayYear = todayObj.getFullYear();
-        const dayLetters = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-        const todayLetter = dayLetters[todayObj.getDay()];
-
-        document.getElementById('header-date').textContent = todayObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
-        // AUTENTICACIÓN
-        onAuthStateChanged(auth, async (user) => {
-            document.getElementById('loading-screen').classList.add('hidden');
-            if (user) {
-                window.state.user = user;
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
-
-                // Resolver ID de documento (uid vs email con guiones bajos)
-                const resolvedId = await resolveUserDocId(user);
-                window.state.activeUserDocId = resolvedId;
-                document.getElementById('diag-active-path').textContent = `users/${resolvedId}`;
-                document.getElementById('plan-active-path').textContent = `Ruta activa: users/${resolvedId}/tasks`;
-                console.log(`[WeaVax Firestore] Conectado como ${user.email}. Ruta raíz resuelta: users/${resolvedId}`);
-
-                subscribeFirestore(resolvedId);
-            } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('app-container').classList.add('hidden');
-            }
-        });
-
-        // DETECCIÓN AUTOMÁTICA DE RUTA (uid vs email.replace(/\./g, "_"))
-        async function resolveUserDocId(user) {
-            const uidId = user.uid;
-            const emailId = user.email ? user.email.replace(/\./g, "_") : null;
-
-            try {
-                // 1. Verificar si existen datos bajo users/{uid}
-                const uidHabits = await getDocs(collection(db, 'users', uidId, 'habits'));
-                const uidTasks = await getDocs(collection(db, 'users', uidId, 'tasks'));
-                const uidAccounts = await getDocs(collection(db, 'users', uidId, 'accounts'));
-                if (!uidHabits.empty || !uidTasks.empty || !uidAccounts.empty) {
-                    return uidId;
-                }
-
-                // 2. Fallback: comprobar si Android guardó bajo users/{email_con_guiones}
-                if (emailId) {
-                    const emailDoc = await getDoc(doc(db, 'users', emailId));
-                    const emailHabits = await getDocs(collection(db, 'users', emailId, 'habits'));
-                    const emailTasks = await getDocs(collection(db, 'users', emailId, 'tasks'));
-                    if (emailDoc.exists() || !emailHabits.empty || !emailTasks.empty) {
-                        console.log(`[WeaVax Firestore] Fallback activado: usando users/${emailId}`);
-                        return emailId;
-                    }
-                }
-
-                // 3. Si ambos están vacíos (nube recién creada), inicializar users/{uid}
-                const userRef = doc(db, 'users', uidId);
-                const snap = await getDoc(userRef);
-                if (!snap.exists()) {
-                    await setDoc(userRef, {
-                        name: user.displayName || 'Marcelo Subieta',
-                        email: user.email,
-                        avatar: user.photoURL || '../weavax_logo.png',
-                        xp: 0,
-                        level: 1,
-                        streak: 0,
-                        themeColor: '#8B5CF6',
-                        isDarkMode: true
-                    });
-                }
-                return uidId;
-            } catch (err) {
-                showFirestoreError(`Error al verificar ruta (${err.code || err.message}). Revisa las reglas de seguridad de Firestore.`);
-                return uidId;
-            }
-        }
-
-        function showFirestoreError(msg) {
-            console.error("[WeaVax Firestore Error]", msg);
-            const banner = document.getElementById('firestore-error-banner');
-            document.getElementById('firestore-error-text').textContent = msg;
-            banner.classList.remove('hidden');
-            const badge = document.getElementById('diag-status-badge');
-            badge.textContent = "Error de permisos / red";
-            badge.className = "px-3 py-1 rounded-full bg-red-500/15 text-red-400 text-xs font-bold";
-        }
-
-        // SUSCRIPCIÓN REAL-TIME A TODAS LAS SUBCOLECCIONES
-        function subscribeFirestore(docId) {
-            onSnapshot(doc(db, 'users', docId), (snap) => {
-                if (snap.exists()) {
-                    window.state.profile = snap.data();
-                    renderProfile();
-                }
-            }, (err) => showFirestoreError(`Perfil (${err.code}): ${err.message}`));
-
-            const collectionsList = [
-                'habits',
-                'tasks',
-                'accounts',
-                'transactions',
-                'budgets',
-                'goals',
-                'workout_routines',
-                'workout_sessions'
-            ];
-
-            collectionsList.forEach(colName => {
-                onSnapshot(collection(db, 'users', docId, colName), (snap) => {
-                    window.state[colName] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    console.log(`[WeaVax Firestore] users/${docId}/${colName} -> ${snap.size} documentos leídos`);
-                    if (colName === 'transactions') {
-                        window.state.transactions.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
-                    }
-                    renderAll();
-                }, (err) => {
-                    showFirestoreError(`Subcolección '${colName}' (${err.code}): ${err.message}`);
-                });
-            });
-        }
-
-        document.getElementById('btn-google-login').addEventListener('click', async () => {
-            try {
-                await signInWithPopup(auth, new GoogleAuthProvider());
-            } catch (err) {
-                const errEl = document.getElementById('auth-error');
-                errEl.textContent = "Error: " + err.message;
-                errEl.classList.remove('hidden');
-            }
-        });
-
-        document.getElementById('email-login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try {
-                await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
-            } catch (err) {
-                const errEl = document.getElementById('auth-error');
-                errEl.textContent = "Error: " + err.message;
-                errEl.classList.remove('hidden');
-            }
-        });
-
-        window.logoutUser = () => signOut(auth);
-
-        function renderProfile() {
-            const p = window.state.profile;
-            const xp = Number(p.xp || 0);
-            const level = Math.floor(xp / 100) + 1;
-            const displayName = p.name || window.state.user.displayName || 'Marce';
-            document.getElementById('user-name').textContent = displayName;
-            document.getElementById('header-greeting').textContent = `Hola, ${displayName.split(' ')[0]}`;
-            document.getElementById('user-level-xp').textContent = `Nivel ${level} · ${xp} XP`;
-            document.getElementById('xp-progress-bar').style.width = `${xp % 100}%`;
-            document.getElementById('streak-count').textContent = `${p.streak || 0} d`;
-            if (p.avatar) document.getElementById('user-avatar').src = p.avatar;
-            if (p.themeColor) document.documentElement.style.setProperty('--color-primary', p.themeColor);
-        }
-
-        // DAILY SCORE ESTRICTO (HÁBITOS + TAREAS SIN EVENTOS + ENTRENAMIENTO)
-        function calculateDailyScore() {
-            const todayHabits = window.state.habits.filter(h => !h.frequencyDays || h.frequencyDays.includes(todayLetter));
-            const completedHabits = todayHabits.filter(h => h.isCompleted).length;
-
-            const todayTasks = window.state.tasks.filter(t => !t.isEvent && Number(t.day) === todayDay && Number(t.month) === todayMonth && Number(t.year) === todayYear);
-            const completedTasks = todayTasks.filter(t => t.isCompleted).length;
-
-            const todayIso = todayObj.toISOString().split('T')[0];
-            const trainedToday = window.state.workout_sessions.some(s => String(s.date || '').startsWith(todayIso));
-
-            const total = todayHabits.length + todayTasks.length + (trainedToday ? 1 : 0);
-            const done = completedHabits + completedTasks + (trainedToday ? 1 : 0);
-            const score = total === 0 ? 0 : Math.round((done / total) * 100);
-
-            return {
-                score,
-                todayHabits,
-                todayTasks,
-                habitPct: todayHabits.length ? Math.round((completedHabits / todayHabits.length) * 100) : 0,
-                taskPct: todayTasks.length ? Math.round((completedTasks / todayTasks.length) * 100) : 0,
-                workoutPct: trainedToday ? 100 : 0
-            };
-        }
-
-        function renderAll() {
-            const ds = calculateDailyScore();
-            document.getElementById('daily-score-pct').textContent = ds.score;
-
-            // Diagnóstico de conteo en Ajustes
-            const diagCols = ['habits', 'tasks', 'accounts', 'transactions', 'budgets', 'goals', 'workout_routines', 'workout_sessions'];
-            document.getElementById('diag-counts-grid').innerHTML = diagCols.map(c => `
-                <div class="p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
-                    <span class="text-[10px] font-mono text-gray-400 block">${c}</span>
-                    <span class="text-base font-black text-white">${window.state[c].length} docs</span>
-                </div>
-            `).join('');
-
-            // Balance
-            const totalBs = window.state.accounts.reduce((sum, a) => {
-                const rate = a.currency === 'USD' ? 6.96 : a.currency === 'EUR' ? 7.5 : 1;
-                return sum + (Number(a.balance || 0) * rate);
-            }, 0);
-            document.getElementById('dashboard-total-balance').textContent = window.state.isBalanceVisible
-                ? `Bs ${totalBs.toLocaleString('es-BO', { minimumFractionDigits: 2 })}`
-                : 'Bs •••••';
-
-            // Hábitos Hoy
-            document.getElementById('dashboard-habits-list').innerHTML = ds.todayHabits.length === 0
-                ? `<p class="text-xs text-gray-400">Sin hábitos programados hoy (${todayLetter}). Crea uno o sincroniza desde Android.</p>`
-                : ds.todayHabits.map(h => `
-                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
-                        <div class="flex items-center space-x-2.5">
-                            <input type="checkbox" ${h.isCompleted ? 'checked' : ''} onchange="toggleHabit('${h.id}', ${!h.isCompleted}, ${h.xpReward || 15})" class="w-4 h-4 accent-purple-600 rounded cursor-pointer">
-                            <span class="${h.isCompleted ? 'line-through text-gray-500' : 'font-semibold'}">${h.name}</span>
-                        </div>
-                        <button onclick="deleteItem('habits', '${h.id}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
-                    </div>
-                `).join('');
-
-            // Agenda Hoy
-            const todayItems = window.state.tasks.filter(t => Number(t.day) === todayDay && Number(t.month) === todayMonth && Number(t.year) === todayYear);
-            document.getElementById('dashboard-agenda-list').innerHTML = todayItems.length === 0
-                ? `<p class="text-xs text-gray-400">No hay tareas ni eventos para hoy.</p>`
-                : todayItems.map(t => renderTaskRow(t)).join('');
-
-            document.getElementById('all-tasks-list').innerHTML = window.state.tasks.length === 0
-                ? `<p class="text-xs text-gray-400">0 documentos en la subcolección tasks.</p>`
-                : window.state.tasks.map(t => renderTaskRow(t, true)).join('');
-
-            // Cuentas
-            document.getElementById('accounts-grid').innerHTML = window.state.accounts.length === 0
-                ? `<p class="text-xs text-gray-400 col-span-3">0 cuentas en Firestore. Crea una con "+ Cuenta" o sincroniza desde Android.</p>`
-                : window.state.accounts.map(a => `
-                    <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] font-bold uppercase text-gray-400">${a.type || 'Cuenta'} · ${a.currency}</span>
-                            <h5 class="text-base font-extrabold mt-0.5">${a.name}</h5>
-                            <p class="text-lg font-black text-accent mt-2">${window.state.isBalanceVisible ? `${a.currency} ${Number(a.balance || 0).toFixed(2)}` : `${a.currency} •••••`}</p>
-                        </div>
-                        <button onclick="deleteItem('accounts', '${a.id}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
-                    </div>
-                `).join('');
-
-            // Presupuestos
-            const budgetsHtml = window.state.budgets.length === 0
-                ? `<p class="text-xs text-gray-400">Sin presupuestos configurados.</p>`
-                : window.state.budgets.map(b => {
-                    const limit = Number(b.limitAmount || 1);
-                    const spent = Number(b.spentAmount || 0);
-                    const pct = Math.min(100, Math.round((spent / limit) * 100));
-                    const barColor = pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-emerald-500';
-                    return `
-                        <div class="p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
-                            <div class="flex justify-between text-xs font-bold mb-1">
-                                <span>${b.category}</span>
-                                <span>${window.state.isBalanceVisible ? `${b.currency || 'Bs'} ${spent} / ${limit}` : '•••••'} (${pct}%)</span>
-                            </div>
-                            <div class="w-full h-2 bg-gray-200 dark:bg-[#181824] rounded-full overflow-hidden">
-                                <div class="h-full ${barColor}" style="width: ${pct}%"></div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            document.getElementById('dashboard-budgets-list').innerHTML = budgetsHtml;
-            document.getElementById('finances-budgets-list').innerHTML = budgetsHtml;
-
-            // Metas
-            const goalsHtml = window.state.goals.length === 0
-                ? `<p class="text-xs text-gray-400">Sin metas de ahorro registradas.</p>`
-                : window.state.goals.map(g => {
-                    const target = Number(g.targetAmount || 1);
-                    const current = Number(g.currentAmount || 0);
-                    const pct = Math.min(100, Math.round((current / target) * 100));
-                    return `
-                        <div class="p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
-                            <div class="flex justify-between items-center text-xs font-bold mb-1">
-                                <span>${g.name}</span>
-                                <div class="flex items-center space-x-2">
-                                    <span>${window.state.isBalanceVisible ? `${g.currency || 'Bs'} ${current} / ${target}` : '•••••'}</span>
-                                    <button onclick="addGoalDeposit('${g.id}', ${current})" class="px-2 py-0.5 rounded bg-accent/20 text-accent">+ Abonar</button>
-                                </div>
-                            </div>
-                            <div class="w-full h-2 bg-gray-200 dark:bg-[#181824] rounded-full overflow-hidden">
-                                <div class="h-full bg-accent" style="width: ${pct}%"></div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            document.getElementById('dashboard-goals-list').innerHTML = goalsHtml;
-            document.getElementById('finances-goals-list').innerHTML = goalsHtml;
-
-            // Transacciones
-            document.getElementById('transactions-list').innerHTML = window.state.transactions.length === 0
-                ? `<p class="text-xs text-gray-400">No hay movimientos registrados.</p>`
-                : window.state.transactions.map(tx => `
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
-                        <div>
-                            <p class="text-sm font-bold">${tx.title}</p>
-                            <p class="text-[11px] text-gray-400">${tx.category || 'General'} · ${tx.accountName || ''} · ${tx.date || ''}</p>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <span class="text-sm font-black ${tx.type === 'income' ? 'text-emerald-400' : 'text-red-400'}">
-                                ${tx.type === 'income' ? '+' : '-'}${tx.currency || 'Bs'} ${Number(tx.amount || 0).toFixed(2)}
-                            </span>
-                            <button onclick="deleteTransaction('${tx.id}', '${tx.accountId}', ${tx.amount}, '${tx.type}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
-                        </div>
-                    </div>
-                `).join('');
-
-            // Rutinas y Sesiones
-            document.getElementById('routines-grid').innerHTML = window.state.workout_routines.length === 0
-                ? `<p class="text-xs text-gray-400 col-span-3">0 rutinas en Firestore.</p>`
-                : window.state.workout_routines.map(r => `
-                    <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex flex-col justify-between">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h5 class="font-extrabold text-base">${r.name}</h5>
-                                <p class="text-xs text-gray-400 mt-1">${r.description || 'Rutina'}</p>
-                            </div>
-                            <button onclick="deleteItem('workout_routines', '${r.id}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
-                        </div>
-                        <button onclick="logQuickSession('${r.name}')" class="mt-4 w-full py-2 rounded-xl bg-accent/15 text-accent hover:bg-accent hover:text-white text-xs font-bold transition-all">
-                            ✓ Registrar Sesión Hoy
-                        </button>
-                    </div>
-                `).join('');
-
-            document.getElementById('sessions-list').innerHTML = window.state.workout_sessions.length === 0
-                ? `<p class="text-xs text-gray-400">No hay sesiones registradas.</p>`
-                : window.state.workout_sessions.map(s => `
-                    <div class="p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex justify-between items-center">
-                        <div>
-                            <p class="text-sm font-bold">${s.routineName || 'Entrenamiento'}</p>
-                            <p class="text-[11px] text-gray-400">${s.date} · ${s.durationMinutes || 60} min</p>
-                        </div>
-                        <button onclick="deleteItem('workout_sessions', '${s.id}')" class="text-xs text-red-400">Eliminar</button>
-                    </div>
-                `).join('');
-
-            // Progreso
-            const modules = [
-                { label: 'Hábitos', pct: ds.habitPct },
-                { label: 'Tareas', pct: ds.taskPct },
-                { label: 'Entrenamiento', pct: ds.workoutPct }
-            ].filter(m => m.pct > 0);
-            document.getElementById('progress-bars-container').innerHTML = modules.length === 0
-                ? `<p class="text-xs text-gray-400">Completa al menos un hábito, tarea o entrenamiento hoy para ver la distribución.</p>`
-                : modules.map(m => `
-                    <div>
-                        <div class="flex justify-between text-xs font-bold mb-1"><span>${m.label}</span><span>${m.pct}%</span></div>
-                        <div class="w-full h-2.5 bg-gray-200 dark:bg-[#0A0A0F] rounded-full overflow-hidden">
-                            <div class="h-full bg-accent" style="width: ${m.pct}%"></div>
-                        </div>
-                    </div>
-                `).join('');
-
-            renderCalendar();
-        }
-
-        function renderTaskRow(t, showDate = false) {
-            if (t.isEvent) {
-                return `
-                    <div class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
-                            <span>📅</span>
-                            <div>
-                                <p class="text-xs font-bold text-blue-300">${t.title}</p>
-                                <p class="text-[10px] text-gray-400">${showDate ? `${t.day}/${t.month}/${t.year} · ` : ''}${t.time || 'Evento'}</p>
-                            </div>
-                        </div>
-                        <button onclick="deleteItem('tasks', '${t.id}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
-                    </div>
-                `;
-            }
-            return `
-                <div class="p-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex items-center justify-between">
-                    <div class="flex items-center space-x-2.5">
-                        <input type="checkbox" ${t.isCompleted ? 'checked' : ''} onchange="toggleTask('${t.id}', ${!t.isCompleted})" class="w-4 h-4 accent-purple-600 rounded cursor-pointer">
-                        <div>
-                            <p class="text-xs ${t.isCompleted ? 'line-through text-gray-500' : 'font-semibold'}">${t.title}</p>
-                            ${showDate ? `<p class="text-[10px] text-gray-400">${t.day}/${t.month}/${t.year}</p>` : ''}
-                        </div>
-                    </div>
-                    <button onclick="deleteItem('tasks', '${t.id}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
-                </div>
-            `;
-        }
-
-        function renderCalendar() {
-            const y = window.state.calYear;
-            const m = window.state.calMonth;
-            const monthDate = new Date(y, m, 1);
-            document.getElementById('calendar-month-label').textContent = monthDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-
-            const firstDayIndex = monthDate.getDay();
-            const daysInMonth = new Date(y, m + 1, 0).getDate();
-            let cells = '';
-
-            for (let i = 0; i < firstDayIndex; i++) cells += `<div class="h-12"></div>`;
-            for (let d = 1; d <= daysInMonth; d++) {
-                const count = window.state.tasks.filter(t => Number(t.day) === d && Number(t.month) === (m + 1) && Number(t.year) === y).length;
-                const isSelected = d === window.state.selectedDay;
-                cells += `
-                    <button onclick="selectCalendarDay(${d})" class="h-12 rounded-xl border ${isSelected ? 'border-accent bg-accent/20 text-white' : 'border-[#28283C] bg-[#0A0A0F] text-gray-300'} flex flex-col items-center justify-center text-xs font-bold">
-                        <span>${d}</span>
-                        ${count > 0 ? `<span class="w-1.5 h-1.5 rounded-full bg-accent mt-1"></span>` : ''}
-                    </button>
-                `;
-            }
-            document.getElementById('calendar-grid-days').innerHTML = cells;
-
-            const dayItems = window.state.tasks.filter(t => Number(t.day) === window.state.selectedDay && Number(t.month) === (m + 1) && Number(t.year) === y);
-            document.getElementById('calendar-selected-day-items').innerHTML = `
-                <p class="text-xs font-bold text-gray-400 mb-2">Elementos del ${window.state.selectedDay}/${m + 1}/${y}:</p>
-                ${dayItems.length === 0 ? '<p class="text-xs text-gray-500">Sin actividades este día.</p>' : dayItems.map(t => renderTaskRow(t)).join('')}
-            `;
-        }
-
-        window.changeCalendarMonth = (delta) => {
-            window.state.calMonth += delta;
-            if (window.state.calMonth < 0) { window.state.calMonth = 11; window.state.calYear--; }
-            if (window.state.calMonth > 11) { window.state.calMonth = 0; window.state.calYear++; }
-            renderCalendar();
-        };
-        window.selectCalendarDay = (d) => { window.state.selectedDay = d; renderCalendar(); };
-        window.setPlanTab = (tab) => {
-            document.getElementById('plan-calendar-view').classList.toggle('hidden', tab !== 'calendar');
-            document.getElementById('plan-list-view').classList.toggle('hidden', tab !== 'list');
-        };
-
-        // OPERACIONES CRUD BIDIRECCIONALES SOBRE activeUserDocId
-        window.toggleHabit = async (id, state, xpReward) => {
-            const docId = window.state.activeUserDocId;
-            await updateDoc(doc(db, 'users', docId, 'habits', id), { isCompleted: state, updatedAt: new Date().toISOString() });
-            const nextXp = Math.max(0, Number(window.state.profile.xp || 0) + (state ? xpReward : -xpReward));
-            await updateDoc(doc(db, 'users', docId), { xp: nextXp, level: Math.floor(nextXp / 100) + 1 });
-        };
-
-        window.toggleTask = async (id, state) => {
-            await updateDoc(doc(db, 'users', window.state.activeUserDocId, 'tasks', id), { isCompleted: state, updatedAt: new Date().toISOString() });
-        };
-
-        window.deleteItem = async (col, id) => {
-            if (!confirm('¿Eliminar permanentemente de Firestore?')) return;
-            await deleteDoc(doc(db, 'users', window.state.activeUserDocId, col, id));
-        };
-
-        window.deleteTransaction = async (txId, accId, amount, type) => {
-            if (!confirm('¿Eliminar movimiento y revertir saldo?')) return;
-            const docId = window.state.activeUserDocId;
-            await deleteDoc(doc(db, 'users', docId, 'transactions', txId));
-            const acc = window.state.accounts.find(a => a.id === accId);
-            if (acc) {
-                const reverted = type === 'income' ? Number(acc.balance) - Number(amount) : Number(acc.balance) + Number(amount);
-                await updateDoc(doc(db, 'users', docId, 'accounts', accId), { balance: reverted });
-            }
-        };
-
-        window.addGoalDeposit = async (goalId, current) => {
-            const val = prompt('Monto a abonar a esta meta:');
-            if (!val || isNaN(val)) return;
-            await updateDoc(doc(db, 'users', window.state.activeUserDocId, 'goals', goalId), { currentAmount: Number(current) + Number(val) });
-        };
-
-        window.logQuickSession = async (routineName) => {
-            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'workout_sessions'), {
-                routineName,
-                date: new Date().toISOString().split('T')[0],
-                durationMinutes: 60,
-                createdAt: new Date().toISOString()
-            });
-        };
-
-        // MODALES
-        function openModal(title, html) {
+        window.openUniversalModal = (title, html) => {
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-body').innerHTML = html;
             document.getElementById('universal-modal').classList.remove('hidden');
-        }
-        window.closeModal = () => document.getElementById('universal-modal').classList.add('hidden');
-
-        window.openHabitModal = () => openModal('Nuevo Hábito', `
-            <form onsubmit="saveHabit(event)" class="space-y-3">
-                <input id="h-name" required placeholder="Nombre del hábito" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <input id="h-days" value="L,M,X,J,V,S,D" placeholder="Días (L,M,X,J,V,S,D)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <input id="h-xp" type="number" value="20" placeholder="XP" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-xs">Guardar Hábito</button>
-            </form>
-        `);
-        window.saveHabit = async (e) => {
-            e.preventDefault();
-            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'habits'), {
-                name: document.getElementById('h-name').value,
-                frequencyDays: document.getElementById('h-days').value.toUpperCase(),
-                xpReward: Number(document.getElementById('h-xp').value) || 15,
-                isCompleted: false,
-                updatedAt: new Date().toISOString()
-            });
-            closeModal();
         };
+        window.closeUniversalModal = () => document.getElementById('universal-modal').classList.add('hidden');
+        window.toggleBalancePrivacy = () => { window.state.isBalanceVisible = !window.state.isBalanceVisible; renderFinances(); };
+        window.deleteDocItem = async (col, id) => { if (confirm('¿Eliminar?')) await fsActions.remove(col, id); };
+        window.toggleTask = (id, s) => fsActions.update('tasks', id, { isCompleted: s });
 
-        window.openTaskModal = () => openModal('Nueva Tarea o Evento', `
-            <form onsubmit="saveTask(event)" class="space-y-3">
-                <input id="t-title" required placeholder="Título" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <select id="t-type" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                    <option value="task">Tarea (con checkbox)</option>
-                    <option value="event">Evento (sin checkbox)</option>
-                </select>
-                <input id="t-time" placeholder="Horario (ej. 14:00 - 15:00)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-xs">Guardar</button>
-            </form>
-        `);
-        window.saveTask = async (e) => {
-            e.preventDefault();
-            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'tasks'), {
-                title: document.getElementById('t-title').value,
-                isEvent: document.getElementById('t-type').value === 'event',
-                time: document.getElementById('t-time').value,
-                day: window.state.selectedDay || todayDay,
-                month: (window.state.calMonth + 1) || todayMonth,
-                year: window.state.calYear || todayYear,
-                isCompleted: false,
-                updatedAt: new Date().toISOString()
-            });
-            closeModal();
-        };
-
-        window.openAccountModal = () => openModal('Nueva Cuenta', `
-            <form onsubmit="saveAccount(event)" class="space-y-3">
-                <input id="a-name" required placeholder="Nombre (ej. Banco Unión)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <select id="a-currency" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                    <option value="Bs">Bs</option><option value="USD">USD</option><option value="EUR">EUR</option>
-                </select>
-                <input id="a-balance" type="number" step="0.01" required placeholder="Saldo actual" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-xs">Guardar Cuenta</button>
-            </form>
-        `);
-        window.saveAccount = async (e) => {
-            e.preventDefault();
-            const bal = Number(document.getElementById('a-balance').value);
-            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'accounts'), {
-                name: document.getElementById('a-name').value,
-                currency: document.getElementById('a-currency').value,
-                balance: bal,
-                initialBalance: bal,
-                type: 'Cuenta'
-            });
-            closeModal();
-        };
-
-        window.openTxModal = (def = 'expense') => {
-            const opts = window.state.accounts.map(a => `<option value="${a.id}">${a.name} (${a.currency})</option>`).join('');
-            openModal('Registrar Movimiento', `
-                <form onsubmit="saveTx(event)" class="space-y-3">
-                    <select id="tx-type" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                        <option value="expense" ${def === 'expense' ? 'selected' : ''}>Gasto</option>
-                        <option value="income" ${def === 'income' ? 'selected' : ''}>Ingreso</option>
-                    </select>
-                    <input id="tx-title" required placeholder="Concepto" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                    <input id="tx-amount" type="number" step="0.01" required placeholder="Monto" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                    <input id="tx-cat" placeholder="Categoría" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                    <select id="tx-acc" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                        ${opts || '<option value="">Sin cuentas</option>'}
-                    </select>
-                    <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-xs">Guardar Movimiento</button>
-                </form>
-            `);
-        };
-        window.saveTx = async (e) => {
-            e.preventDefault();
-            const docId = window.state.activeUserDocId;
-            const type = document.getElementById('tx-type').value;
-            const amount = Number(document.getElementById('tx-amount').value);
-            const accId = document.getElementById('tx-acc').value;
-            const acc = window.state.accounts.find(a => a.id === accId);
-
-            await addDoc(collection(db, 'users', docId, 'transactions'), {
-                type,
-                title: document.getElementById('tx-title').value,
-                amount,
-                category: document.getElementById('tx-cat').value || 'General',
-                accountId: accId,
-                accountName: acc ? acc.name : '',
-                currency: acc ? acc.currency : 'Bs',
-                date: new Date().toISOString().split('T')[0]
-            });
-
-            if (acc) {
-                const newBal = type === 'income' ? Number(acc.balance) + amount : Number(acc.balance) - amount;
-                await updateDoc(doc(db, 'users', docId, 'accounts', accId), { balance: newBal });
-            }
-            closeModal();
-        };
-
-        window.openBudgetModal = () => openModal('Nuevo Presupuesto', `
-            <form onsubmit="saveBudget(event)" class="space-y-3">
-                <input id="b-cat" required placeholder="Categoría (ej. Comida, Transporte)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <input id="b-limit" type="number" step="0.01" required placeholder="Límite mensual" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-xs">Crear Presupuesto</button>
-            </form>
-        `);
-        window.saveBudget = async (e) => {
-            e.preventDefault();
-            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'budgets'), {
-                category: document.getElementById('b-cat').value,
-                limitAmount: Number(document.getElementById('b-limit').value),
-                spentAmount: 0,
-                currency: 'Bs',
-                periodType: 'monthly'
-            });
-            closeModal();
-        };
-
-        window.openGoalModal = () => openModal('Nueva Meta de Ahorro', `
-            <form onsubmit="saveGoal(event)" class="space-y-3">
-                <input id="g-name" required placeholder="Nombre de la meta" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <input id="g-target" type="number" step="0.01" required placeholder="Monto objetivo" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-xs">Crear Meta</button>
-            </form>
-        `);
-        window.saveGoal = async (e) => {
-            e.preventDefault();
-            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'goals'), {
-                name: document.getElementById('g-name').value,
-                targetAmount: Number(document.getElementById('g-target').value),
-                currentAmount: 0,
-                currency: 'Bs',
-                isCompleted: false
-            });
-            closeModal();
-        };
-
-        window.openRoutineModal = () => openModal('Nueva Rutina', `
-            <form onsubmit="saveRoutine(event)" class="space-y-3">
-                <input id="r-name" required placeholder="Nombre de rutina" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <input id="r-desc" placeholder="Descripción o días" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-xs">Guardar Rutina</button>
-            </form>
-        `);
-        window.saveRoutine = async (e) => {
-            e.preventDefault();
-            await addDoc(collection(db, 'users', window.state.activeUserDocId, 'workout_routines'), {
-                name: document.getElementById('r-name').value,
-                description: document.getElementById('r-desc').value
-            });
-            closeModal();
-        };
-
-        window.openDailyScoreModal = () => {
-            const ds = calculateDailyScore();
-            const pendingH = ds.todayHabits.filter(h => !h.isCompleted).map(h => `<li>• Hábito: ${h.name}</li>`).join('');
-            const pendingT = ds.todayTasks.filter(t => !t.isCompleted).map(t => `<li>• Tarea: ${t.title}</li>`).join('');
-            openModal(`Daily Score: ${ds.score}%`, `
-                <ul class="text-xs space-y-1.5 text-gray-300">
-                    ${pendingH || pendingT ? pendingH + pendingT : '<li class="text-emerald-400 font-bold">¡Todo completado hoy!</li>'}
-                </ul>
-            `);
-        };
-
-        window.openQuickModal = () => openModal('Acciones Rápidas', `
-            <div class="grid grid-cols-2 gap-2.5 text-xs font-bold">
-                <button onclick="openTxModal('expense')" class="p-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent text-left">💸 Gasto</button>
-                <button onclick="openTxModal('income')" class="p-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent text-left">💰 Ingreso</button>
-                <button onclick="openHabitModal()" class="p-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent text-left">🔥 Hábito</button>
-                <button onclick="openTaskModal()" class="p-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent text-left">✅ Tarea</button>
-            </div>
-        `);
-
-        window.toggleBalancePrivacy = () => { window.state.isBalanceVisible = !window.state.isBalanceVisible; renderAll(); };
-        window.toggleTheme = () => document.documentElement.classList.toggle('dark');
-        window.setAccentColor = async (hex) => {
-            document.documentElement.style.setProperty('--color-primary', hex);
-            if (window.state.activeUserDocId) await updateDoc(doc(db, 'users', window.state.activeUserDocId), { themeColor: hex });
-        };
-
-        window.navigate = (viewId) => {
+        window.navigate = (v) => {
             document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
-            document.getElementById('view-' + viewId).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                const active = btn.dataset.nav === viewId;
-                btn.classList.toggle('bg-accent/15', active);
-                btn.classList.toggle('text-accent', active);
-                btn.classList.toggle('font-bold', active);
-            });
+            document.getElementById('view-' + v).classList.remove('hidden');
         };
 
-        window.exportBackupJSON = () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.state, null, 2));
-            const a = document.createElement('a');
-            a.href = dataStr;
-            a.download = `weavax_backup_${todayYear}${String(todayMonth).padStart(2,'0')}${String(todayDay).padStart(2,'0')}.json`;
-            a.click();
-        };
-
-        window.addEventListener('keydown', (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openQuickModal(); }
+        initSync(() => {
+            const p = window.state.profile;
+            const xp = Number(p.xp || 0);
+            document.getElementById('user-level-xp').textContent = `Nivel ${Math.floor(xp / 100) + 1} · ${xp} XP`;
+            document.getElementById('streak-count').textContent = `${p.streak || 0} d`;
+            renderDashboard();
+            renderFinances();
         });
     </script>
 </body>
