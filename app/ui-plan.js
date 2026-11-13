@@ -35,7 +35,7 @@ function renderCalendarGrid() {
 
     for (let i = 0; i < startDay; i++) html += `<div class="h-12"></div>`;
     for (let d = 1; d <= totalDays; d++) {
-        const items = window.state.tasks.filter(t => !t.inInbox && Number(t.day) === d && Number(t.month) === (m + 1) && Number(t.year) === y);
+        const items = (window.state.tasks || []).filter(t => !t.inInbox && Number(t.day) === d && Number(t.month) === (m + 1) && Number(t.year) === y);
         const hasEvents = items.some(i => i.isEvent);
         const hasTasks = items.some(i => !i.isEvent);
         const isSel = d === window.state.selectedDay;
@@ -53,7 +53,7 @@ function renderCalendarGrid() {
     const grid = document.getElementById('calendar-grid-days');
     if (grid) grid.innerHTML = html;
 
-    const selItems = window.state.tasks.filter(t => !t.inInbox && Number(t.day) === window.state.selectedDay && Number(t.month) === (m + 1) && Number(t.year) === y);
+    const selItems = (window.state.tasks || []).filter(t => !t.inInbox && Number(t.day) === window.state.selectedDay && Number(t.month) === (m + 1) && Number(t.year) === y);
     const selBox = document.getElementById('calendar-selected-day-items');
     if (selBox) {
         selBox.innerHTML = `
@@ -100,32 +100,30 @@ function renderPlanRow(t) {
 }
 
 function renderTasksAndEventsLists() {
-    const onlyTasks = window.state.tasks.filter(t => !t.isEvent && !t.inInbox);
-    const onlyEvents = window.state.tasks.filter(t => t.isEvent);
-    const inboxTasks = window.state.tasks.filter(t => t.inInbox);
+    const tasksList = window.state.tasks || [];
+    const onlyTasks = tasksList.filter(t => !t.isEvent && !t.inInbox);
+    const onlyEvents = tasksList.filter(t => t.isEvent);
+    const inboxTasks = tasksList.filter(t => t.inInbox);
 
-    document.getElementById('plan-tasks-container').innerHTML = onlyTasks.length === 0
-        ? '<p class="text-xs text-gray-400">No hay tareas pendientes.</p>'
-        : onlyTasks.map(renderPlanRow).join('');
+    const tBox = document.getElementById('plan-tasks-container');
+    const eBox = document.getElementById('plan-events-container');
+    const iBox = document.getElementById('plan-inbox-container');
 
-    document.getElementById('plan-events-container').innerHTML = onlyEvents.length === 0
-        ? '<p class="text-xs text-gray-400">No hay eventos registrados.</p>'
-        : onlyEvents.map(renderPlanRow).join('');
-
-    document.getElementById('plan-inbox-container').innerHTML = inboxTasks.length === 0
-        ? '<p class="text-xs text-gray-400">Bandeja de entrada vacía.</p>'
-        : inboxTasks.map(renderPlanRow).join('');
+    if (tBox) tBox.innerHTML = onlyTasks.length === 0 ? '<p class="text-xs text-gray-400">No hay tareas pendientes.</p>' : onlyTasks.map(renderPlanRow).join('');
+    if (eBox) eBox.innerHTML = onlyEvents.length === 0 ? '<p class="text-xs text-gray-400">No hay eventos registrados.</p>' : onlyEvents.map(renderPlanRow).join('');
+    if (iBox) iBox.innerHTML = inboxTasks.length === 0 ? '<p class="text-xs text-gray-400">Bandeja de entrada vacía.</p>' : inboxTasks.map(renderPlanRow).join('');
 }
 
 function renderProjectsBoard() {
     const el = document.getElementById('plan-projects-grid');
     if (!el) return;
-    if (window.state.projects.length === 0) {
+    const projs = window.state.projects || [];
+    if (projs.length === 0) {
         el.innerHTML = `<p class="text-xs text-gray-400 col-span-3">Sin proyectos creados. Pulsa "+ Proyecto" para organizar tus tareas.</p>`;
         return;
     }
-    el.innerHTML = window.state.projects.map(p => {
-        const projTasks = window.state.tasks.filter(t => t.project === p.name);
+    el.innerHTML = projs.map(p => {
+        const projTasks = (window.state.tasks || []).filter(t => t.project === p.name);
         const done = projTasks.filter(t => t.isCompleted).length;
         const pct = projTasks.length ? Math.round((done / projTasks.length) * 100) : 0;
         return `
@@ -162,7 +160,7 @@ window.changeCalendarMonth = (delta) => {
 window.selectCalDay = (d) => { window.state.selectedDay = d; renderCalendarGrid(); };
 
 window.openTaskModal = (isEvent = false) => {
-    const projOpts = window.state.projects.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+    const projOpts = (window.state.projects || []).map(p => `<option value="${p.name}">${p.name}</option>`).join('');
     window.openUniversalModal(isEvent ? 'Crear Evento de Calendario' : 'Crear Tarea', `
         <form onsubmit="saveTaskOrEvent(event, ${isEvent})" class="space-y-3 text-xs">
             <input id="te-title" required placeholder="${isEvent ? 'Nombre del evento' : 'Título de la tarea'}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
