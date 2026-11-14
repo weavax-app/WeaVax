@@ -1,4 +1,4 @@
-import { fsActions } from '../firebase-sync.js?v=5';
+import { fsActions } from '../firebase-sync.js';
 
 export const HABIT_ICONS = {
     star: '⭐', water: '💧', fitness: '💪', book: '📖', brain: '🧠',
