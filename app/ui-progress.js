@@ -1,5 +1,5 @@
-import { isHabitScheduledToday } from './habits/habits-views.js?v=3';
-import { getWeeklyWorkoutStats } from './workout/workout-state.js?v=2';
+import { isHabitScheduledToday } from './habits/habits-views.js';
+import { getWeeklyWorkoutStats } from './workout/workout-state.js';
 
 export function renderProgressModule() {
     const container = document.getElementById('view-progress');
