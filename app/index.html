@@ -6,6 +6,8 @@
     <title>WeaVax · LifeOS Web & Desktop</title>
     <meta name="theme-color" content="#0A0A0F">
     <link rel="icon" type="image/png" href="../weavax_logo.png">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="../weavax_logo.png">
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
@@ -393,6 +395,32 @@
                 try { modules.set?.renderSettings(); } catch (e) { console.error(e); }
             });
         }
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js', { scope: '/app/' })
+                    .catch(err => console.warn('SW registro:', err));
+            });
+        }
+
+        window.deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredInstallPrompt = e;
+            const btn = document.getElementById('btn-install-desktop-pwa');
+            if (btn) btn.classList.remove('hidden');
+        });
+
+        window.installWeavaxDesktopApp = async () => {
+            if (!window.deferredInstallPrompt) {
+                alert('Para instalar en tu PC: haz clic en el ícono de instalar (💻+) en el extremo derecho de la barra de direcciones de Chrome, Edge o Brave.');
+                return;
+            }
+            window.deferredInstallPrompt.prompt();
+            await window.deferredInstallPrompt.userChoice;
+            window.deferredInstallPrompt = null;
+        };
     </script>
 </body>
 </html>
