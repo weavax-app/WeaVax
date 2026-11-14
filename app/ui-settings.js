@@ -198,7 +198,7 @@ export function renderSettings() {
                         ⬆️ Restaurar Respaldo Local (.JSON)
                         <input type="file" accept=".json" class="hidden" onchange="importLocalBackupJSON(event)">
                     </label>
-                    <button onclick="exportFinancesToCSV()" class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-left">📊 Exportar Finanzas a Excel (.CSV)</button>
+                    <button onclick="openFinanceExcelExportModal()" class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-left">📊 Exportar Finanzas Excel (.XLSX)</button>
                     <button onclick="exportWorkoutsToCSV()" class="p-3 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 text-left">🏋️ Exportar Historial Gym (.CSV)</button>
                     <label class="sm:col-span-2 p-3 rounded-xl bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20 text-left cursor-pointer">
                         📥 Importar Historial de Entrenamientos (.CSV)
