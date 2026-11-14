@@ -1,6 +1,13 @@
-import { fsActions } from '../firebase-sync.js?v=5';
-import { wState, getAllAvailableRoutines } from './workout-state.js?v=4';
-import { EXERCISE_DATABASE } from './workout-catalog.js?v=4';
+import { fsActions } from '../firebase-sync.js';
+import { wState, getAllAvailableRoutines } from './workout-state.js';
+import * as catalog from './workout-catalog.js';
+const EXERCISE_DATABASE =
+    catalog.EXERCISE_DATABASE ||
+    catalog.EXERCISES ||
+    catalog.EXERCISE_CATALOG ||
+    catalog.default ||
+    Object.values(catalog).find(v => Array.isArray(v) && v[0]?.muscleGroup) ||
+    [];
 
 export function renderActiveAndFinishViews(container) {
     if (wState.subScreen === 'SESION_ACTIVA' && wState.activeSession) {
