@@ -1,4 +1,12 @@
-import { WORKOUT_CATALOG_TEMPLATES } from './workout-catalog.js?v=4';
+import * as catalog from './workout-catalog.js?v=4';
+
+const CATALOG_TEMPLATES =
+    catalog.WORKOUT_CATALOG_TEMPLATES ||
+    catalog.WORKOUT_TEMPLATES ||
+    catalog.ROUTINE_TEMPLATES ||
+    catalog.default ||
+    Object.values(catalog).find(v => Array.isArray(v) && v[0]?.days) ||
+    [];
 
 // Anclar en window para evitar copias duplicadas entre módulos
 if (!window.wState) {
@@ -22,7 +30,7 @@ export function getAllAvailableRoutines() {
         isCustom: true,
         days: Array.isArray(r.days) ? r.days : [{ dayNumber: 1, name: r.focus || 'Entrenamiento General', exercises: [] }]
     }));
-    return [...userRoutines, ...WORKOUT_CATALOG_TEMPLATES];
+    return [...userRoutines, ...CATALOG_TEMPLATES];
 }
 
 export function getActiveMainRoutine() {
