@@ -1,6 +1,7 @@
 import { fsActions } from '../firebase-sync.js';
-import { wState, getAllAvailableRoutines, getActiveMainRoutine, getTodayScheduledWorkoutInfo, getWeeklyWorkoutStats } from './workout-state.js';
+import { wState, getUserSavedRoutines, getCatalogTemplates, getAllAvailableRoutines, getActiveMainRoutine, getTodayScheduledWorkoutInfo, getWeeklyWorkoutStats } from './workout-state.js';
 import * as catalog from './workout-catalog.js';
+
 const EXERCISE_DATABASE =
     catalog.EXERCISE_DATABASE ||
     catalog.EXERCISES ||
