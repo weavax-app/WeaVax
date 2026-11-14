@@ -1,4 +1,5 @@
 import { fsActions } from '../firebase-sync.js?v=5';
+import { requireProOrCheckLimit } from '../weavax-pro.js?v=3';
 import { HABIT_ICONS, getReminderTimesList } from './habits-views.js';
 
 let modalTempReminders = [];
@@ -145,8 +146,17 @@ function renderDaysPickerButtons() {
 
 window.addHabitReminderTime = () => {
     const val = document.getElementById('h-new-rem-time')?.value;
-    if (!val) return;
-    if (!modalTempReminders.includes(val)) modalTempReminders.push(val);
+    if (!val || modalTempReminders.includes(val)) return;
+
+    // Máximo 2 notificaciones por hábito en Free; más de 2 requiere WeaVax Pro
+    if (!requireProOrCheckLimit(
+        'HABIT_REMINDERS',
+        modalTempReminders.length,
+        2,
+        'El plan Gratuito permite hasta 2 notificaciones por hábito. Con WeaVax Pro puedes programar recordatorios ilimitados.'
+    )) return;
+
+    modalTempReminders.push(val);
     renderReminderChips();
 };
 
