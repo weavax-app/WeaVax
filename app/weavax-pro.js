@@ -1,4 +1,4 @@
-import { fsActions } from './firebase-sync.js?v=5';
+import { fsActions } from './firebase-sync.js';
 
 export const FREE_LIMITS = {
     MAX_AI_SCANS_MONTH: 5,
