@@ -1,4 +1,4 @@
-import * as catalog from './workout-catalog.js?v=4';
+import * as catalog from './workout-catalog.js';
 
 const CATALOG_TEMPLATES =
     catalog.WORKOUT_CATALOG_TEMPLATES ||
