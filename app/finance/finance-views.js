@@ -1,3 +1,4 @@
+import './finance-export.js?v=1';
 import {
     finState,
     getCategoriesByType,
@@ -33,6 +34,7 @@ export function renderFinanceModule(container) {
                 <button onclick="openTxModal('gasto')" class="px-3.5 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-bold">- Gasto</button>
                 <button onclick="openTxModal('ingreso')" class="px-3.5 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold">+ Ingreso</button>
                 <button onclick="openTransferModal()" class="px-3.5 py-2 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30 text-xs font-bold">⇄ Transferir</button>
+                <button onclick="openFinanceExcelExportModal()" class="px-3.5 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold">📊 Exportar Excel (.xlsx)</button>
             </div>
         </div>
 
