@@ -1,5 +1,5 @@
-import { renderFinanceModule } from './finance/finance-views.js?v=3';
-import './finance/finance-modals.js?v=3';
+import { renderFinanceModule } from './finance/finance-views.js';
+import './finance/finance-modals.js';
 
 export function renderFinances() {
     const container = document.getElementById('view-finances');
