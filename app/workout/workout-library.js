@@ -1,6 +1,6 @@
 import { fsActions } from '../firebase-sync.js?v=5';
-import { EXERCISE_CATALOG, WEAVAX_30_TEMPLATES, getExById, mkDay, pPush } from './workout-catalog.js';
-import { wState, getUserSavedRoutines, getAllRoutinesAndTemplates, getWeeklyWorkoutStats, getTodayScheduledWorkoutInfo } from './workout-state.js';
+import { wState, getAllAvailableRoutines, getActiveMainRoutine, getTodayScheduledWorkoutInfo, getWeeklyWorkoutStats } from './workout-state.js?v=4';
+import { EXERCISE_DATABASE } from './workout-catalog.js?v=4';
 
 export function renderLibraryAndHub(container, minimizedBannerHtml) {
     const userLibraryRoutines = getUserSavedRoutines();
