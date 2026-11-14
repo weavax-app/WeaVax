@@ -112,7 +112,7 @@
                 </button>
             </nav>
         </aside>
-
+        
         <!-- MAIN -->
         <main id="app-main" class="flex-1 md:pl-64 pb-20 transition-all duration-200">
             <header class="h-16 px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
@@ -246,6 +246,27 @@
                 </section>
 
             </div>
+            <!-- BARRA INFERIOR DE NAVEGACIÓN MÓVIL (Visible solo en pantallas < 768px) -->
+            <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white dark:bg-[#181824] border-t border-gray-200 dark:border-[#28283C] px-2 py-1.5 flex items-center justify-around">
+                <button onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl bg-accent/15 text-accent font-bold text-[10px]">
+                    <span class="text-base">🏠</span><span>Inicio</span>
+                </button>
+                <button onclick="navigate('plan')" data-nav="plan" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-gray-400 text-[10px]">
+                    <span class="text-base">📅</span><span>Plan</span>
+                </button>
+                <button onclick="navigate('finances')" data-nav="finances" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-gray-400 text-[10px]">
+                    <span class="text-base">💳</span><span>Finanzas</span>
+                </button>
+                <button onclick="navigate('workouts')" data-nav="workouts" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-gray-400 text-[10px]">
+                    <span class="text-base">🏋️</span><span>Gym</span>
+                </button>
+                <button onclick="navigate('progress')" data-nav="progress" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-gray-400 text-[10px]">
+                    <span class="text-base">📊</span><span>Progreso</span>
+                </button>
+                <button onclick="navigate('settings')" data-nav="settings" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-gray-400 text-[10px]">
+                    <span class="text-base">⚙️</span><span>Ajustes</span>
+                </button>
+            </nav>
         </main>
     </div>
 
