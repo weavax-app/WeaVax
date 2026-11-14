@@ -1,4 +1,4 @@
-const CACHE_NAME = 'weavax-desktop-v2';
+const CACHE_NAME = 'weavax-desktop-v3';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
