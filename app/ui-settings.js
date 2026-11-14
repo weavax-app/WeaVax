@@ -10,6 +10,17 @@ export const WEAVAX_THEMES = [
     { name: 'Rosa Frambuesa', hex: '#EC4899', isFree: false },
     { name: 'Turquesa Cian', hex: '#06B6D4', isFree: false }
 ];
+export const CURRENCY_CATALOG = [
+    { code: 'Bs', name: 'Bolivianos (Bs)' },
+    { code: 'USD', name: 'Dólares (USD)' },
+    { code: 'EUR', name: 'Euros (EUR)' },
+    { code: 'MXN', name: 'Pesos Mexicanos (MXN)' },
+    { code: 'ARS', name: 'Pesos Argentinos (ARS)' },
+    { code: 'CLP', name: 'Pesos Chilenos (CLP)' },
+    { code: 'PEN', name: 'Soles Peruanos (PEN)' },
+    { code: 'BRL', name: 'Reales Brasileños (BRL)' },
+    { code: 'COP', name: 'Pesos Colombianos (COP)' }
+];
 
 const FREE_THEME_COLORS = ['#8b5cf6', '#3b82f6', '#ef4444'];
 
@@ -19,7 +30,21 @@ export function renderSettings() {
     const pro = window.state.pro || {};
     const container = document.getElementById('settings-full-container');
     if (!container) return;
+    let enabledCurrs = p.enabledCurrencies || JSON.parse(localStorage.getItem('weavax_enabled_currencies') || '["Bs","USD"]');
+    if (!Array.isArray(enabledCurrs) || enabledCurrs.length === 0) enabledCurrs = ['Bs'];
 
+    let prefCurr = p.preferredCurrency || localStorage.getItem('weavax_pref_currency') || enabledCurrs[0];
+    if (!enabledCurrs.includes(prefCurr)) {
+        prefCurr = enabledCurrs[0];
+        localStorage.setItem('weavax_pref_currency', prefCurr);
+    }
+    const enabledCurrencyObjects = CURRENCY_CATALOG.filter(c => enabledCurrs.includes(c.code));
+
+    const notifEnabled = localStorage.getItem('weavax_notifs_enabled') !== '0';
+    const notifHabits = localStorage.getItem('weavax_notif_habits') !== '0';
+    const notifAgenda = localStorage.getItem('weavax_notif_agenda') !== '0';
+    const notifWorkouts = localStorage.getItem('weavax_notif_workouts') !== '0';
+    const notifWorkoutTime = localStorage.getItem('weavax_notif_workout_time') || '18:00';
     const currentColor = p.themeColor || localStorage.getItem('weavax_theme_color') || '#8B5CF6';
     const isDark = document.documentElement.classList.contains('dark');
     const prefCurr = p.preferredCurrency || localStorage.getItem('weavax_pref_currency') || 'Bs';
@@ -122,31 +147,29 @@ export function renderSettings() {
                 </div>
             </div>
 
-            <!-- 3. MONEDA PREDETERMINADA Y BANCO DE MONEDAS -->
+            <!-- 3. MONEDA PREDETERMINADA DINÁMICA -->
             <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
                 <div class="flex items-center space-x-3">
                     <span class="text-xl">💱</span>
                     <div>
                         <h4 class="text-sm font-extrabold">Moneda Predeterminada y Banco de Divisas</h4>
-                        <p class="text-xs text-gray-400">Configura tu divisa base y las monedas activas en Finanzas</p>
+                        <p class="text-xs text-gray-400">Solo las monedas habilitadas aparecen como opción principal</p>
                     </div>
                 </div>
                 <div class="space-y-3 text-xs">
                     <div>
                         <label class="text-[10px] text-gray-400 font-bold uppercase">Moneda Principal</label>
-                        <select id="set-pref-curr" onchange="saveCurrencySettings()" class="mt-1 w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
-                            <option value="Bs" ${prefCurr === 'Bs' ? 'selected' : ''}>Bolivianos (Bs)</option>
-                            <option value="USD" ${prefCurr === 'USD' ? 'selected' : ''}>Dólares (USD)</option>
-                            <option value="EUR" ${prefCurr === 'EUR' ? 'selected' : ''}>Euros (EUR)</option>
+                        <select id="set-pref-curr" onchange="saveCurrencySettings()" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] font-bold">
+                            ${enabledCurrencyObjects.map(c => `<option value="${c.code}" ${prefCurr === c.code ? 'selected' : ''}>${c.name}</option>`).join('')}
                         </select>
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-400 font-bold uppercase block mb-1.5">Banco de Monedas Habilitadas</label>
                         <div class="flex flex-wrap gap-2">
-                            ${['Bs', 'USD', 'EUR', 'ARS', 'CLP', 'PEN', 'MXN', 'BRL'].map(c => `
-                                <label class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] cursor-pointer">
-                                    <input type="checkbox" value="${c}" class="curr-bank-chk" ${enabledCurrs.includes(c) ? 'checked' : ''} onchange="saveCurrencySettings()">
-                                    <span class="font-bold">${c}</span>
+                            ${CURRENCY_CATALOG.map(c => `
+                                <label class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-[#0A0A0F] border ${enabledCurrs.includes(c.code) ? 'border-accent/60' : 'border-gray-200 dark:border-[#28283C]'} cursor-pointer">
+                                    <input type="checkbox" value="${c.code}" class="curr-bank-chk" ${enabledCurrs.includes(c.code) ? 'checked' : ''} onchange="saveCurrencySettings()">
+                                    <span class="font-bold">${c.code}</span>
                                 </label>
                             `).join('')}
                         </div>
@@ -154,35 +177,46 @@ export function renderSettings() {
                 </div>
             </div>
 
-            <!-- 4. NOTIFICACIONES Y PRIVACIDAD -->
+            <!-- 4. NOTIFICACIONES MULTIMÓDULO Y PRIVACIDAD -->
             <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
-                <div class="flex items-center space-x-3">
-                    <span class="text-xl">🛡️</span>
-                    <div>
-                        <h4 class="text-sm font-extrabold">Notificaciones, Privacidad y Seguridad</h4>
-                        <p class="text-xs text-gray-400">Avisos del navegador y censura de saldos</p>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xl">🔔</span>
+                        <div>
+                            <h4 class="text-sm font-extrabold">Notificaciones y Recordatorios</h4>
+                            <p class="text-xs text-gray-400">Hábitos, tareas, eventos y entrenamientos</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="testWeavaxNotification()" class="px-3 py-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-[11px] font-bold hover:border-accent">Probar</button>
+                        <button onclick="requestWebNotifications()" class="px-3 py-1.5 rounded-lg bg-accent text-white text-[11px] font-bold">Permiso OS</button>
                     </div>
                 </div>
-                <div class="space-y-3 text-xs">
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
-                        <div>
-                            <p class="font-bold">Notificaciones del Navegador</p>
-                            <p class="text-[10px] text-gray-400">Recordatorios de hábitos, tareas y agenda</p>
-                        </div>
-                        <button onclick="requestWebNotifications()" class="px-3 py-1.5 rounded-lg bg-accent text-white font-bold">Activar</button>
+
+                <div class="space-y-2 text-xs">
+                    <label class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] cursor-pointer">
+                        <span class="font-bold">Activar sistema de notificaciones</span>
+                        <input type="checkbox" id="notif-chk-all" ${notifEnabled ? 'checked' : ''} onchange="saveNotificationPreferences()" class="w-4 h-4 rounded">
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] cursor-pointer">
+                            <span>🔥 Hábitos</span>
+                            <input type="checkbox" id="notif-chk-habits" ${notifHabits ? 'checked' : ''} onchange="saveNotificationPreferences()" class="w-4 h-4 rounded">
+                        </label>
+                        <label class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] cursor-pointer">
+                            <span>📅 Tareas y Eventos</span>
+                            <input type="checkbox" id="notif-chk-agenda" ${notifAgenda ? 'checked' : ''} onchange="saveNotificationPreferences()" class="w-4 h-4 rounded">
+                        </label>
                     </div>
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
-                        <div>
-                            <p class="font-bold">Ocultar Saldos al Iniciar (Modo Privacidad)</p>
-                            <p class="text-[10px] text-gray-400">Muestra Bs ••••• por defecto</p>
-                        </div>
-                        <button onclick="toggleBalancePrivacy()" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-[#28283C] font-bold">
-                            ${window.state.isBalanceVisible ? 'Saldos Visibles' : 'Saldos Ocultos 🔒'}
-                        </button>
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="notif-chk-workouts" ${notifWorkouts ? 'checked' : ''} onchange="saveNotificationPreferences()" class="w-4 h-4 rounded">
+                            <span>🏋️ Aviso diario de Gym</span>
+                        </label>
+                        <input type="time" id="notif-workout-time" value="${notifWorkoutTime}" onchange="saveNotificationPreferences()" class="px-2 py-1 rounded bg-[#181824] border border-[#28283C] text-xs font-mono">
                     </div>
                 </div>
             </div>
-
             <!-- 5. RESPALDOS, EXCEL CSV E HISTORIAL -->
             <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
                 <div class="flex items-center space-x-3">
@@ -261,13 +295,33 @@ window.toggleAppThemeMode = async () => {
 };
 
 window.saveCurrencySettings = async () => {
-    const pref = document.getElementById('set-pref-curr').value;
-    const checked = Array.from(document.querySelectorAll('.curr-bank-chk:checked')).map(el => el.value);
-    localStorage.setItem('weavax_pref_currency', pref);
+    let checked = Array.from(document.querySelectorAll('.curr-bank-chk:checked')).map(el => el.value);
+    if (checked.length === 0) {
+        checked = ['Bs'];
+        alert('Debes mantener al menos una moneda habilitada.');
+    }
+    let pref = document.getElementById('set-pref-curr')?.value || checked[0];
+    if (!checked.includes(pref)) pref = checked[0];
+
     localStorage.setItem('weavax_enabled_currencies', JSON.stringify(checked));
+    localStorage.setItem('weavax_pref_currency', pref);
+
+    if (window.state.profile) {
+        window.state.profile.enabledCurrencies = checked;
+        window.state.profile.preferredCurrency = pref;
+    }
     if (window.state.activeUserDocId) {
         await fsActions.updateProfile({ preferredCurrency: pref, enabledCurrencies: checked });
     }
+    renderSettings();
+};
+
+window.saveNotificationPreferences = () => {
+    localStorage.setItem('weavax_notifs_enabled', document.getElementById('notif-chk-all')?.checked ? '1' : '0');
+    localStorage.setItem('weavax_notif_habits', document.getElementById('notif-chk-habits')?.checked ? '1' : '0');
+    localStorage.setItem('weavax_notif_agenda', document.getElementById('notif-chk-agenda')?.checked ? '1' : '0');
+    localStorage.setItem('weavax_notif_workouts', document.getElementById('notif-chk-workouts')?.checked ? '1' : '0');
+    localStorage.setItem('weavax_notif_workout_time', document.getElementById('notif-workout-time')?.value || '18:00');
 };
 
 window.requestWebNotifications = async () => {
