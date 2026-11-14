@@ -1,6 +1,6 @@
 import { fsActions } from '../firebase-sync.js?v=5';
-import { EXERCISE_CATALOG, getExById } from './workout-catalog.js';
-import { wState, getUserSavedRoutines, getAllRoutinesAndTemplates } from './workout-state.js';
+import { wState, getAllAvailableRoutines } from './workout-state.js?v=4';
+import { EXERCISE_DATABASE } from './workout-catalog.js?v=4';
 
 export function renderActiveAndFinishViews(container) {
     if (wState.subScreen === 'SESION_ACTIVA' && wState.activeSession) {
