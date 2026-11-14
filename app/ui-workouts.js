@@ -1,6 +1,7 @@
-import { wState, getTodayScheduledWorkoutInfo } from './workout/workout-state.js?v=2';
-import { renderLibraryAndHub } from './workout/workout-library.js?v=2';
-import { renderActiveAndFinishViews } from './workout/workout-session.js?v=2';
+import { wState, getTodayScheduledWorkoutInfo } from './workout/workout-state.js?v=3';
+import { renderLibraryAndHub } from './workout/workout-library.js?v=3';
+import { renderActiveAndFinishViews } from './workout/workout-session.js?v=3';
+
 export { getTodayScheduledWorkoutInfo };
 
 export function renderWorkouts() {
@@ -17,8 +18,8 @@ export function renderWorkouts() {
                 </div>
             </div>
             <div class="flex gap-2">
-                <button onclick="openWorkoutSub('SESION_ACTIVA')" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-extrabold">Reanudar</button>
-                <button onclick="discardActiveWorkout()" class="px-3.5 py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/40 text-xs font-bold">Descartar</button>
+                <button type="button" onclick="openWorkoutSub('SESION_ACTIVA')" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-extrabold">Reanudar</button>
+                <button type="button" onclick="discardActiveWorkout()" class="px-3.5 py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/40 text-xs font-bold">Descartar</button>
             </div>
         </div>
     ` : '';
