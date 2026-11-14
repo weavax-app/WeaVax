@@ -1,5 +1,15 @@
-import { fsActions } from './firebase-sync.js';
-import { requireProOrCheckLimit, FREE_LIMITS } from './weavax-pro.js?v=1';
+import { fsActions } from './firebase-sync.js?v=5';
+import { requireProOrCheckLimit, FREE_LIMITS } from './weavax-pro.js?v=3';
+
+let planTempReminders = []; // { mode: 'FIXED' | 'BEFORE', value: '09:00' | '30' }
+
+const BEFORE_LABELS = {
+    '10': '10 minutos antes',
+    '30': '30 minutos antes',
+    '60': '1 hora antes',
+    '120': '2 horas antes',
+    '1440': '1 día antes'
+};
 
 export function renderPlanModule() {
     const sub = window.state.planSubTab || 'calendar';
@@ -45,7 +55,7 @@ function renderCalendarGrid() {
             <button onclick="selectCalDay(${d})" class="h-12 rounded-xl border ${isSel ? 'border-accent bg-accent/20 text-white' : 'border-[#28283C] bg-[#0A0A0F] text-gray-300'} flex flex-col items-center justify-center text-xs font-bold">
                 <span>${d}</span>
                 <div class="flex space-x-1 mt-1">
-                    ${hasTasks ? '<span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>' : ''}
+                    ${hasTasks ? '<span class="w-1.5 h-1.5 rounded-full bg-accent"></span>' : ''}
                     ${hasEvents ? '<span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>' : ''}
                 </div>
             </button>
@@ -70,32 +80,47 @@ function renderCalendarGrid() {
     }
 }
 
+function formatPlanRemindersSummary(t) {
+    const list = Array.isArray(t.reminders) ? t.reminders : [];
+    if (list.length === 0) return '';
+    return list.map(r => r.mode === 'FIXED' ? `⏰ ${r.value}` : `⏳ ${BEFORE_LABELS[r.value] || `${r.value} min antes`}`).join(' · ');
+}
+
 function renderPlanRow(t) {
+    const remText = formatPlanRemindersSummary(t);
     if (t.isEvent) {
         return `
-            <div class="p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
+            <div class="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-between gap-2">
+                <div class="flex items-center space-x-3 min-w-0">
                     <span>📅</span>
-                    <div>
-                        <p class="text-xs font-bold text-blue-300">${t.title}</p>
+                    <div class="min-w-0">
+                        <p class="text-xs font-extrabold text-blue-300 truncate">${t.title}</p>
                         <p class="text-[10px] text-gray-400">${t.day}/${t.month}/${t.year} · ${t.time || 'Todo el día'}${t.endTime ? ' - ' + t.endTime : ''} ${t.location ? '· 📍 ' + t.location : ''}</p>
+                        ${remText ? `<p class="text-[10px] text-accent mt-0.5">🔔 ${remText}</p>` : ''}
                     </div>
                 </div>
-                <button onclick="deleteDocItem('tasks', '${t.docId}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
+                <div class="flex items-center space-x-2 shrink-0">
+                    <button onclick="openTaskModal(true, '${t.docId}')" class="text-xs text-gray-400 hover:text-white" title="Editar">✎</button>
+                    <button onclick="deleteDocItem('tasks', '${t.docId}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
+                </div>
             </div>
         `;
     }
     const prioColor = t.priority === 'Alta' ? 'text-red-400' : t.priority === 'Baja' ? 'text-gray-400' : 'text-amber-400';
     return `
-        <div class="p-3 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <input type="checkbox" ${t.isCompleted ? 'checked' : ''} onchange="toggleTaskCheck('${t.docId}', ${!t.isCompleted})" class="w-4 h-4 accent-purple-600 rounded cursor-pointer">
-                <div>
-                    <p class="text-xs ${t.isCompleted ? 'line-through text-gray-500' : 'font-semibold'}">${t.title}</p>
-                    <p class="text-[10px] text-gray-400">${t.day}/${t.month}/${t.year} · <span class="${prioColor}">${t.priority || 'Media'}</span> ${t.project ? '· 📁 ' + t.project : ''}</p>
+        <div class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex items-center justify-between gap-2">
+            <div class="flex items-center space-x-3 min-w-0">
+                <input type="checkbox" ${t.isCompleted ? 'checked' : ''} onchange="toggleTaskCheck('${t.docId}', ${!t.isCompleted})" class="w-4 h-4 rounded cursor-pointer shrink-0">
+                <div class="min-w-0">
+                    <p class="text-xs ${t.isCompleted ? 'line-through text-gray-500' : 'font-extrabold'} truncate">${t.title}</p>
+                    <p class="text-[10px] text-gray-400">${t.day}/${t.month}/${t.year} ${t.time ? `· ${t.time}` : ''} · <span class="${prioColor}">${t.priority || 'Media'}</span> ${t.project ? '· 📁 ' + t.project : ''}</p>
+                    ${remText ? `<p class="text-[10px] text-accent mt-0.5">🔔 ${remText}</p>` : ''}
                 </div>
             </div>
-            <button onclick="deleteDocItem('tasks', '${t.docId}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
+            <div class="flex items-center space-x-2 shrink-0">
+                <button onclick="openTaskModal(false, '${t.docId}')" class="text-xs text-gray-400 hover:text-white" title="Editar">✎</button>
+                <button onclick="deleteDocItem('tasks', '${t.docId}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
+            </div>
         </div>
     `;
 }
@@ -160,28 +185,43 @@ window.changeCalendarMonth = (delta) => {
 
 window.selectCalDay = (d) => { window.state.selectedDay = d; renderCalendarGrid(); };
 
-window.openTaskModal = (isEvent = false) => {
-    const projOpts = (window.state.projects || []).map(p => `<option value="${p.name}">${p.name}</option>`).join('');
-    window.openUniversalModal(isEvent ? 'Crear Evento de Calendario' : 'Crear Tarea', `
-        <form onsubmit="saveTaskOrEvent(event, ${isEvent})" class="space-y-3 text-xs">
-            <input id="te-title" required placeholder="${isEvent ? 'Nombre del evento' : 'Título de la tarea'}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+window.openTaskModal = (isEvent = false, existingDocId = null) => {
+    const existing = existingDocId ? (window.state.tasks || []).find(x => String(x.docId) === String(existingDocId)) : null;
+    planTempReminders = existing && Array.isArray(existing.reminders) ? [...existing.reminders] : [];
+
+    const projOpts = (window.state.projects || []).map(p => `<option value="${p.name}" ${existing?.project === p.name ? 'selected' : ''}>${p.name}</option>`).join('');
+
+    window.openUniversalModal(
+        existing ? (isEvent ? '✎ Editar Evento' : '✎ Editar Tarea') : (isEvent ? '📅 Crear Evento' : '✅ Crear Tarea'),
+        `
+        <form onsubmit="saveTaskOrEvent(event, ${isEvent}, ${existing ? `'${existing.docId}'` : 'null'})" class="space-y-3 text-xs max-h-[78vh] overflow-y-auto pr-1">
+            <input id="te-title" required value="${existing?.title || ''}" placeholder="${isEvent ? 'Nombre del evento' : 'Título de la tarea'}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-bold">
+            
             <div class="grid grid-cols-3 gap-2">
-                <input id="te-day" type="number" value="${window.state.selectedDay}" placeholder="Día" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                <input id="te-month" type="number" value="${window.state.calMonth + 1}" placeholder="Mes" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                <input id="te-year" type="number" value="${window.state.calYear}" placeholder="Año" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+                <input id="te-day" type="number" min="1" max="31" value="${existing?.day || window.state.selectedDay}" placeholder="Día" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+                <input id="te-month" type="number" min="1" max="12" value="${existing?.month || (window.state.calMonth + 1)}" placeholder="Mes" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+                <input id="te-year" type="number" value="${existing?.year || window.state.calYear}" placeholder="Año" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             </div>
+
             <div class="grid grid-cols-2 gap-2">
-                <input id="te-time" placeholder="Hora inicio (ej. 10:00)" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                <input id="te-end" placeholder="Hora fin (ej. 11:30)" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold uppercase">Hora Inicio</label>
+                    <input id="te-time" type="time" value="${existing?.time || ''}" class="mt-1 w-full px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold uppercase">Hora Fin (Opcional)</label>
+                    <input id="te-end" type="time" value="${existing?.endTime || ''}" class="mt-1 w-full px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+                </div>
             </div>
+
             ${isEvent ? `
-                <input id="te-loc" placeholder="Ubicación" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+                <input id="te-loc" value="${existing?.location || ''}" placeholder="Ubicación (ej. Universidad, Gym)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             ` : `
                 <div class="grid grid-cols-2 gap-2">
                     <select id="te-prio" class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                        <option value="Media">Prioridad Media</option>
-                        <option value="Alta">Prioridad Alta</option>
-                        <option value="Baja">Prioridad Baja</option>
+                        <option value="Media" ${(!existing || existing?.priority === 'Media') ? 'selected' : ''}>Prioridad Media</option>
+                        <option value="Alta" ${existing?.priority === 'Alta' ? 'selected' : ''}>Prioridad Alta</option>
+                        <option value="Baja" ${existing?.priority === 'Baja' ? 'selected' : ''}>Prioridad Baja</option>
                     </select>
                     <select id="te-proj" class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
                         <option value="">Sin proyecto</option>
@@ -189,18 +229,100 @@ window.openTaskModal = (isEvent = false) => {
                     </select>
                 </div>
                 <label class="flex items-center space-x-2 text-gray-400">
-                    <input type="checkbox" id="te-inbox"> <span>Enviar a Bandeja de Entrada (Inbox)</span>
+                    <input type="checkbox" id="te-inbox" ${existing?.inInbox ? 'checked' : ''}> <span>Enviar a Bandeja de Entrada (Inbox)</span>
                 </label>
             `}
-            <textarea id="te-notes" placeholder="Notas o subtareas..." class="w-full px-3.5 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]"></textarea>
-            <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold">Guardar</button>
+
+            <!-- RECORDATORIOS: HORA FIJA O TIEMPO ANTES (Máximo 2 en Free, >2 con WeaVax Pro) -->
+            <div class="p-3 rounded-2xl bg-[#0A0A0F] border border-[#28283C] space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-extrabold text-gray-300">🔔 Recordatorios (${planTempReminders.length})</span>
+                    <select id="te-rem-mode" onchange="onPlanRemModeChange(this.value)" class="px-2 py-1 rounded-lg bg-[#181824] border border-[#28283C] text-[11px] font-bold">
+                        <option value="BEFORE">⏳ Tiempo antes</option>
+                        <option value="FIXED">⏰ Hora fija</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <select id="te-rem-before-val" class="flex-1 px-2.5 py-1.5 rounded-lg bg-[#181824] border border-[#28283C] text-xs">
+                        <option value="10">10 minutos antes</option>
+                        <option value="30" selected>30 minutos antes</option>
+                        <option value="60">1 hora antes</option>
+                        <option value="120">2 horas antes</option>
+                        <option value="1440">1 día antes</option>
+                    </select>
+                    <input type="time" id="te-rem-fixed-val" value="09:00" class="hidden flex-1 px-2.5 py-1.5 rounded-lg bg-[#181824] border border-[#28283C] text-xs">
+                    <button type="button" onclick="addPlanReminderItem()" class="px-3 py-1.5 rounded-lg bg-accent text-white font-bold">+ Añadir</button>
+                </div>
+
+                <div id="te-rem-chips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <textarea id="te-notes" placeholder="Notas o detalles..." class="w-full px-3.5 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C]">${existing?.notes || ''}</textarea>
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-extrabold">Guardar</button>
         </form>
-    `);
+        `
+    );
+    renderPlanReminderChips();
 };
 
-window.saveTaskOrEvent = async (e, isEvent) => {
+window.onPlanRemModeChange = (mode) => {
+    document.getElementById('te-rem-before-val')?.classList.toggle('hidden', mode !== 'BEFORE');
+    document.getElementById('te-rem-fixed-val')?.classList.toggle('hidden', mode !== 'FIXED');
+};
+
+window.addPlanReminderItem = () => {
+    const mode = document.getElementById('te-rem-mode')?.value || 'BEFORE';
+    const value = mode === 'FIXED'
+        ? document.getElementById('te-rem-fixed-val')?.value
+        : document.getElementById('te-rem-before-val')?.value;
+    if (!value) return;
+
+    if (planTempReminders.some(r => r.mode === mode && r.value === value)) return;
+
+    // Máximo 2 notificaciones por tarea o evento en Free; >2 con WeaVax Pro
+    if (!requireProOrCheckLimit(
+        'PLAN_REMINDERS',
+        planTempReminders.length,
+        2,
+        'El plan Gratuito permite hasta 2 notificaciones por tarea o evento. Desbloquea recordatorios múltiples ilimitados con WeaVax Pro.'
+    )) return;
+
+    planTempReminders.push({ mode, value });
+    renderPlanReminderChips();
+};
+
+window.removePlanReminderItem = (idx) => {
+    planTempReminders.splice(idx, 1);
+    renderPlanReminderChips();
+};
+
+function renderPlanReminderChips() {
+    const box = document.getElementById('te-rem-chips');
+    if (!box) return;
+    if (planTempReminders.length === 0) {
+        box.innerHTML = `<span class="text-[10px] text-gray-500">Sin notificaciones programadas</span>`;
+        return;
+    }
+    box.innerHTML = planTempReminders.map((r, i) => {
+        const text = r.mode === 'FIXED' ? `⏰ ${r.value}` : `⏳ ${BEFORE_LABELS[r.value] || `${r.value} min antes`}`;
+        return `
+            <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-[#181824] border border-[#28283C] text-[11px]">
+                <span>${text}</span>
+                <button type="button" onclick="removePlanReminderItem(${i})" class="text-gray-400 hover:text-red-400 ml-1">✕</button>
+            </span>
+        `;
+    }).join('');
+}
+
+window.saveTaskOrEvent = async (e, isEvent, existingDocId = null) => {
     e.preventDefault();
-    const id = Date.now();
+    const existing = existingDocId ? (window.state.tasks || []).find(x => String(x.docId) === String(existingDocId)) : null;
+    const id = existing ? Number(existing.id || existingDocId) : Math.floor(Date.now() / 1000);
+
+    const firstFixed = planTempReminders.find(r => r.mode === 'FIXED');
+    const firstBefore = planTempReminders.find(r => r.mode === 'BEFORE');
+
     await fsActions.setItem('tasks', id, {
         title: document.getElementById('te-title').value.trim(),
         day: Number(document.getElementById('te-day').value),
@@ -213,9 +335,13 @@ window.saveTaskOrEvent = async (e, isEvent) => {
         project: isEvent ? 'Agenda' : document.getElementById('te-proj').value,
         inInbox: isEvent ? false : document.getElementById('te-inbox').checked,
         notes: document.getElementById('te-notes').value.trim(),
+        reminders: planTempReminders,
+        reminderEnabled: planTempReminders.length > 0,
+        reminderTime: firstFixed ? firstFixed.value : '',
+        reminderMinutesBefore: firstBefore ? Number(firstBefore.value) : 0,
         isEvent,
-        isCompleted: false,
-        createdAt: id
+        isCompleted: existing ? Boolean(existing.isCompleted) : false,
+        createdAt: existing?.createdAt || Date.now()
     });
     window.closeUniversalModal();
 };
@@ -234,14 +360,14 @@ window.openProjectModal = () => {
 
 window.saveProjectForm = async (e) => {
     e.preventDefault();
-    const id = Date.now();
+    const id = Math.floor(Date.now() / 1000);
     await fsActions.setItem('projects', id, {
         name: document.getElementById('p-name').value.trim(),
         description: document.getElementById('p-desc').value.trim(),
         categories: document.getElementById('p-cats').value.trim(),
         status: 'active',
         deadline: Date.now() + 86400000 * 30,
-        createdAt: id
+        createdAt: Date.now()
     });
     window.closeUniversalModal();
 };
