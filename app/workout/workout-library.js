@@ -1,6 +1,13 @@
 import { fsActions } from '../firebase-sync.js';
 import { wState, getAllAvailableRoutines, getActiveMainRoutine, getTodayScheduledWorkoutInfo, getWeeklyWorkoutStats } from './workout-state.js';
-import { EXERCISE_DATABASE } from './workout-catalog.js';
+import * as catalog from './workout-catalog.js';
+const EXERCISE_DATABASE =
+    catalog.EXERCISE_DATABASE ||
+    catalog.EXERCISES ||
+    catalog.EXERCISE_CATALOG ||
+    catalog.default ||
+    Object.values(catalog).find(v => Array.isArray(v) && v[0]?.muscleGroup) ||
+    [];
 
 export function renderLibraryAndHub(container, minimizedBannerHtml) {
     const userLibraryRoutines = getUserSavedRoutines();
