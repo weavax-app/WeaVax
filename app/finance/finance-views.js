@@ -257,20 +257,39 @@ export function renderFinanceModule(container) {
 }
 
 function renderAccountCard(a) {
+    const defaultAccId = localStorage.getItem('weavax_default_account_id') || '';
+    const isDefault = String(a.id) === String(defaultAccId) || String(a.docId) === String(defaultAccId);
+
     return `
-        <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex justify-between items-start hover:border-accent transition-all">
+        <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border ${isDefault ? 'border-accent' : 'border-gray-200 dark:border-[#28283C]'} flex justify-between items-start hover:border-accent transition-all">
             <div>
-                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-accent/15 text-accent">${a.type || 'Banco'} · ${a.currency || 'Bs'}</span>
+                <div class="flex items-center space-x-1.5">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-accent/15 text-accent">${a.type || 'Banco'} · ${a.currency || 'Bs'}</span>
+                    ${isDefault ? '<span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-accent text-white">★ Predeterminada</span>' : ''}
+                </div>
                 <h5 class="text-base font-extrabold mt-2">${a.name}</h5>
                 <p class="text-xl font-black mt-1">${formatMoney(a.balance, a.currency || 'Bs')}</p>
             </div>
             <div class="flex items-center space-x-2">
+                <button onclick="setDefaultFinanceAccount('${a.id}')" class="text-sm ${isDefault ? 'text-accent' : 'text-gray-400 hover:text-white'}" title="${isDefault ? 'Quitar como predeterminada' : 'Marcar como cuenta predeterminada'}">
+                    ${isDefault ? '★' : '☆'}
+                </button>
                 <button onclick="openEditAccountModal('${a.docId}')" class="text-xs text-gray-400 hover:text-white" title="Editar cuenta">✎</button>
                 <button onclick="deleteDocItem('accounts', '${a.docId}')" class="text-xs text-gray-500 hover:text-red-400" title="Eliminar cuenta">✕</button>
             </div>
         </div>
     `;
 }
+
+window.setDefaultFinanceAccount = (accId) => {
+    const current = localStorage.getItem('weavax_default_account_id') || '';
+    if (String(current) === String(accId)) {
+        localStorage.removeItem('weavax_default_account_id');
+    } else {
+        localStorage.setItem('weavax_default_account_id', String(accId));
+    }
+    window.renderFinances();
+};
 
 function renderBudgetCard(b) {
     const dynamicSpent = getMonthlySpentForCategory(b.category);
