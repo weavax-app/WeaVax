@@ -1,4 +1,4 @@
-import './finance-export.js?v=1';
+import './finance-export.js';
 import {
     finState,
     getCategoriesByType,
