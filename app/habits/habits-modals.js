@@ -1,5 +1,5 @@
-import { fsActions } from '../firebase-sync.js?v=5';
-import { requireProOrCheckLimit } from '../weavax-pro.js?v=3';
+import { fsActions } from '../firebase-sync.js';
+import { requireProOrCheckLimit } from '../weavax-pro.js';
 import { HABIT_ICONS, getReminderTimesList } from './habits-views.js';
 
 let modalTempReminders = [];
