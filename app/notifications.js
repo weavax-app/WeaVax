@@ -1,5 +1,5 @@
-import { isHabitScheduledToday, getReminderTimesList } from './habits/habits-views.js?v=3';
-import { getTodayScheduledWorkoutInfo } from './ui-workouts.js?v=2';
+import { isHabitScheduledToday, getReminderTimesList } from './habits/habits-views.js';
+import { getTodayScheduledWorkoutInfo } from './ui-workouts.js';
 
 let notifInterval = null;
 
