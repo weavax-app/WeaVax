@@ -20,7 +20,7 @@
         :root { --color-primary: #8B5CF6; }
         body { font-family: 'Inter', sans-serif; background-color: #0A0A0F; color: #F9FAFB; transition: background-color 0.2s, color 0.2s; }
         
-        /* Colores dinámicos del tema elegido (Morado, Océano, Esmeralda, Ámbar, Frambuesa, Carmesí, Cian) */
+        /* Colores dinámicos del tema elegido */
         .bg-accent { background-color: var(--color-primary) !important; }
         .text-accent { color: var(--color-primary) !important; }
         .border-accent { border-color: var(--color-primary) !important; }
@@ -71,14 +71,14 @@
     <!-- CONTENEDOR PRINCIPAL -->
     <div id="app-container" class="hidden min-h-screen flex flex-col md:flex-row">
         
-        <!-- SIDEBAR EXPANDIBLE / CONTRAÍBLE -->
+        <!-- SIDEBAR EXPANDIBLE / CONTRAÍBLE (ESCRITORIO) -->
         <aside id="app-sidebar" class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 dark:border-[#28283C] bg-white dark:bg-[#181824] transition-all duration-200 z-30">
             <div class="h-16 px-4 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
                 <div class="flex items-center space-x-2.5 overflow-hidden">
                     <img src="../weavax_logo.png" class="w-7 h-7 object-contain shrink-0">
                     <span class="sidebar-label font-black text-lg tracking-tight">WeaVax</span>
                 </div>
-                <button onclick="toggleSidebar()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#0A0A0F] text-gray-400 hover:text-white text-xs" title="Expandir / Contraer barra">
+                <button type="button" onclick="toggleSidebar()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#0A0A0F] text-gray-400 hover:text-white text-xs" title="Expandir / Contraer barra">
                     ⇔
                 </button>
             </div>
@@ -94,58 +94,58 @@
             </div>
 
             <nav class="flex-1 px-3 py-4 space-y-1.5 text-sm font-medium">
-                <button onclick="navigate('dashboard')" data-nav="dashboard" title="Inicio / Mi Día" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-accent/15 text-accent font-bold">
+                <button type="button" onclick="navigate('dashboard')" data-nav="dashboard" title="Inicio / Mi Día" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-accent/15 text-accent font-bold">
                     <span class="text-lg">🏠</span><span class="sidebar-label">Inicio / Mi Día</span>
                 </button>
-                <button onclick="navigate('plan')" data-nav="plan" title="Plan & Agenda" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button type="button" onclick="navigate('plan')" data-nav="plan" title="Plan & Agenda" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span class="text-lg">📅</span><span class="sidebar-label">Plan & Agenda</span>
                 </button>
-                <button onclick="navigate('finances')" data-nav="finances" title="Finanzas & IA" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button type="button" onclick="navigate('finances')" data-nav="finances" title="Finanzas & IA" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span class="text-lg">💳</span><span class="sidebar-label">Finanzas & IA</span>
                 </button>
-                <button onclick="navigate('workouts')" data-nav="workouts" title="Entrenamiento" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button type="button" onclick="navigate('workouts')" data-nav="workouts" title="Entrenamiento" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span class="text-lg">🏋️</span><span class="sidebar-label">Entrenamiento</span>
                 </button>
-                <button onclick="navigate('progress')" data-nav="progress" title="Progreso" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button type="button" onclick="navigate('progress')" data-nav="progress" title="Progreso" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span class="text-lg">📊</span><span class="sidebar-label">Progreso</span>
                 </button>
-                <button onclick="navigate('settings')" data-nav="settings" title="Ajustes" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button type="button" onclick="navigate('settings')" data-nav="settings" title="Ajustes" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
                     <span class="text-lg">⚙️</span><span class="sidebar-label">Ajustes</span>
                 </button>
             </nav>
         </aside>
         
         <!-- MAIN -->
-        <main id="app-main" class="flex-1 md:pl-64 pb-20 transition-all duration-200">
-            <header class="h-16 px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
-                <h2 id="header-greeting" class="text-lg font-extrabold">Hola, Marce</h2>
-                <div class="flex items-center space-x-2.5">
-                    <span class="px-3 py-1 rounded-full bg-gray-100 dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] text-xs font-bold">🔥 <span id="streak-count">0 d</span></span>
-                    <span class="px-3.5 py-1 rounded-full bg-accent/15 border border-accent/40 text-accent text-xs font-extrabold">Día <span id="daily-score-pct">0</span>%</span>
+        <main id="app-main" class="flex-1 md:pl-64 pb-24 md:pb-12 transition-all duration-200">
+            <header class="h-16 px-4 sm:px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
+                <h2 id="header-greeting" class="text-base sm:text-lg font-extrabold truncate">Hola, Marce</h2>
+                <div class="flex items-center space-x-2">
+                    <span class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] text-xs font-bold">🔥 <span id="streak-count">0 d</span></span>
+                    <span class="px-3 py-1 rounded-full bg-accent/15 border border-accent/40 text-accent text-xs font-extrabold">Día <span id="daily-score-pct">0</span>%</span>
                 </div>
             </header>
 
-            <div class="max-w-6xl mx-auto p-6">
+            <div class="max-w-6xl mx-auto p-4 sm:p-6">
 
                 <!-- 1. SECCIÓN MI DÍA -->
                 <section id="view-dashboard" class="app-view grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-xs font-bold uppercase text-gray-400">Balance Consolidado</span>
-                            <button onclick="toggleBalancePrivacy()" class="text-sm">👁️‍🗨️</button>
+                            <button type="button" onclick="toggleBalancePrivacy()" class="text-sm">👁️‍🗨️</button>
                         </div>
                         <div id="dashboard-total-balance" class="text-3xl font-black my-2">Bs •••••</div>
                         <div class="flex gap-2 mt-4">
-                            <button onclick="openTxModal('gasto')" class="flex-1 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-bold">+ Gasto</button>
-                            <button onclick="openTxModal('ingreso')" class="flex-1 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-bold">+ Ingreso</button>
-                            <button onclick="openReceiptScannerModal()" class="py-2 px-3 rounded-xl bg-accent/20 text-accent text-xs font-bold" title="Escanear QR/Recibo">📷 IA</button>
+                            <button type="button" onclick="openTxModal('gasto')" class="flex-1 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-bold">+ Gasto</button>
+                            <button type="button" onclick="openTxModal('ingreso')" class="flex-1 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-bold">+ Ingreso</button>
+                            <button type="button" onclick="openReceiptScannerModal()" class="py-2 px-3 rounded-xl bg-accent/20 text-accent text-xs font-bold" title="Escanear QR/Recibo">📷 IA</button>
                         </div>
                     </div>
 
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-extrabold">Hábitos de Hoy</h3>
-                            <button onclick="openHabitModal()" class="text-xs font-bold text-accent">+ Nuevo</button>
+                            <button type="button" onclick="openHabitModal()" class="text-xs font-bold text-accent">+ Nuevo</button>
                         </div>
                         <div id="dashboard-habits-list" class="space-y-2.5"></div>
                     </div>
@@ -154,8 +154,8 @@
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-extrabold">Agenda de Hoy</h3>
                             <div class="space-x-2">
-                                <button onclick="openTaskModal(false)" class="text-xs font-bold text-accent">+ Tarea</button>
-                                <button onclick="openTaskModal(true)" class="text-xs font-bold text-blue-400">+ Evento</button>
+                                <button type="button" onclick="openTaskModal(false)" class="text-xs font-bold text-accent">+ Tarea</button>
+                                <button type="button" onclick="openTaskModal(true)" class="text-xs font-bold text-blue-400">+ Evento</button>
                             </div>
                         </div>
                         <div id="dashboard-agenda-list" class="space-y-2.5"></div>
@@ -169,24 +169,24 @@
                 <section id="view-plan" class="app-view hidden space-y-6">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div class="flex flex-wrap gap-2">
-                            <button onclick="setPlanSubTab('calendar')" id="btn-plan-calendar" class="px-3.5 py-2 rounded-xl bg-accent text-white text-xs font-bold">📅 Calendario</button>
-                            <button onclick="setPlanSubTab('tasks')" id="btn-plan-tasks" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">✅ Tareas</button>
-                            <button onclick="setPlanSubTab('events')" id="btn-plan-events" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">🗓️ Eventos</button>
-                            <button onclick="setPlanSubTab('inbox')" id="btn-plan-inbox" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">📥 Inbox</button>
-                            <button onclick="setPlanSubTab('projects')" id="btn-plan-projects" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">📁 Proyectos</button>
+                            <button type="button" onclick="setPlanSubTab('calendar')" id="btn-plan-calendar" class="px-3.5 py-2 rounded-xl bg-accent text-white text-xs font-bold">📅 Calendario</button>
+                            <button type="button" onclick="setPlanSubTab('tasks')" id="btn-plan-tasks" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">✅ Tareas</button>
+                            <button type="button" onclick="setPlanSubTab('events')" id="btn-plan-events" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">🗓️ Eventos</button>
+                            <button type="button" onclick="setPlanSubTab('inbox')" id="btn-plan-inbox" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">📥 Inbox</button>
+                            <button type="button" onclick="setPlanSubTab('projects')" id="btn-plan-projects" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">📁 Proyectos</button>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="openProjectModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Proyecto</button>
-                            <button onclick="openTaskModal(false)" class="px-3.5 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Tarea</button>
-                            <button onclick="openTaskModal(true)" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold">+ Evento</button>
+                            <button type="button" onclick="openProjectModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Proyecto</button>
+                            <button type="button" onclick="openTaskModal(false)" class="px-3.5 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Tarea</button>
+                            <button type="button" onclick="openTaskModal(true)" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold">+ Evento</button>
                         </div>
                     </div>
 
                     <div id="plan-sub-calendar" class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <div class="flex justify-between items-center mb-4">
-                            <button onclick="changeCalendarMonth(-1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs">←</button>
+                            <button type="button" onclick="changeCalendarMonth(-1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs">←</button>
                             <h4 id="calendar-month-label" class="text-base font-extrabold capitalize"></h4>
-                            <button onclick="changeCalendarMonth(1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs">→</button>
+                            <button type="button" onclick="changeCalendarMonth(1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs">→</button>
                         </div>
                         <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-gray-400 mb-2">
                             <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
@@ -201,45 +201,14 @@
                     <div id="plan-sub-projects" class="hidden"><div id="plan-projects-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div>
                 </section>
 
-                <!-- 3. SECCIÓN FINANZAS (BIEN ENCAPSULADA CON SU ETIQUETA SECTION) -->
-                <section id="view-finances" class="app-view hidden space-y-6">
-                    <div class="flex flex-wrap justify-between items-center gap-3">
-                        <h3 class="text-xl font-black">Finanzas Multi-Moneda</h3>
-                        <div class="flex flex-wrap gap-2">
-                            <button onclick="openReceiptScannerModal()" class="px-3.5 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-bold">📷 Escanear QR / Recibo IA</button>
-                            <button onclick="openAccountModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Cuenta</button>
-                            <button onclick="openBudgetModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Presupuesto</button>
-                            <button onclick="openGoalModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Meta</button>
-                            <button onclick="openTxModal('gasto')" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Movimiento</button>
-                        </div>
-                    </div>
-                    <div id="accounts-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                            <h4 class="text-sm font-extrabold mb-3">Presupuestos</h4>
-                            <div id="finances-budgets-list" class="space-y-2.5"></div>
-                        </div>
-                        <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                            <h4 class="text-sm font-extrabold mb-3">Metas de Ahorro</h4>
-                            <div id="finances-goals-list" class="space-y-2.5"></div>
-                        </div>
-                    </div>
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                        <h4 class="text-sm font-extrabold mb-4">Historial de Movimientos</h4>
-                        <div id="transactions-list" class="space-y-2"></div>
-                    </div>
-                </section>
+                <!-- 3. SECCIÓN FINANZAS -->
+                <section id="view-finances" class="app-view hidden space-y-6"></section>
 
-                <!-- 4. SECCIÓN ENTRENAMIENTO (CONTENEDOR LIMPIO PARA ui-workouts.js) -->
+                <!-- 4. SECCIÓN ENTRENAMIENTO -->
                 <section id="view-workouts" class="app-view hidden space-y-6"></section>
 
                 <!-- 5. SECCIÓN PROGRESO -->
-                <section id="view-progress" class="app-view hidden space-y-6">
-                    <h3 class="text-xl font-black">Progreso y Distribución Diaria</h3>
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                        <div id="progress-bars-container" class="space-y-4"></div>
-                    </div>
-                </section>
+                <section id="view-progress" class="app-view hidden space-y-6"></section>
 
                 <!-- 6. SECCIÓN AJUSTES -->
                 <section id="view-settings" class="app-view hidden space-y-6">
@@ -248,24 +217,25 @@
                 </section>
 
             </div>
+
             <!-- BARRA INFERIOR DE NAVEGACIÓN MÓVIL (Visible solo en pantallas < 768px) -->
-            <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white dark:bg-[#181824] border-t border-gray-200 dark:border-[#28283C] px-2 py-1.5 flex items-center justify-around">
-                <button onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl bg-accent/15 text-accent font-bold text-[10px]">
+            <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-[#181824] border-t border-gray-200 dark:border-[#28283C] px-1 py-1.5 flex items-center justify-around">
+                <button type="button" onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl bg-accent/15 text-accent font-bold text-[10px]">
                     <span class="text-base">🏠</span><span>Inicio</span>
                 </button>
-                <button onclick="navigate('plan')" data-nav="plan" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-gray-400 text-[10px]">
+                <button type="button" onclick="navigate('plan')" data-nav="plan" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-gray-400 text-[10px]">
                     <span class="text-base">📅</span><span>Plan</span>
                 </button>
-                <button onclick="navigate('finances')" data-nav="finances" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-gray-400 text-[10px]">
+                <button type="button" onclick="navigate('finances')" data-nav="finances" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-gray-400 text-[10px]">
                     <span class="text-base">💳</span><span>Finanzas</span>
                 </button>
-                <button onclick="navigate('workouts')" data-nav="workouts" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-gray-400 text-[10px]">
+                <button type="button" onclick="navigate('workouts')" data-nav="workouts" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-gray-400 text-[10px]">
                     <span class="text-base">🏋️</span><span>Gym</span>
                 </button>
-                <button onclick="navigate('progress')" data-nav="progress" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-gray-400 text-[10px]">
+                <button type="button" onclick="navigate('progress')" data-nav="progress" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-gray-400 text-[10px]">
                     <span class="text-base">📊</span><span>Progreso</span>
                 </button>
-                <button onclick="navigate('settings')" data-nav="settings" class="nav-btn flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-gray-400 text-[10px]">
+                <button type="button" onclick="navigate('settings')" data-nav="settings" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-gray-400 text-[10px]">
                     <span class="text-base">⚙️</span><span>Ajustes</span>
                 </button>
             </nav>
@@ -277,13 +247,13 @@
         <div class="w-full max-w-md p-6 rounded-3xl bg-[#181824] border border-[#28283C]">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="modal-title" class="text-base font-extrabold"></h3>
-                <button onclick="closeUniversalModal()">✕</button>
+                <button type="button" onclick="closeUniversalModal()">✕</button>
             </div>
             <div id="modal-body"></div>
         </div>
     </div>
 
-   <script type="module">
+    <script type="module">
         window.toggleSidebar = () => {
             const sb = document.getElementById('app-sidebar');
             const main = document.getElementById('app-main');
@@ -301,7 +271,7 @@
         const ts = Date.now();
         const modules = {};
 
-        // 1. Cargar Firebase Sync PRIMERO y activar de inmediato el Login de Google
+        // 1. Cargar Firebase Sync PRIMERO
         try {
             modules.sync = await import(`./firebase-sync.js?v=${ts}`);
         } catch (e) {
@@ -309,7 +279,7 @@
             alert("Error en firebase-sync.js: " + e.message);
         }
 
-        // 2. Cargar cada módulo visual de forma aislada (si uno falla, no rompe a los demás ni al Login)
+        // 2. Cargar cada módulo visual de forma aislada
         const loadSafe = async (key, path) => {
             try {
                 modules[key] = await import(`${path}?v=${ts}`);
@@ -324,30 +294,35 @@
             loadSafe('plan', './ui-plan.js'),
             loadSafe('fin', './ui-finances.js'),
             loadSafe('work', './ui-workouts.js'),
-            loadSafe('set', './ui-settings.js')
+            loadSafe('prog', './ui-progress.js'),
+            loadSafe('set', './ui-settings.js'),
+            loadSafe('notif', './notifications.js')
         ]);
 
         window.navigate = (v) => {
             document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById('view-' + v);
             if (target) target.classList.remove('hidden');
+
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 const active = btn.dataset.nav === v;
                 btn.classList.toggle('bg-accent/15', active);
                 btn.classList.toggle('text-accent', active);
                 btn.classList.toggle('font-bold', active);
             });
-            if (v === 'dashboard' && modules.dash?.renderDashboard) modules.dash.renderDashboard();
-            if (v === 'plan' && modules.plan?.renderPlanModule) modules.plan.renderPlanModule();
-            if (v === 'finances' && modules.fin?.renderFinances) modules.fin.renderFinances();
-            if (v === 'workouts' && modules.work?.renderWorkouts) modules.work.renderWorkouts();
-            if (v === 'settings' && modules.set?.renderSettings) modules.set.renderSettings();
+
+            if (v === 'dashboard') (modules.dash?.renderDashboard || window.renderDashboard)?.();
+            if (v === 'plan') (modules.plan?.renderPlanModule || window.renderPlanModule)?.();
+            if (v === 'finances') (modules.fin?.renderFinances || window.renderFinances)?.();
+            if (v === 'workouts') (modules.work?.renderWorkouts || window.renderWorkouts)?.();
+            if (v === 'progress') (modules.prog?.renderProgressModule || window.renderProgressModule)?.();
+            if (v === 'settings') (modules.set?.renderSettings || window.renderSettings)?.();
         };
 
         window.toggleBalancePrivacy = () => {
             window.state.isBalanceVisible = !window.state.isBalanceVisible;
-            if (modules.fin?.renderFinances) modules.fin.renderFinances();
-            if (modules.set?.renderSettings) modules.set.renderSettings();
+            (modules.fin?.renderFinances || window.renderFinances)?.();
+            (modules.set?.renderSettings || window.renderSettings)?.();
         };
 
         window.deleteDocItem = async (col, docId) => {
@@ -388,14 +363,17 @@
                 if (p.themeColor) document.documentElement.style.setProperty('--color-primary', p.themeColor);
 
                 try { modules.pro?.initProState(); } catch (e) { console.error(e); }
-                try { modules.dash?.renderDashboard(); } catch (e) { console.error(e); }
-                try { modules.plan?.renderPlanModule(); } catch (e) { console.error(e); }
-                try { modules.fin?.renderFinances(); } catch (e) { console.error(e); }
-                try { modules.work?.renderWorkouts(); } catch (e) { console.error(e); }
-                try { modules.set?.renderSettings(); } catch (e) { console.error(e); }
+                try { (modules.dash?.renderDashboard || window.renderDashboard)?.(); } catch (e) { console.error(e); }
+                try { (modules.plan?.renderPlanModule || window.renderPlanModule)?.(); } catch (e) { console.error(e); }
+                try { (modules.fin?.renderFinances || window.renderFinances)?.(); } catch (e) { console.error(e); }
+                try { (modules.work?.renderWorkouts || window.renderWorkouts)?.(); } catch (e) { console.error(e); }
+                try { (modules.prog?.renderProgressModule || window.renderProgressModule)?.(); } catch (e) { console.error(e); }
+                try { (modules.set?.renderSettings || window.renderSettings)?.(); } catch (e) { console.error(e); }
+                try { modules.notif?.startNotificationEngine(); } catch (e) { console.error(e); }
             });
         }
     </script>
+
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
