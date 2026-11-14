@@ -1,5 +1,5 @@
-import { fsActions } from '../firebase-sync.js?v=5';
-import { consumeAiScanQuota, requireProOrCheckLimit, FREE_LIMITS } from '../weavax-pro.js?v=1';
+import { fsActions } from '../firebase-sync.js';
+import { consumeAiScanQuota, requireProOrCheckLimit, FREE_LIMITS } from '../weavax-pro.js';
 import {
     finState,
     getCategoriesByType,
