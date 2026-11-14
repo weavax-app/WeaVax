@@ -17,12 +17,28 @@ function getGroqApiKey() {
     return p1 + p2;
 }
 
-// 1. MODAL DE GASTO / INGRESO (NUEVO)
+// 1. MODAL DE GASTO / INGRESO (Categoría vacía por defecto y Cuenta vacía o Predeterminada)
 window.openTxModal = (tipo = 'gasto', preset = null) => {
     const isIncome = tipo === 'ingreso';
     const cats = isIncome ? getCategoriesByType('INGRESO') : getAllExpenseCategories();
     const accounts = window.state.accounts || [];
-    const accOpts = accounts.map(a => `<option value="${a.id}" ${preset?.accountName === a.name ? 'selected' : ''}>${a.name} (${a.currency})</option>`).join('');
+    const defaultAccId = localStorage.getItem('weavax_default_account_id') || '';
+
+    const catOpts = [
+        `<option value="" disabled ${!preset?.category ? 'selected' : ''}>Seleccionar categoría...</option>`,
+        ...cats.map(c => `<option value="${c}" ${preset?.category === c ? 'selected' : ''}>${c}</option>`)
+    ].join('');
+
+    const hasPreselectedAcc = Boolean(preset?.accountName || defaultAccId);
+    const accOpts = [
+        `<option value="" disabled ${!hasPreselectedAcc ? 'selected' : ''}>Seleccionar cuenta...</option>`,
+        ...accounts.map(a => {
+            const isSelected = preset?.accountName
+                ? preset.accountName === a.name
+                : (defaultAccId && (String(a.id) === String(defaultAccId) || String(a.docId) === String(defaultAccId)));
+            return `<option value="${a.id}" ${isSelected ? 'selected' : ''}>${a.name} (${a.currency})</option>`;
+        })
+    ].join('');
 
     window.openUniversalModal(isIncome ? '💰 Registrar Ingreso' : '💸 Registrar Gasto', `
         <form onsubmit="saveTxForm(event, null)" class="space-y-3 text-xs">
@@ -30,11 +46,11 @@ window.openTxModal = (tipo = 'gasto', preset = null) => {
             <input id="tx-title" required value="${preset?.title || ''}" placeholder="Concepto o comercio" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             <input id="tx-amount" type="number" step="0.01" required value="${preset?.defaultAmount || ''}" placeholder="Monto" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             <div class="grid grid-cols-2 gap-2">
-                <select id="tx-cat" class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                    ${cats.map(c => `<option value="${c}" ${preset?.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                <select id="tx-cat" required class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+                    ${catOpts}
                 </select>
                 <select id="tx-acc" required class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                    ${accOpts || '<option value="">Crea una cuenta primero</option>'}
+                    ${accOpts}
                 </select>
             </div>
             <input id="tx-note" placeholder="Nota opcional..." class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
@@ -120,22 +136,34 @@ window.saveTxForm = async (e, existingDocId = null) => {
 };
 
 // 3. MODAL DE TRANSFERENCIA ENTRE CUENTAS (recordTransfer de FinanceDao.kt)
+// 3. MODAL DE TRANSFERENCIA ENTRE CUENTAS
 window.openTransferModal = () => {
     const accounts = window.state.accounts || [];
     if (accounts.length < 2) return alert('Necesitas al menos 2 cuentas activas para realizar una transferencia.');
-    const opts = accounts.map(a => `<option value="${a.id}">${a.name} (${a.currency} ${Number(a.balance || 0).toFixed(2)})</option>`).join('');
+    const defaultAccId = localStorage.getItem('weavax_default_account_id') || '';
+
+    const fromOpts = [
+        `<option value="" disabled ${!defaultAccId ? 'selected' : ''}>Seleccionar cuenta de origen...</option>`,
+        ...accounts.map(a => {
+            const isDef = defaultAccId && (String(a.id) === String(defaultAccId) || String(a.docId) === String(defaultAccId));
+            return `<option value="${a.id}" ${isDef ? 'selected' : ''}>${a.name} (${a.currency} ${Number(a.balance || 0).toFixed(2)})</option>`;
+        })
+    ].join('');
+
+    const toOpts = [
+        `<option value="" disabled selected>Seleccionar cuenta de destino...</option>`,
+        ...accounts.map(a => `<option value="${a.id}">${a.name} (${a.currency} ${Number(a.balance || 0).toFixed(2)})</option>`)
+    ].join('');
 
     window.openUniversalModal('⇄ Transferir entre Cuentas', `
         <form onsubmit="saveTransferForm(event)" class="space-y-3 text-xs">
             <div>
                 <label class="text-[10px] text-gray-400 font-bold uppercase">Cuenta de Origen (Sale dinero)</label>
-                <select id="tr-from" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">${opts}</select>
+                <select id="tr-from" required class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">${fromOpts}</select>
             </div>
             <div>
                 <label class="text-[10px] text-gray-400 font-bold uppercase">Cuenta de Destino (Entra dinero)</label>
-                <select id="tr-to" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                    ${accounts.map((a, i) => `<option value="${a.id}" ${i === 1 ? 'selected' : ''}>${a.name} (${a.currency})</option>`).join('')}
-                </select>
+                <select id="tr-to" required class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">${toOpts}</select>
             </div>
             <div class="grid grid-cols-2 gap-2">
                 <div>
@@ -154,7 +182,7 @@ window.openTransferModal = () => {
             <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 text-white font-extrabold">Ejecutar Transferencia</button>
         </form>
     `);
-};
+};    
 
 window.saveTransferForm = async (e) => {
     e.preventDefault();
