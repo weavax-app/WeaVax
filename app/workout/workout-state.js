@@ -1,5 +1,4 @@
 import * as catalog from './workout-catalog.js';
-import { wState, getUserSavedRoutines, getCatalogTemplates, getAllAvailableRoutines, getActiveMainRoutine, getTodayScheduledWorkoutInfo, getWeeklyWorkoutStats } from './workout-state.js';
 
 const CATALOG_TEMPLATES =
     catalog.WORKOUT_CATALOG_TEMPLATES ||
@@ -9,10 +8,9 @@ const CATALOG_TEMPLATES =
     Object.values(catalog).find(v => Array.isArray(v) && v[0]?.days) ||
     [];
 
-// Anclar en window para evitar copias duplicadas entre módulos
 if (!window.wState) {
     window.wState = {
-        subScreen: 'HUB', // HUB | RUTINAS | DETALLE_RUTINA | DETALLE_EJERCICIO | SESION_ACTIVA | POR_FINALIZAR | RESUMEN_SESION | HISTORIAL
+        subScreen: 'HUB',
         selectedRoutineId: null,
         selectedExerciseName: null,
         activeSession: null,
@@ -24,15 +22,6 @@ if (!window.wState) {
 }
 
 export const wState = window.wState;
-
-export function getAllAvailableRoutines() {
-    const userRoutines = (window.state.workout_routines || []).map(r => ({
-        ...r,
-        isCustom: true,
-        days: Array.isArray(r.days) ? r.days : [{ dayNumber: 1, name: r.focus || 'Entrenamiento General', exercises: [] }]
-    }));
-    return [...userRoutines, ...CATALOG_TEMPLATES];
-}
 
 export function getUserSavedRoutines() {
     return (window.state.workout_routines || []).map(r => ({
