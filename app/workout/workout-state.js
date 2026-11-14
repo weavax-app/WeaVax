@@ -1,4 +1,5 @@
 import * as catalog from './workout-catalog.js';
+import { wState, getUserSavedRoutines, getCatalogTemplates, getAllAvailableRoutines, getActiveMainRoutine, getTodayScheduledWorkoutInfo, getWeeklyWorkoutStats } from './workout-state.js';
 
 const CATALOG_TEMPLATES =
     catalog.WORKOUT_CATALOG_TEMPLATES ||
@@ -31,6 +32,22 @@ export function getAllAvailableRoutines() {
         days: Array.isArray(r.days) ? r.days : [{ dayNumber: 1, name: r.focus || 'Entrenamiento General', exercises: [] }]
     }));
     return [...userRoutines, ...CATALOG_TEMPLATES];
+}
+
+export function getUserSavedRoutines() {
+    return (window.state.workout_routines || []).map(r => ({
+        ...r,
+        isCustom: true,
+        days: Array.isArray(r.days) ? r.days : [{ dayNumber: 1, name: r.focus || 'Entrenamiento General', exercises: [] }]
+    }));
+}
+
+export function getCatalogTemplates() {
+    return CATALOG_TEMPLATES;
+}
+
+export function getAllAvailableRoutines() {
+    return [...getUserSavedRoutines(), ...CATALOG_TEMPLATES];
 }
 
 export function getActiveMainRoutine() {
