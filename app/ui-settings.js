@@ -1,5 +1,5 @@
-import { fsActions } from './firebase-sync.js?v=5';
-import { isUserPro, openProPaywall } from './weavax-pro.js?v=2';
+import { fsActions } from './firebase-sync.js';
+import { isUserPro, openProPaywall } from './weavax-pro.js';
 
 export const WEAVAX_THEMES = [
     { name: 'Morado WeaVax', hex: '#8B5CF6', isFree: true },
