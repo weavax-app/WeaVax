@@ -1,5 +1,5 @@
-import { fsActions } from './firebase-sync.js?v=5';
-import { requireProOrCheckLimit, FREE_LIMITS } from './weavax-pro.js?v=3';
+import { fsActions } from './firebase-sync.js';
+import { requireProOrCheckLimit, FREE_LIMITS } from './weavax-pro.js';
 
 let planTempReminders = []; // { mode: 'FIXED' | 'BEFORE', value: '09:00' | '30' }
 
