@@ -10,6 +10,13 @@ const EXERCISE_DATABASE =
     Object.values(catalog).find(v => Array.isArray(v) && v[0]?.muscleGroup) ||
     [];
 
+const WEAVAX_30_TEMPLATES =
+    catalog.WEAVAX_30_TEMPLATES ||
+    catalog.WORKOUT_CATALOG_TEMPLATES ||
+    catalog.WORKOUT_TEMPLATES ||
+    catalog.ROUTINE_TEMPLATES ||
+    [];
+
 export function renderLibraryAndHub(container, minimizedBannerHtml) {
     const userLibraryRoutines = getUserSavedRoutines();
     const primaryRoutine = userLibraryRoutines.find(r => Number(r.id) === Number(wState.selectedRoutineId)) || userLibraryRoutines[0] || null;
