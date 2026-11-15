@@ -107,9 +107,15 @@ export function getAllRoutinesAndTemplates() {
 export function getActiveMainRoutine() {
     const userRoutines = getUserSavedRoutines();
     if (userRoutines.length > 0) {
-        const savedId = Number(wState.selectedRoutineId || localStorage.getItem('weavax_primary_routine_id'));
-        const found = userRoutines.find(r => Number(r.id) === savedId);
-        return found || userRoutines[0];
+        const cloudId = Number(window.state.profile?.primaryRoutineId || 0);
+        const localId = Number(wState.selectedRoutineId || localStorage.getItem('weavax_primary_routine_id') || 0);
+        const targetId = cloudId || localId;
+
+        if (targetId > 0) {
+            const found = userRoutines.find(r => Number(r.id) === targetId);
+            if (found) return found;
+        }
+        return userRoutines[0];
     }
     const all = getAllRoutinesAndTemplates();
     return all[0] || null;
