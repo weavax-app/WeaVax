@@ -1,13 +1,10 @@
 import { fsActions } from '../firebase-sync.js';
-import { wState, getAllAvailableRoutines } from './workout-state.js';
-import * as catalog from './workout-catalog.js';
-const EXERCISE_DATABASE =
-    catalog.EXERCISE_DATABASE ||
-    catalog.EXERCISES ||
-    catalog.EXERCISE_CATALOG ||
-    catalog.default ||
-    Object.values(catalog).find(v => Array.isArray(v) && v[0]?.muscleGroup) ||
-    [];
+import {
+    wState,
+    EXERCISES_LIST,
+    findExerciseInfo,
+    getAllRoutinesAndTemplates
+} from './workout-state.js';
 
 export function renderActiveAndFinishViews(container) {
     if (wState.subScreen === 'SESION_ACTIVA' && wState.activeSession) {
@@ -27,7 +24,7 @@ export function renderActiveAndFinishViews(container) {
             <div class="space-y-6">
                 <div class="sticky top-16 z-20 p-4 sm:p-5 rounded-2xl bg-[#181824] border border-accent flex flex-wrap items-center justify-between gap-3 shadow-xl">
                     <div class="flex items-center space-x-3">
-                        <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent text-xs font-bold">← Minimizar</button>
+                        <button type="button" onclick="openWorkoutSub('PRINCIPAL')" class="px-3 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent text-xs font-bold">← Minimizar</button>
                         <div>
                             <span class="text-[10px] font-bold uppercase text-accent">${s.routineName}</span>
                             <div class="flex items-center space-x-4 mt-0.5">
@@ -38,9 +35,9 @@ export function renderActiveAndFinishViews(container) {
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="openAddExerciseToActiveModal()" class="px-3.5 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">+ Ejercicio</button>
-                        <button onclick="discardActiveWorkout()" class="px-3.5 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-bold">🗑️ Descartar</button>
-                        <button onclick="attemptFinishWorkout()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold">Finalizar</button>
+                        <button type="button" onclick="openAddExerciseToActiveModal()" class="px-3.5 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">+ Ejercicio</button>
+                        <button type="button" onclick="discardActiveWorkout()" class="px-3.5 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-bold">🗑️ Descartar</button>
+                        <button type="button" onclick="attemptFinishWorkout()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold">Finalizar</button>
                     </div>
                 </div>
 
@@ -52,7 +49,7 @@ export function renderActiveAndFinishViews(container) {
                                     <img src="${ex.imageUri}" class="w-12 h-12 rounded-xl object-contain bg-white p-1">
                                     <div><h4 class="text-sm font-extrabold">${ex.exerciseName}</h4><p class="text-[11px] text-gray-400">${ex.muscleGroup} · Descanso ${ex.restSeconds}s</p></div>
                                 </div>
-                                <button onclick="removeExerciseFromActive(${exIdx})" class="text-xs text-gray-500 hover:text-red-400">Quitar</button>
+                                <button type="button" onclick="removeExerciseFromActive(${exIdx})" class="text-xs text-gray-500 hover:text-red-400">Quitar</button>
                             </div>
                             <div class="grid grid-cols-12 gap-2 text-[10px] font-bold uppercase text-gray-400 px-2">
                                 <div class="col-span-3">Tipo / Serie</div><div class="col-span-3">Peso (kg)</div><div class="col-span-3">Reps</div><div class="col-span-3 text-center">Completar</div>
@@ -61,7 +58,7 @@ export function renderActiveAndFinishViews(container) {
                                 ${ex.sets.map((st, stIdx) => `
                                     <div class="grid grid-cols-12 gap-2 items-center p-2.5 rounded-xl ${st.isCompleted ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-gray-50 dark:bg-[#0A0A0F]'} text-xs">
                                         <div class="col-span-3">
-                                            <button onclick="openSetTypePickerModal(${exIdx}, ${stIdx})" class="w-full px-2.5 py-1.5 rounded-lg bg-[#181824] border border-[#28283C] hover:border-accent flex items-center justify-between text-xs">
+                                            <button type="button" onclick="openSetTypePickerModal(${exIdx}, ${stIdx})" class="w-full px-2.5 py-1.5 rounded-lg bg-[#181824] border border-[#28283C] hover:border-accent flex items-center justify-between text-xs">
                                                 ${setTypeBadge(st, stIdx)}<span class="text-[9px] text-gray-400">▼</span>
                                             </button>
                                         </div>
@@ -72,8 +69,8 @@ export function renderActiveAndFinishViews(container) {
                                 `).join('')}
                             </div>
                             <div class="flex gap-3 pt-1">
-                                <button onclick="addSetToActive(${exIdx})" class="text-xs font-bold text-accent">+ Añadir Serie</button>
-                                <button onclick="removeLastSetFromActive(${exIdx})" class="text-xs text-gray-400 hover:text-red-400">- Quitar Serie</button>
+                                <button type="button" onclick="addSetToActive(${exIdx})" class="text-xs font-bold text-accent">+ Añadir Serie</button>
+                                <button type="button" onclick="removeLastSetFromActive(${exIdx})" class="text-xs text-gray-400 hover:text-red-400">- Quitar Serie</button>
                             </div>
                         </div>
                     `).join('')}
@@ -89,7 +86,7 @@ export function renderActiveAndFinishViews(container) {
             <div class="max-w-xl mx-auto p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-5">
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400">Cronómetro Detenido · Revisión Final</span>
-                    <button onclick="openWorkoutSub('SESION_ACTIVA')" class="text-xs text-accent font-bold">← Volver</button>
+                    <button type="button" onclick="openWorkoutSub('SESION_ACTIVA')" class="text-xs text-accent font-bold">← Volver</button>
                 </div>
                 <div>
                     <label class="text-[11px] font-bold text-gray-400 uppercase">Título del entrenamiento</label>
@@ -117,8 +114,8 @@ export function renderActiveAndFinishViews(container) {
                     <textarea id="fin-notes" rows="3" placeholder="¿Cómo te sentiste hoy?" class="mt-1 w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] text-xs">${d.notes || ''}</textarea>
                 </div>
                 <div class="flex gap-3 pt-2">
-                    <button onclick="discardActiveWorkout()" class="flex-1 py-3 rounded-xl bg-red-500/15 text-red-400 font-bold text-xs">🗑️ Descartar</button>
-                    <button onclick="checkRoutineReconciliationBeforeSave()" class="flex-1 py-3 rounded-xl bg-accent text-white font-extrabold text-xs">Guardar Entrenamiento</button>
+                    <button type="button" onclick="discardActiveWorkout()" class="flex-1 py-3 rounded-xl bg-red-500/15 text-red-400 font-bold text-xs">🗑️ Descartar</button>
+                    <button type="button" onclick="finalizeAndSaveWorkoutSession()" class="flex-1 py-3 rounded-xl bg-accent text-white font-extrabold text-xs">Guardar Entrenamiento</button>
                 </div>
             </div>
         `;
@@ -139,11 +136,11 @@ export function renderActiveAndFinishViews(container) {
             <div class="max-w-md mx-auto space-y-4">
                 ${slides[idx]}
                 <div class="flex justify-between items-center">
-                    <button onclick="stepSummarySlide(-1)" class="px-4 py-2 rounded-xl bg-[#181824] text-xs font-bold">← Anterior</button>
+                    <button type="button" onclick="stepSummarySlide(-1)" class="px-4 py-2 rounded-xl bg-[#181824] text-xs font-bold">← Anterior</button>
                     <span class="text-xs font-bold text-gray-400">Tarjeta ${idx + 1} de 5</span>
-                    <button onclick="stepSummarySlide(1)" class="px-4 py-2 rounded-xl bg-[#181824] text-xs font-bold">Siguiente →</button>
+                    <button type="button" onclick="stepSummarySlide(1)" class="px-4 py-2 rounded-xl bg-[#181824] text-xs font-bold">Siguiente →</button>
                 </div>
-                <button onclick="openWorkoutSub('PRINCIPAL')" class="w-full py-3 rounded-xl bg-accent text-white font-extrabold text-xs">Cerrar Resumen</button>
+                <button type="button" onclick="openWorkoutSub('PRINCIPAL')" class="w-full py-3 rounded-xl bg-accent text-white font-extrabold text-xs">Cerrar Resumen</button>
             </div>
         `;
     }
@@ -154,20 +151,25 @@ window.beginActiveWorkoutSession = (routineId, dayNumber) => {
     const d = (r?.days || []).find(x => Number(x.dayNumber) === Number(dayNumber)) || r?.days?.[0];
     if (!r || !d) return;
 
-    window.navigate('workouts');
+    if (window.navigate) window.navigate('workouts');
     wState.activeSession = {
         routineId: r.id,
         routineName: `${r.name} · ${d.dayName}`,
         dayNumber: d.dayNumber,
         startedAt: Date.now(),
         elapsedSeconds: 0,
-        originalExercisesSnapshot: JSON.parse(JSON.stringify(d.exercises || [])),
         exercises: (d.exercises || []).map(ex => {
-            const cat = getExById(ex.exerciseId);
+            const cat = findExerciseInfo(ex.exerciseId, ex.exerciseName);
             return {
                 ...ex,
                 imageUri: cat.img,
-                sets: Array.from({ length: Number(ex.targetSets || 3) }, (_, i) => ({ setNumber: i + 1, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false }))
+                sets: Array.from({ length: Number(ex.targetSets || 3) }, (_, i) => ({
+                    setNumber: i + 1,
+                    setType: 'NORMAL',
+                    weightKg: 0,
+                    reps: 0,
+                    isCompleted: false
+                }))
             };
         })
     };
@@ -195,7 +197,7 @@ window.openSetTypePickerModal = (exIdx, stIdx) => {
         { code: 'D', label: 'D · Dropset (Serie Descendente)', desc: 'Reducción inmediata de peso sin descanso', color: 'text-cyan-400' },
         { code: 'F', label: 'F · Serie al Fallo Muscular', desc: 'Máximo esfuerzo hasta no poder completar otra rep', color: 'text-red-400' }
     ];
-    window.openUniversalModal('Seleccionar Tipo de Serie', `<div class="space-y-2.5 text-xs">${types.map(t => `<button onclick="selectSetTypeOption(${exIdx}, ${stIdx}, '${t.code}')" class="w-full p-3.5 rounded-2xl bg-[#0A0A0F] border ${cur === t.code ? 'border-accent bg-accent/10' : 'border-[#28283C]'} hover:border-accent text-left"><p class="font-extrabold ${t.color}">${t.label}</p><p class="text-[11px] text-gray-400 mt-0.5">${t.desc}</p></button>`).join('')}</div>`);
+    window.openUniversalModal('Seleccionar Tipo de Serie', `<div class="space-y-2.5 text-xs">${types.map(t => `<button type="button" onclick="selectSetTypeOption(${exIdx}, ${stIdx}, '${t.code}')" class="w-full p-3.5 rounded-2xl bg-[#0A0A0F] border ${cur === t.code ? 'border-accent bg-accent/10' : 'border-[#28283C]'} hover:border-accent text-left"><p class="font-extrabold ${t.color}">${t.label}</p><p class="text-[11px] text-gray-400 mt-0.5">${t.desc}</p></button>`).join('')}</div>`);
 };
 
 window.selectSetTypeOption = (exIdx, stIdx, code) => { wState.activeSession.exercises[exIdx].sets[stIdx].setType = code; window.closeUniversalModal(); window.renderWorkouts(); };
@@ -217,12 +219,25 @@ window.toggleActiveSetDone = (exIdx, stIdx) => {
 window.addSetToActive = (exIdx) => { const sets = wState.activeSession.exercises[exIdx].sets; sets.push({ setNumber: sets.length + 1, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false }); window.renderWorkouts(); };
 window.removeLastSetFromActive = (exIdx) => { const sets = wState.activeSession.exercises[exIdx].sets; if (sets.length > 1) sets.pop(); window.renderWorkouts(); };
 window.removeExerciseFromActive = (exIdx) => { wState.activeSession.exercises.splice(exIdx, 1); window.renderWorkouts(); };
+
 window.openAddExerciseToActiveModal = () => {
-    window.openUniversalModal('Añadir Ejercicio', `<div class="max-h-80 overflow-y-auto space-y-2">${EXERCISE_CATALOG.map(ex => `<button onclick="addExerciseToActiveSession(${ex.id})" class="w-full p-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] flex items-center space-x-3 text-left hover:border-accent"><img src="${ex.img}" class="w-10 h-10 rounded-lg bg-white p-0.5 object-contain"><div><p class="text-xs font-bold">${ex.name}</p><p class="text-[10px] text-gray-400">${ex.muscleGroup}</p></div></button>`).join('')}</div>`);
+    window.openUniversalModal('Añadir Ejercicio', `<div class="max-h-80 overflow-y-auto space-y-2">${EXERCISES_LIST.map(ex => `<button type="button" onclick="addExerciseToActiveSession(${ex.id})" class="w-full p-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] flex items-center space-x-3 text-left hover:border-accent"><img src="${ex.img}" class="w-10 h-10 rounded-lg bg-white p-0.5 object-contain"><div><p class="text-xs font-bold">${ex.name}</p><p class="text-[10px] text-gray-400">${ex.muscleGroup}</p></div></button>`).join('')}</div>`);
 };
+
 window.addExerciseToActiveSession = (exId) => {
-    const cat = getExById(exId);
-    wState.activeSession.exercises.push({ exerciseId: cat.id, exerciseName: cat.name, muscleGroup: cat.muscleGroup, equipment: cat.equipment, imageUri: cat.img, restSeconds: 90, sets: [{ setNumber: 1, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false }, { setNumber: 2, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false }] });
+    const cat = findExerciseInfo(exId);
+    wState.activeSession.exercises.push({
+        exerciseId: cat.id,
+        exerciseName: cat.name,
+        muscleGroup: cat.muscleGroup,
+        equipment: cat.equipment,
+        imageUri: cat.img,
+        restSeconds: 90,
+        sets: [
+            { setNumber: 1, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false },
+            { setNumber: 2, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false }
+        ]
+    });
     window.closeUniversalModal();
     window.renderWorkouts();
 };
@@ -230,7 +245,7 @@ window.addExerciseToActiveSession = (exId) => {
 window.attemptFinishWorkout = () => {
     const incomplete = wState.activeSession.exercises.filter(ex => ex.sets.some(s => !s.isCompleted));
     if (incomplete.length > 0) {
-        window.openUniversalModal('Series sin marcar', `<div class="space-y-4 text-xs"><p class="font-bold text-gray-200">Solo se contabilizarán las series marcadas con el check (✓).</p><div class="flex gap-2"><button onclick="closeUniversalModal()" class="flex-1 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-bold">Volver</button><button onclick="closeUniversalModal(); proceedToPorFinalizarScreen()" class="flex-1 py-2.5 rounded-xl bg-amber-500 text-black font-extrabold">Continuar</button></div></div>`);
+        window.openUniversalModal('Series sin marcar', `<div class="space-y-4 text-xs"><p class="font-bold text-gray-200">Solo se contabilizarán las series marcadas con el check (✓).</p><div class="flex gap-2"><button type="button" onclick="closeUniversalModal()" class="flex-1 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-bold">Volver</button><button type="button" onclick="closeUniversalModal(); proceedToPorFinalizarScreen()" class="flex-1 py-2.5 rounded-xl bg-amber-500 text-black font-extrabold">Continuar</button></div></div>`);
     } else {
         proceedToPorFinalizarScreen();
     }
@@ -239,7 +254,14 @@ window.attemptFinishWorkout = () => {
 window.proceedToPorFinalizarScreen = () => {
     if (wState.timerInterval) clearInterval(wState.timerInterval);
     const totalSec = Math.max(1, wState.activeSession.elapsedSeconds);
-    wState.finishDraft = { title: wState.activeSession.routineName, hours: Math.floor(totalSec / 3600), minutes: Math.floor((totalSec % 3600) / 60), seconds: totalSec % 60, photoDataUrl: '', notes: '' };
+    wState.finishDraft = {
+        title: wState.activeSession.routineName,
+        hours: Math.floor(totalSec / 3600),
+        minutes: Math.floor((totalSec % 3600) / 60),
+        seconds: totalSec % 60,
+        photoDataUrl: '',
+        notes: ''
+    };
     wState.subScreen = 'POR_FINALIZAR';
     window.renderWorkouts();
 };
@@ -252,8 +274,6 @@ window.handleWorkoutPhotoUpload = (e) => {
     reader.readAsDataURL(file);
 };
 
-window.checkRoutineReconciliationBeforeSave = () => finalizeAndSaveWorkoutSession(false);
-
 window.finalizeAndSaveWorkoutSession = async () => {
     const s = wState.activeSession;
     const title = document.getElementById('fin-title')?.value || s.routineName;
@@ -263,6 +283,7 @@ window.finalizeAndSaveWorkoutSession = async () => {
 
     let totalVolumeKg = 0, totalCompletedSets = 0;
     const prs = [], breakdown = [], workedMuscles = new Set();
+    const setsPayload = [];
 
     s.exercises.forEach(ex => {
         const doneSets = ex.sets.filter(st => st.isCompleted === true);
@@ -270,11 +291,21 @@ window.finalizeAndSaveWorkoutSession = async () => {
         workedMuscles.add(ex.muscleGroup);
         totalCompletedSets += doneSets.length;
         let exVol = 0, best1RM = 0;
-        doneSets.forEach(st => {
+        doneSets.forEach((st, i) => {
             const w = Math.max(0, Number(st.weightKg || 0));
             const r = Math.max(0, Number(st.reps || 0));
             exVol += (w * r);
             if (w > 0 && r > 0) best1RM = Math.max(best1RM, w * (1 + r / 30));
+            setsPayload.push({
+                exerciseId: ex.exerciseId,
+                exerciseName: ex.exerciseName,
+                setNumber: i + 1,
+                weightKg: w,
+                reps: r,
+                isCompleted: true,
+                completedAt: Date.now(),
+                setType: st.setType || 'NORMAL'
+            });
         });
         totalVolumeKg += exVol;
         if (best1RM > 0) prs.push(`${ex.exerciseName}: 1RM real ${best1RM.toFixed(1)} kg`);
@@ -282,11 +313,36 @@ window.finalizeAndSaveWorkoutSession = async () => {
     });
 
     const id = Date.now();
-    await fsActions.setItem('workout_sessions', id, { routineId: s.routineId, routineName: title, dayNumber: s.dayNumber, startedAt: s.startedAt, endedAt: id, durationSeconds, totalVolumeKg, totalCompletedSets, photoDataUrl, xpEarned: 60, notes, isCompleted: true });
+    await fsActions.setItem('workout_sessions', id, {
+        id,
+        routineId: s.routineId,
+        routineName: title,
+        dayNumber: s.dayNumber,
+        startedAt: s.startedAt,
+        endedAt: id,
+        durationSeconds,
+        totalVolumeKg,
+        totalCompletedSets,
+        photoDataUrl,
+        xpEarned: 60,
+        notes,
+        isCompleted: true,
+        sets: setsPayload
+    });
+
     const nextXp = Number(window.state.profile?.xp || 0) + 60;
     await fsActions.updateProfile({ xp: nextXp, level: Math.floor(nextXp / 100) + 1 });
 
-    wState.summaryData = { title, photoDataUrl, volume: totalVolumeKg.toFixed(0), sets: totalCompletedSets, durationMin: Math.max(1, Math.round(durationSeconds / 60)), muscles: Array.from(workedMuscles), prs, breakdown };
+    wState.summaryData = {
+        title,
+        photoDataUrl,
+        volume: totalVolumeKg.toFixed(0),
+        sets: totalCompletedSets,
+        durationMin: Math.max(1, Math.round(durationSeconds / 60)),
+        muscles: Array.from(workedMuscles),
+        prs,
+        breakdown
+    };
     wState.summarySlideIdx = 0;
     wState.activeSession = null;
     wState.subScreen = 'RESUMEN_SESION';
