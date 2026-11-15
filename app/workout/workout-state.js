@@ -10,7 +10,7 @@ const CATALOG_TEMPLATES =
 
 if (!window.wState) {
     window.wState = {
-        subScreen: 'HUB',
+        subScreen: 'PRINCIPAL', // CORREGIDO: Inicia en 'PRINCIPAL' para que no quede la pantalla en negro
         selectedRoutineId: null,
         selectedExerciseName: null,
         activeSession: null,
@@ -60,13 +60,13 @@ export function getTodayScheduledWorkoutInfo() {
     const doneToday = sessions.some(s => Number(s.startedAt || 0) >= startOfToday);
     const completedCountForRoutine = sessions.filter(s => String(s.routineId) === String(mainR.id)).length;
     const dayIdx = completedCountForRoutine % mainR.days.length;
-    const nextDay = mainR.days[dayIdx];
+    const nextDay = mainR.days[dayIdx] || mainR.days[0];
 
     return {
         routineId: mainR.id,
-        routineName: mainR.name,
+        routineName: mainR.name || 'Rutina Activa',
         dayNumber: nextDay.dayNumber || (dayIdx + 1),
-        dayName: nextDay.name,
+        dayName: nextDay.dayName || nextDay.name || 'Entrenamiento General', // CORREGIDO: Lee dayName correctamente en vez de undefined
         exercisesCount: (nextDay.exercises || []).length,
         estimatedMin: Math.max(25, (nextDay.exercises || []).length * 10),
         doneToday
