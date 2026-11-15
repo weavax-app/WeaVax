@@ -1,44 +1,46 @@
 import { fsActions } from '../firebase-sync.js';
-import { wState, getUserSavedRoutines, getCatalogTemplates, getAllAvailableRoutines, getActiveMainRoutine, getTodayScheduledWorkoutInfo, getWeeklyWorkoutStats } from './workout-state.js';
-import * as catalog from './workout-catalog.js';
+import {
+    wState,
+    EXERCISES_LIST,
+    TEMPLATES_LIST,
+    findExerciseInfo,
+    getUserSavedRoutines,
+    getAllRoutinesAndTemplates,
+    getActiveMainRoutine,
+    getCompletedSessionsList,
+    getTodayScheduledWorkoutInfo,
+    getWeeklyWorkoutStats
+} from './workout-state.js';
 
-const EXERCISE_DATABASE =
-    catalog.EXERCISE_DATABASE ||
-    catalog.EXERCISES ||
-    catalog.EXERCISE_CATALOG ||
-    catalog.default ||
-    Object.values(catalog).find(v => Array.isArray(v) && v[0]?.muscleGroup) ||
-    [];
-
-const WEAVAX_30_TEMPLATES =
-    catalog.WEAVAX_30_TEMPLATES ||
-    catalog.WORKOUT_CATALOG_TEMPLATES ||
-    catalog.WORKOUT_TEMPLATES ||
-    catalog.ROUTINE_TEMPLATES ||
-    [];
+const DEFAULT_COVER = 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800';
 
 export function renderLibraryAndHub(container, minimizedBannerHtml) {
     const userLibraryRoutines = getUserSavedRoutines();
-    const primaryRoutine = userLibraryRoutines.find(r => Number(r.id) === Number(wState.selectedRoutineId)) || userLibraryRoutines[0] || null;
+    const primaryRoutine = getActiveMainRoutine();
     const weekStats = getWeeklyWorkoutStats();
+    const allCompletedSessions = getCompletedSessionsList();
     const targetDays = Number(primaryRoutine?.targetDaysPerWeek || 4);
 
+    // 1. PANTALLA PRINCIPAL (HUB)
     if (wState.subScreen === 'PRINCIPAL') {
+        const totalLifetimeKg = allCompletedSessions.reduce((acc, s) => acc + Number(s.totalVolumeKg || 0), 0);
+
         container.innerHTML = `
             <div class="space-y-8">
                 ${minimizedBannerHtml}
                 <div class="flex flex-wrap items-center justify-between gap-4 pb-2">
                     <div>
                         <h3 class="text-2xl font-black tracking-tight">Entrenamiento</h3>
-                        <p class="text-xs text-gray-400 mt-1">Tu programación activa, progreso semanal y biblioteca</p>
+                        <p class="text-xs text-gray-400 mt-1">Tu programación activa, progreso semanal y biblioteca sincronizada</p>
                     </div>
                     <div class="flex flex-wrap gap-2.5">
-                        <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'MIS_RUTINAS')" class="px-4 py-2.5 rounded-xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] hover:border-accent text-xs font-bold">📚 Biblioteca de Rutinas</button>
-                        <button onclick="openWorkoutSub('BANCO_EJERCICIOS')" class="px-4 py-2.5 rounded-xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] hover:border-accent text-xs font-bold">💪 Ejercicios</button>
-                        <button onclick="openWorkoutSub('HISTORIAL')" class="px-4 py-2.5 rounded-xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] hover:border-accent text-xs font-bold">🕒 Historial</button>
+                        <button type="button" onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'MIS_RUTINAS')" class="px-4 py-2.5 rounded-xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] hover:border-accent text-xs font-bold">📚 Biblioteca de Rutinas</button>
+                        <button type="button" onclick="openWorkoutSub('BANCO_EJERCICIOS')" class="px-4 py-2.5 rounded-xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] hover:border-accent text-xs font-bold">💪 Ejercicios (${EXERCISES_LIST.length})</button>
+                        <button type="button" onclick="openWorkoutSub('HISTORIAL')" class="px-4 py-2.5 rounded-xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] hover:border-accent text-xs font-bold">🕒 Historial (${allCompletedSessions.length})</button>
                     </div>
                 </div>
 
+                <!-- KPIs -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Meta de la Semana</span>
@@ -47,55 +49,59 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
                             <span class="text-xs text-gray-400">entrenamientos</span>
                         </div>
                         <div class="w-full h-2 bg-gray-200 dark:bg-[#0A0A0F] rounded-full mt-3.5 overflow-hidden">
-                            <div class="h-full bg-accent transition-all" style="width:${Math.min(100, Math.round((weekStats.count / targetDays) * 100))}%"></div>
+                            <div class="h-full bg-accent transition-all" style="width:${Math.min(100, Math.round((weekStats.count / Math.max(1, targetDays)) * 100))}%"></div>
                         </div>
                     </div>
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Volumen Semanal</span>
                         <div class="text-2xl font-black mt-2">${weekStats.volume.toLocaleString('es-BO')} <span class="text-sm font-normal text-gray-400">kg</span></div>
-                        <p class="text-[11px] text-emerald-400 mt-2">Registrado en series completadas</p>
+                        <p class="text-[11px] text-emerald-400 mt-2">Histórico: ${Math.round(totalLifetimeKg / 1000).toLocaleString('es-BO')} ton</p>
                     </div>
                     <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
                         <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Sesiones Totales</span>
-                        <div class="text-2xl font-black mt-2">${(window.state.workout_sessions || []).length} <span class="text-sm font-normal text-gray-400">completadas</span></div>
-                        <p class="text-[11px] text-purple-400 mt-2">Sincronizadas en tu cuenta</p>
+                        <div class="text-2xl font-black mt-2">${allCompletedSessions.length} <span class="text-sm font-normal text-gray-400">completadas</span></div>
+                        <p class="text-[11px] text-purple-400 mt-2">Sincronizadas con Android</p>
                     </div>
                 </div>
 
+                <!-- RUTINA PRINCIPAL ACTIVA -->
                 ${!primaryRoutine ? `
                     <div class="p-8 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] text-center space-y-4">
                         <span class="text-3xl">🏋️</span>
-                        <h4 class="text-lg font-black">Aún no tienes una Rutina Principal en tu Biblioteca</h4>
-                        <p class="text-xs text-gray-400 max-w-md mx-auto leading-relaxed">Para seleccionar tu rutina principal, primero crea una rutina propia o entra a Plantillas WeaVax y copia tu favorita a "Mis Rutinas".</p>
+                        <h4 class="text-lg font-black">Selecciona o crea tu Rutina Principal</h4>
                         <div class="flex flex-wrap justify-center gap-3 pt-2">
-                            <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shadow-lg">Explorar Plantillas WeaVax</button>
-                            <button onclick="openRoutineCreatorModal()" class="px-5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">+ Crear Mi Propia Rutina</button>
+                            <button type="button" onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shadow-lg">Explorar Plantillas WeaVax</button>
+                            <button type="button" onclick="openRoutineCreatorModal()" class="px-5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">+ Crear Mi Propia Rutina</button>
                         </div>
                     </div>
                 ` : `
                     <div class="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-6">
                         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-[#28283C] pb-5">
                             <div>
-                                <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/15 text-accent">Rutina Principal Activa</span>
+                                <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/15 text-accent">
+                                    ${primaryRoutine.isCustom ? 'Rutina Principal Activa' : 'Programa Sugerido'}
+                                </span>
                                 <h4 class="text-xl font-black mt-2.5">${primaryRoutine.name}</h4>
                                 <p class="text-xs text-gray-400 mt-1">${primaryRoutine.description || ''}</p>
                             </div>
                             <div class="flex flex-wrap items-center gap-2.5">
-                                <select onchange="selectPrimaryRoutine(this.value)" class="px-3.5 py-2.5 rounded-xl bg-gray-100 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] text-xs font-bold">
-                                    ${userLibraryRoutines.map(r => `<option value="${r.id}" ${Number(r.id) === Number(primaryRoutine.id) ? 'selected' : ''}>${r.name} (${r.targetDaysPerWeek || 4} días)</option>`).join('')}
-                                </select>
-                                <button onclick="openRoutineDetailView(${primaryRoutine.id})" class="px-4 py-2.5 rounded-xl bg-accent/15 text-accent text-xs font-bold">Detalles</button>
+                                ${userLibraryRoutines.length > 0 ? `
+                                    <select onchange="selectPrimaryRoutine(this.value)" class="px-3.5 py-2.5 rounded-xl bg-gray-100 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] text-xs font-bold">
+                                        ${userLibraryRoutines.map(r => `<option value="${r.id}" ${Number(r.id) === Number(primaryRoutine.id) ? 'selected' : ''}>${r.name} (${r.targetDaysPerWeek || r.days.length} días)</option>`).join('')}
+                                    </select>
+                                ` : ''}
+                                <button type="button" onclick="openRoutineDetailView(${primaryRoutine.id})" class="px-4 py-2.5 rounded-xl bg-accent/15 text-accent text-xs font-bold">Ver Programa</button>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             ${(primaryRoutine.days || []).map(d => {
-                                const completedThisWeek = weekStats.sessions.some(s => Number(s.routineId) === Number(primaryRoutine.id) && Number(s.dayNumber) === Number(d.dayNumber));
+                                const completedThisWeek = weekStats.sessions.some(s => String(s.routineId) === String(primaryRoutine.id) && Number(s.dayNumber) === Number(d.dayNumber));
                                 return `
                                     <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border ${completedThisWeek ? 'border-emerald-500/50' : 'border-gray-200 dark:border-[#28283C]'} flex items-center justify-between gap-3">
                                         <div onclick="openDayDetailView(${primaryRoutine.id}, ${d.dayNumber})" class="flex items-center space-x-3.5 cursor-pointer flex-1 min-w-0">
                                             <div class="w-12 h-12 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center font-black text-accent shrink-0 overflow-hidden">
-                                                ${d.dayImageUri ? `<img src="${d.dayImageUri}" class="w-full h-full object-cover">` : d.dayName.charAt(0)}
+                                                ${d.dayImageUri ? `<img src="${d.dayImageUri}" class="w-full h-full object-cover">` : (d.dayName || 'D').charAt(0)}
                                             </div>
                                             <div class="min-w-0 flex-1">
                                                 <div class="flex items-center space-x-1.5">
@@ -105,7 +111,7 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
                                                 <p class="text-[11px] text-gray-400 mt-1">${(d.exercises || []).length} ejercicios · ~${primaryRoutine.estimatedDurationMinutes || 60} min</p>
                                             </div>
                                         </div>
-                                        <button onclick="beginActiveWorkoutSession(${primaryRoutine.id}, ${d.dayNumber})" class="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center font-bold shadow-lg hover:opacity-90 shrink-0">▶</button>
+                                        <button type="button" onclick="beginActiveWorkoutSession(${primaryRoutine.id}, ${d.dayNumber})" class="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center font-bold shadow-lg hover:opacity-90 shrink-0" title="Iniciar entrenamiento">▶</button>
                                     </div>
                                 `;
                             }).join('')}
@@ -113,6 +119,7 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
                     </div>
                 `}
 
+                <!-- VAX COACH IA -->
                 <div class="p-6 rounded-3xl bg-gradient-to-r from-[#181824] via-[#1E1B36] to-[#181824] border border-accent/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div class="flex items-start space-x-4">
                         <div class="w-12 h-12 rounded-2xl bg-accent/20 border border-accent flex items-center justify-center text-2xl shrink-0">🤖</div>
@@ -121,21 +128,27 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
                                 <h4 class="text-base font-black text-white">Entrenador Personal IA · Vax Coach</h4>
                                 <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">Activo</span>
                             </div>
-                            <p class="text-xs text-gray-300 mt-1">Analiza tu fatiga muscular y te sugiere qué día entrenar hoy con sobrecarga progresiva.</p>
+                            <p class="text-xs text-gray-300 mt-1">Analiza tu fatiga muscular reciente y recomienda tu siguiente sesión con sobrecarga progresiva.</p>
                         </div>
                     </div>
-                    <button onclick="openWorkoutSub('COACH_IA')" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shrink-0 shadow-lg">Abrir Coach IA →</button>
+                    <button type="button" onclick="openWorkoutSub('COACH_IA')" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shrink-0 shadow-lg">Abrir Coach IA →</button>
                 </div>
 
+                <!-- MIS RUTINAS -->
                 <div class="space-y-4">
                     <div class="flex items-center justify-between">
                         <div>
                             <h4 class="text-base font-extrabold">Mis Rutinas (${userLibraryRoutines.length})</h4>
-                            <p class="text-xs text-gray-400 mt-0.5">Tus programas guardados listos para usar</p>
+                            <p class="text-xs text-gray-400 mt-0.5">Tus programas personales sincronizados en Firestore</p>
                         </div>
-                        <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="text-xs font-bold text-accent hover:underline">Ir a Plantillas WeaVax →</button>
+                        <div class="flex gap-3">
+                            <button type="button" onclick="openRoutineCreatorModal()" class="text-xs font-bold text-emerald-400 hover:underline">+ Crear Rutina</button>
+                            <button type="button" onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="text-xs font-bold text-accent hover:underline">Plantillas WeaVax →</button>
+                        </div>
                     </div>
-                    ${userLibraryRoutines.length === 0 ? `<p class="text-xs text-gray-400">Todavía no tienes rutinas en tu biblioteca personal.</p>` : `
+                    ${userLibraryRoutines.length === 0 ? `
+                        <p class="text-xs text-gray-400">Aún no tienes rutinas guardadas en "Mis Rutinas". Copia una plantilla WeaVax o crea la tuya.</p>
+                    ` : `
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                             ${userLibraryRoutines.map(r => renderRoutineCard(r, 'grid', false)).join('')}
                         </div>
@@ -146,11 +159,12 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
         return;
     }
 
+    // 2. BIBLIOTECA DE RUTINAS (MIS RUTINAS / PLANTILLAS WEAVAX)
     if (wState.subScreen === 'LIBRERIA_RUTINAS') {
         const categories = ['Todas', 'PPL (Push Pull Legs)', 'Torso / Pierna', 'Full Body', 'Énfasis Específico', 'Calistenia y Funcional', 'Anime Aesthetic & Superhero', 'Híbridos y Acondicionamiento'];
         const isTemplatesTab = wState.libraryTab === 'PLANTILLAS';
         const listToShow = isTemplatesTab
-            ? WEAVAX_30_TEMPLATES.filter(t => wState.categoryFilter === 'Todas' || t.categoryGroup === wState.categoryFilter)
+            ? TEMPLATES_LIST.filter(t => wState.categoryFilter === 'Todas' || t.categoryGroup === wState.categoryFilter)
             : userLibraryRoutines;
 
         container.innerHTML = `
@@ -158,26 +172,26 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
                 ${minimizedBannerHtml}
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div class="flex items-center space-x-3">
-                        <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                        <button type="button" onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
                         <div>
                             <h3 class="text-xl font-black">Biblioteca de Rutinas</h3>
                             <p class="text-xs text-gray-400">Gestiona tus rutinas o copia plantillas WeaVax a tu biblioteca</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="setLibraryViewMode('grid')" class="px-3 py-2 rounded-xl border ${wState.viewMode === 'grid' ? 'bg-accent text-white border-accent' : 'border-[#28283C]'} text-xs font-bold">⊞ Cuadrícula</button>
-                        <button onclick="setLibraryViewMode('list')" class="px-3 py-2 rounded-xl border ${wState.viewMode === 'list' ? 'bg-accent text-white border-accent' : 'border-[#28283C]'} text-xs font-bold">☰ Lista</button>
+                        <button type="button" onclick="setLibraryViewMode('grid')" class="px-3 py-2 rounded-xl border ${wState.viewMode === 'grid' ? 'bg-accent text-white border-accent' : 'border-[#28283C]'} text-xs font-bold">⊞ Cuadrícula</button>
+                        <button type="button" onclick="setLibraryViewMode('list')" class="px-3 py-2 rounded-xl border ${wState.viewMode === 'list' ? 'bg-accent text-white border-accent' : 'border-[#28283C]'} text-xs font-bold">☰ Lista</button>
                     </div>
                 </div>
 
                 <div class="flex gap-2.5 border-b border-gray-200 dark:border-[#28283C] pb-4">
-                    <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'MIS_RUTINAS')" class="px-4 py-2.5 rounded-xl text-xs font-bold ${!isTemplatesTab ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">Mis Rutinas (${userLibraryRoutines.length})</button>
-                    <button onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="px-4 py-2.5 rounded-xl text-xs font-bold ${isTemplatesTab ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">Plantillas WeaVax</button>
+                    <button type="button" onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'MIS_RUTINAS')" class="px-4 py-2.5 rounded-xl text-xs font-bold ${!isTemplatesTab ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">Mis Rutinas (${userLibraryRoutines.length})</button>
+                    <button type="button" onclick="openWorkoutSub('LIBRERIA_RUTINAS', 'PLANTILLAS')" class="px-4 py-2.5 rounded-xl text-xs font-bold ${isTemplatesTab ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">Plantillas WeaVax (${TEMPLATES_LIST.length})</button>
                 </div>
 
                 ${isTemplatesTab ? `
                     <div class="flex flex-wrap gap-2">
-                        ${categories.map(c => `<button onclick="setTemplateCategory('${c}')" class="px-3.5 py-1.5 rounded-full text-[11px] font-bold ${wState.categoryFilter === c ? 'bg-accent text-white' : 'bg-[#181824] border border-[#28283C] text-gray-400'}">${c}</button>`).join('')}
+                        ${categories.map(c => `<button type="button" onclick="setTemplateCategory('${c}')" class="px-3.5 py-1.5 rounded-full text-[11px] font-bold ${wState.categoryFilter === c ? 'bg-accent text-white' : 'bg-[#181824] border border-[#28283C] text-gray-400'}">${c}</button>`).join('')}
                     </div>
                 ` : ''}
 
@@ -195,23 +209,26 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
         return;
     }
 
+    // 3. DETALLE DE RUTINA
     if (wState.subScreen === 'DETALLE_RUTINA' && wState.viewingRoutine) {
         const r = wState.viewingRoutine;
-        const isSaved = userLibraryRoutines.some(u => Number(u.id) === Number(r.id) || u.name === r.name);
+        const isSaved = userLibraryRoutines.some(u => Number(u.id) === Number(r.id));
         container.innerHTML = `
             <div class="space-y-6">
                 ${minimizedBannerHtml}
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <button onclick="openWorkoutSub('LIBRERIA_RUTINAS')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
-                    ${isSaved
-                        ? `<button onclick="selectPrimaryRoutine(${r.id})" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-extrabold">★ Elegir como Rutina Principal</button>`
-                        : `<button onclick="copyTemplateToLibrary(${r.id})" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold">📥 Copiar a mi biblioteca</button>`}
+                    <button type="button" onclick="openWorkoutSub('LIBRERIA_RUTINAS')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                    <div class="flex gap-2">
+                        ${isSaved
+                            ? `<button type="button" onclick="selectPrimaryRoutine(${r.id})" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-extrabold">★ Elegir como Rutina Principal</button>`
+                            : `<button type="button" onclick="copyTemplateToLibrary(${r.id})" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold">📥 Copiar a mi biblioteca</button>`}
+                    </div>
                 </div>
                 <div class="rounded-3xl overflow-hidden bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
-                    <div class="h-48 bg-cover bg-center relative" style="background-image:url('${r.imageUri || pPush}')">
+                    <div class="h-48 bg-cover bg-center relative" style="background-image:url('${r.imageUri || DEFAULT_COVER}')">
                         <div class="absolute inset-0 bg-gradient-to-t from-[#181824] via-[#181824]/40 to-transparent"></div>
                         <div class="absolute bottom-4 left-6 right-6">
-                            <span class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-accent text-white">${r.focusCategory || 'Hipertrofia'} · ${r.targetDaysPerWeek || 4} días/sem</span>
+                            <span class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-accent text-white">${r.focusCategory || 'Hipertrofia'} · ${r.targetDaysPerWeek || r.days.length} días/sem</span>
                             <h3 class="text-2xl font-black text-white mt-2">${r.name}</h3>
                             <p class="text-xs text-gray-300 mt-1">${r.description || ''}</p>
                         </div>
@@ -220,13 +237,13 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
                         ${(r.days || []).map(d => `
                             <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex items-center justify-between">
                                 <div onclick="openDayDetailView(${r.id}, ${d.dayNumber})" class="flex items-center space-x-3.5 cursor-pointer flex-1">
-                                    <div class="w-12 h-12 rounded-xl bg-accent/20 text-accent font-black flex items-center justify-center overflow-hidden">${d.dayName.charAt(0)}</div>
+                                    <div class="w-12 h-12 rounded-xl bg-accent/20 text-accent font-black flex items-center justify-center overflow-hidden">${(d.dayName || 'D').charAt(0)}</div>
                                     <div>
                                         <p class="text-sm font-extrabold">${d.dayName}</p>
-                                        <p class="text-xs text-gray-400 mt-0.5">${(d.exercises || []).map(e => e.exerciseName).slice(0, 3).join(', ')}...</p>
+                                        <p class="text-xs text-gray-400 mt-0.5">${(d.exercises || []).map(e => e.exerciseName).slice(0, 3).join(', ')}${(d.exercises || []).length > 3 ? '...' : ''}</p>
                                     </div>
                                 </div>
-                                <button onclick="beginActiveWorkoutSession(${r.id}, ${d.dayNumber})" class="w-10 h-10 rounded-full bg-accent text-white font-bold flex items-center justify-center">▶</button>
+                                <button type="button" onclick="beginActiveWorkoutSession(${r.id}, ${d.dayNumber})" class="w-10 h-10 rounded-full bg-accent text-white font-bold flex items-center justify-center">▶</button>
                             </div>
                         `).join('')}
                     </div>
@@ -236,22 +253,23 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
         return;
     }
 
+    // 4. DETALLE DE ENTRENAMIENTO (DÍA)
     if (wState.subScreen === 'DETALLE_ENTRENAMIENTO' && wState.viewingDayPlan) {
         const r = wState.viewingRoutine;
         const d = wState.viewingDayPlan;
-        const muscles = Array.from(new Set((d.exercises || []).map(e => e.muscleGroup)));
+        const muscles = Array.from(new Set((d.exercises || []).map(e => e.muscleGroup).filter(Boolean)));
         container.innerHTML = `
             <div class="space-y-6">
                 <div class="flex items-center justify-between">
-                    <button onclick="openRoutineDetailView(${r.id})" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
-                    <button onclick="beginActiveWorkoutSession(${r.id}, ${d.dayNumber})" class="px-5 py-2.5 rounded-full bg-accent text-white text-xs font-extrabold">▶ Iniciar Entrenamiento</button>
+                    <button type="button" onclick="openRoutineDetailView(${r.id})" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                    <button type="button" onclick="beginActiveWorkoutSession(${r.id}, ${d.dayNumber})" class="px-5 py-2.5 rounded-full bg-accent text-white text-xs font-extrabold">▶ Iniciar Entrenamiento</button>
                 </div>
                 <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
                     <h3 class="text-xl font-black">${d.dayName}</h3>
                     <div class="flex flex-wrap gap-2">${muscles.map(m => `<span class="px-3 py-1 rounded-full bg-accent/15 text-accent text-xs font-bold">${m}</span>`).join('')}</div>
                     <div class="space-y-3">
                         ${(d.exercises || []).map(ex => {
-                            const catEx = getExById(ex.exerciseId);
+                            const catEx = findExerciseInfo(ex.exerciseId, ex.exerciseName);
                             return `
                                 <div onclick="showExerciseAnatomyModal(${catEx.id})" class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex items-center justify-between cursor-pointer hover:border-accent">
                                     <div class="flex items-center space-x-4">
@@ -269,20 +287,21 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
         return;
     }
 
+    // 5. BANCO DE EJERCICIOS
     if (wState.subScreen === 'BANCO_EJERCICIOS') {
         const muscles = ['Todos', 'Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales/Glúteos', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Pantorrillas'];
-        const filtered = EXERCISE_CATALOG.filter(e =>
+        const filtered = EXERCISES_LIST.filter(e =>
             (wState.muscleFilter === 'Todos' || e.muscleGroup === wState.muscleFilter) &&
-            e.name.toLowerCase().includes(wState.searchQuery.toLowerCase())
+            e.name.toLowerCase().includes((wState.searchQuery || '').toLowerCase())
         );
         container.innerHTML = `
             <div class="space-y-6">
                 ${minimizedBannerHtml}
                 <div class="flex items-center justify-between gap-3">
-                    <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
-                    <input oninput="filterExerciseBank(this.value)" value="${wState.searchQuery}" placeholder="Buscar ejercicio..." class="flex-1 max-w-md px-4 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs">
+                    <button type="button" onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                    <input oninput="filterExerciseBank(this.value)" value="${wState.searchQuery || ''}" placeholder="Buscar ejercicio..." class="flex-1 max-w-md px-4 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs">
                 </div>
-                <div class="flex flex-wrap gap-2">${muscles.map(m => `<button onclick="setMuscleBankFilter('${m}')" class="px-3.5 py-1.5 rounded-full text-[11px] font-bold ${wState.muscleFilter === m ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">${m}</button>`).join('')}</div>
+                <div class="flex flex-wrap gap-2">${muscles.map(m => `<button type="button" onclick="setMuscleBankFilter('${m}')" class="px-3.5 py-1.5 rounded-full text-[11px] font-bold ${wState.muscleFilter === m ? 'bg-accent text-white' : 'bg-[#181824] text-gray-400'}">${m}</button>`).join('')}</div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     ${filtered.map(ex => `
                         <div onclick="showExerciseAnatomyModal(${ex.id})" class="p-4 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex items-center space-x-3.5 cursor-pointer hover:border-accent">
@@ -296,40 +315,51 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
         return;
     }
 
+    // 6. HISTORIAL DE SESIONES (MUESTRA TUS 250+ SESIONES SINCRONIZADAS)
     if (wState.subScreen === 'HISTORIAL') {
-        const list = window.state.workout_sessions || [];
+        const list = allCompletedSessions;
+        const totalHours = (list.reduce((acc, s) => acc + Number(s.durationSeconds || 0), 0) / 3600).toFixed(1);
+        const totalTons = (list.reduce((acc, s) => acc + Number(s.totalVolumeKg || 0), 0) / 1000).toFixed(1);
+
         container.innerHTML = `
             <div class="space-y-6">
                 ${minimizedBannerHtml}
-                <div class="flex items-center justify-between">
-                    <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
-                    <h3 class="text-lg font-black">Historial (${list.length})</h3>
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center space-x-3">
+                        <button type="button" onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                        <div>
+                            <h3 class="text-lg font-black">Historial de Entrenamientos (${list.length})</h3>
+                            <p class="text-xs text-gray-400">${totalHours} hrs acumuladas · ${totalTons} toneladas levantadas</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="space-y-3">
-                    ${list.length === 0 ? '<p class="text-xs text-gray-400">Sin entrenamientos registrados.</p>' : list.map(s => `
-                        <div class="p-4 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex justify-between items-center">
-                            <div class="flex items-center space-x-3.5">
-                                ${s.photoDataUrl ? `<img src="${s.photoDataUrl}" class="w-12 h-12 rounded-xl object-cover">` : ''}
-                                <div>
-                                    <p class="text-sm font-extrabold">${s.routineName}</p>
-                                    <p class="text-xs text-gray-400 mt-0.5">${new Date(Number(s.startedAt || Date.now())).toLocaleDateString('es-BO')} · ${Math.round(Number(s.durationSeconds || 0) / 60)} min · ${Number(s.totalVolumeKg || 0).toFixed(0)} kg · ${s.totalCompletedSets || 0} series</p>
+                    ${list.length === 0 ? '<p class="text-xs text-gray-400">Sin entrenamientos registrados.</p>' : list.slice(0, 100).map(s => `
+                        <div class="p-4 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex justify-between items-center gap-3">
+                            <div class="flex items-center space-x-3.5 min-w-0">
+                                ${s.photoDataUrl ? `<img src="${s.photoDataUrl}" class="w-12 h-12 rounded-xl object-cover shrink-0">` : '<div class="w-10 h-10 rounded-xl bg-accent/15 text-accent flex items-center justify-center font-bold shrink-0">🏋️</div>'}
+                                <div class="min-w-0">
+                                    <p class="text-sm font-extrabold truncate">${s.routineName || 'Entrenamiento'}</p>
+                                    <p class="text-xs text-gray-400 mt-0.5">${new Date(Number(s.startedAt || Date.now())).toLocaleDateString('es-BO')} · ${Math.round(Number(s.durationSeconds || 0) / 60)} min · ${Number(s.totalVolumeKg || 0).toLocaleString('es-BO')} kg · ${s.totalCompletedSets || 0} series</p>
                                 </div>
                             </div>
-                            <button onclick="deleteDocItem('workout_sessions', '${s.docId}')" class="text-xs text-red-400">Eliminar</button>
+                            <button type="button" onclick="deleteDocItem('workout_sessions', '${s.docId || s.id}')" class="text-xs text-red-400 shrink-0">Eliminar</button>
                         </div>
                     `).join('')}
+                    ${list.length > 100 ? `<p class="text-center text-xs text-gray-400 pt-2">Mostrando las 100 sesiones más recientes de ${list.length} totales.</p>` : ''}
                 </div>
             </div>
         `;
         return;
     }
 
+    // 7. VAX COACH IA
     if (wState.subScreen === 'COACH_IA') {
         const nextInfo = getTodayScheduledWorkoutInfo();
         container.innerHTML = `
             <div class="space-y-6">
                 <div class="flex items-center justify-between">
-                    <button onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                    <button type="button" onclick="openWorkoutSub('PRINCIPAL')" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
                     <h3 class="text-lg font-black">🤖 Vax Coach</h3>
                 </div>
                 <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-accent/40 space-y-4">
@@ -338,9 +368,9 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
                             <div>
                                 <span class="text-[10px] font-bold text-accent uppercase">Entrenamiento recomendado hoy</span>
                                 <h4 class="text-base font-black mt-0.5">${nextInfo.dayName}</h4>
-                                <p class="text-xs text-gray-400">${nextInfo.exercisesCount} ejercicios · ~${nextInfo.estimatedMin} min</p>
+                                <p class="text-xs text-gray-400">${nextInfo.routineName} · ${nextInfo.exercisesCount} ejercicios · ~${nextInfo.estimatedMin} min</p>
                             </div>
-                            <button onclick="beginActiveWorkoutSession(${nextInfo.routineId}, ${nextInfo.dayNumber})" class="px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold">▶ Entrenar</button>
+                            <button type="button" onclick="beginActiveWorkoutSession(${nextInfo.routineId}, ${nextInfo.dayNumber})" class="px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold">▶ Entrenar</button>
                         </div>
                     `}
                 </div>
@@ -351,14 +381,14 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
 
 function renderRoutineCard(r, mode = 'grid', isSystemTemplateCard = false) {
     const actionBtn = isSystemTemplateCard
-        ? `<button onclick="event.stopPropagation(); copyTemplateToLibrary(${r.id})" class="flex-1 py-2 px-3 rounded-xl bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white text-xs font-bold transition-all">📥 Copiar a mi biblioteca</button>`
-        : `<button onclick="event.stopPropagation(); selectPrimaryRoutine(${r.id})" class="flex-1 py-2 px-3 rounded-xl bg-accent/15 text-accent hover:bg-accent hover:text-white text-xs font-bold transition-all">★ Elegir Principal</button>`;
+        ? `<button type="button" onclick="event.stopPropagation(); copyTemplateToLibrary(${r.id})" class="flex-1 py-2 px-3 rounded-xl bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white text-xs font-bold transition-all">📥 Copiar a mi biblioteca</button>`
+        : `<button type="button" onclick="event.stopPropagation(); selectPrimaryRoutine(${r.id})" class="flex-1 py-2 px-3 rounded-xl bg-accent/15 text-accent hover:bg-accent hover:text-white text-xs font-bold transition-all">★ Elegir Principal</button>`;
 
     if (mode === 'list') {
         return `
             <div onclick="openRoutineDetailView(${r.id})" class="p-4 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex items-center justify-between gap-4 cursor-pointer hover:border-accent">
                 <div class="flex items-center space-x-3.5">
-                    <img src="${r.imageUri || pPush}" class="w-16 h-16 rounded-xl object-cover">
+                    <img src="${r.imageUri || DEFAULT_COVER}" class="w-16 h-16 rounded-xl object-cover">
                     <div><h5 class="text-sm font-extrabold">${r.name}</h5><p class="text-xs text-gray-400">${(r.days || []).length} días · ${r.focusCategory || 'Hipertrofia'}</p></div>
                 </div>
                 <div class="shrink-0">${actionBtn}</div>
@@ -367,9 +397,9 @@ function renderRoutineCard(r, mode = 'grid', isSystemTemplateCard = false) {
     }
     return `
         <div onclick="openRoutineDetailView(${r.id})" class="rounded-2xl overflow-hidden bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex flex-col justify-between cursor-pointer hover:border-accent transition-all">
-            <div class="h-36 bg-cover bg-center relative" style="background-image:url('${r.imageUri || pPush}')">
+            <div class="h-36 bg-cover bg-center relative" style="background-image:url('${r.imageUri || DEFAULT_COVER}')">
                 <div class="absolute inset-0 bg-gradient-to-t from-[#181824] to-transparent"></div>
-                <span class="absolute bottom-2 left-3 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-accent text-white">${r.focusCategory || 'Hipertrofia'} · ${r.targetDaysPerWeek || 4}d</span>
+                <span class="absolute bottom-2 left-3 text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-accent text-white">${r.focusCategory || 'Hipertrofia'} · ${r.targetDaysPerWeek || (r.days || []).length}d</span>
             </div>
             <div class="p-5 flex-1 flex flex-col justify-between">
                 <div><h5 class="font-extrabold text-sm">${r.name}</h5><p class="text-[11px] text-gray-400 mt-1 line-clamp-2">${r.description || ''}</p></div>
@@ -379,11 +409,17 @@ function renderRoutineCard(r, mode = 'grid', isSystemTemplateCard = false) {
     `;
 }
 
+// ACCIONES GLOBALES DEL MÓDULO
 window.copyTemplateToLibrary = async (templateId) => {
-    const tpl = WEAVAX_30_TEMPLATES.find(t => Number(t.id) === Number(templateId));
+    const tpl = TEMPLATES_LIST.find(t => Number(t.id) === Number(templateId));
     if (!tpl) return;
     const newId = Date.now();
-    await fsActions.setItem('workout_routines', newId, { ...tpl, id: newId, isSystemTemplate: false, createdAt: newId });
+    await fsActions.setItem('workout_routines', newId, {
+        ...tpl,
+        id: newId,
+        isSystemTemplate: false,
+        createdAt: newId
+    });
     wState.selectedRoutineId = newId;
     localStorage.setItem('weavax_primary_routine_id', String(newId));
     wState.libraryTab = 'MIS_RUTINAS';
@@ -392,21 +428,29 @@ window.copyTemplateToLibrary = async (templateId) => {
 };
 
 window.selectPrimaryRoutine = (routineId) => {
-    if (!getUserSavedRoutines().some(r => Number(r.id) === Number(routineId))) {
-        return alert('Primero copia esta plantilla a tu biblioteca para elegirla como principal.');
-    }
     wState.selectedRoutineId = Number(routineId);
     localStorage.setItem('weavax_primary_routine_id', String(routineId));
     wState.subScreen = 'PRINCIPAL';
     window.renderWorkouts();
 };
 
-window.openWorkoutSub = (sub, tab) => { wState.subScreen = sub; if (tab) wState.libraryTab = tab; window.renderWorkouts(); };
+window.openWorkoutSub = (sub, tab) => {
+    wState.subScreen = sub;
+    if (tab) wState.libraryTab = tab;
+    window.renderWorkouts();
+};
+
 window.setLibraryViewMode = (m) => { wState.viewMode = m; window.renderWorkouts(); };
 window.setTemplateCategory = (c) => { wState.categoryFilter = c; window.renderWorkouts(); };
 window.setMuscleBankFilter = (m) => { wState.muscleFilter = m; window.renderWorkouts(); };
 window.filterExerciseBank = (q) => { wState.searchQuery = q; window.renderWorkouts(); };
-window.openRoutineDetailView = (id) => { wState.viewingRoutine = getAllRoutinesAndTemplates().find(r => Number(r.id) === Number(id)); wState.subScreen = 'DETALLE_RUTINA'; window.renderWorkouts(); };
+
+window.openRoutineDetailView = (id) => {
+    wState.viewingRoutine = getAllRoutinesAndTemplates().find(r => Number(r.id) === Number(id));
+    wState.subScreen = 'DETALLE_RUTINA';
+    window.renderWorkouts();
+};
+
 window.openDayDetailView = (rId, dNum) => {
     const r = getAllRoutinesAndTemplates().find(x => Number(x.id) === Number(rId));
     if (!r) return;
@@ -415,17 +459,31 @@ window.openDayDetailView = (rId, dNum) => {
     wState.subScreen = 'DETALLE_ENTRENAMIENTO';
     window.renderWorkouts();
 };
+
 window.showExerciseAnatomyModal = (exId) => {
-    const ex = getExById(exId);
-    window.openUniversalModal(ex.name, `<div class="space-y-3 text-center"><img src="${ex.img}" class="w-48 h-48 mx-auto rounded-2xl object-contain bg-white p-2"><div class="flex justify-center gap-2 text-xs font-bold"><span class="px-3 py-1 rounded-full bg-accent/20 text-accent">${ex.muscleGroup}</span><span class="px-3 py-1 rounded-full bg-[#0A0A0F] border border-[#28283C]">${ex.equipment}</span></div></div>`);
+    const ex = findExerciseInfo(exId);
+    window.openUniversalModal(ex.name, `
+        <div class="space-y-3 text-center">
+            <img src="${ex.img}" class="w-48 h-48 mx-auto rounded-2xl object-contain bg-white p-2">
+            <div class="flex justify-center gap-2 text-xs font-bold">
+                <span class="px-3 py-1 rounded-full bg-accent/20 text-accent">${ex.muscleGroup}</span>
+                <span class="px-3 py-1 rounded-full bg-[#0A0A0F] border border-[#28283C]">${ex.equipment}</span>
+            </div>
+        </div>
+    `);
 };
+
 window.openRoutineCreatorModal = () => {
     window.openUniversalModal('Crear Nueva Rutina', `
         <form onsubmit="saveNewUserRoutine(event)" class="space-y-3 text-xs">
             <input id="nr-name" required placeholder="Nombre de tu rutina" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             <input id="nr-desc" placeholder="Descripción" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             <div class="grid grid-cols-2 gap-2">
-                <select id="nr-focus" class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]"><option value="Hipertrofia">Hipertrofia</option><option value="Fuerza">Fuerza</option><option value="Calistenia">Calistenia</option></select>
+                <select id="nr-focus" class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+                    <option value="Hipertrofia">Hipertrofia</option>
+                    <option value="Fuerza">Fuerza</option>
+                    <option value="Calistenia">Calistenia</option>
+                </select>
                 <input id="nr-days" type="number" min="1" max="7" value="4" class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
             </div>
             <input id="nr-day1" value="Día 1: Entrenamiento A" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
@@ -433,17 +491,37 @@ window.openRoutineCreatorModal = () => {
         </form>
     `);
 };
+
 window.saveNewUserRoutine = async (e) => {
     e.preventDefault();
     const id = Date.now();
+    const dayName = document.getElementById('nr-day1').value.trim() || 'Día 1';
+    const defaultExs = [1, 14, 43].map((exId, idx) => {
+        const info = findExerciseInfo(exId);
+        return {
+            id: idx + 1,
+            exerciseId: info.id,
+            exerciseName: info.name,
+            muscleGroup: info.muscleGroup,
+            equipment: info.equipment,
+            imageUri: info.img,
+            orderIndex: idx,
+            targetSets: 4,
+            targetRepsRange: '8-12',
+            restSeconds: 90
+        };
+    });
+
     await fsActions.setItem('workout_routines', id, {
+        id,
         name: document.getElementById('nr-name').value.trim(),
         description: document.getElementById('nr-desc').value.trim(),
         focusCategory: document.getElementById('nr-focus').value,
         targetDaysPerWeek: Number(document.getElementById('nr-days').value || 4),
         isSystemTemplate: false,
-        imageUri: pPush,
-        days: [mkDay(1, document.getElementById('nr-day1').value.trim() || 'Día 1', pPush, [[1,4,"8-10",90],[14,4,"8-10",90],[43,4,"12-15",60]])]
+        imageUri: DEFAULT_COVER,
+        days: [{ dayNumber: 1, dayName, dayImageUri: DEFAULT_COVER, exercises: defaultExs }],
+        createdAt: id
     });
     window.closeUniversalModal();
     wState.selectedRoutineId = id;
