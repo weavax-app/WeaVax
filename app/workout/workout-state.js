@@ -81,6 +81,7 @@ export function getWeeklyWorkoutStats() {
     return {
         count: sessions.length,
         volume: sessions.reduce((acc, s) => acc + Number(s.totalVolumeKg || 0), 0),
-        minutes: Math.round(sessions.reduce((acc, s) => acc + Number(s.durationSeconds || 0), 0) / 60)
+        minutes: Math.round(sessions.reduce((acc, s) => acc + Number(s.durationSeconds || 0), 0) / 60),
+        sessions // Añadido para evitar undefined en .some()
     };
 }
