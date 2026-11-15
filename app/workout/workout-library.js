@@ -427,9 +427,16 @@ window.copyTemplateToLibrary = async (templateId) => {
     window.renderWorkouts();
 };
 
-window.selectPrimaryRoutine = (routineId) => {
-    wState.selectedRoutineId = Number(routineId);
-    localStorage.setItem('weavax_primary_routine_id', String(routineId));
+window.selectPrimaryRoutine = async (routineId) => {
+    const numId = Number(routineId);
+    wState.selectedRoutineId = numId;
+    localStorage.setItem('weavax_primary_routine_id', String(numId));
+    
+    // Sincronizar selección en Firestore para que Android la lea
+    if (window.state.activeUserDocId) {
+        await fsActions.updateProfile({ primaryRoutineId: numId });
+    }
+    
     wState.subScreen = 'PRINCIPAL';
     window.renderWorkouts();
 };
