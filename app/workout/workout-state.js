@@ -35,6 +35,11 @@ if (!window.wState) {
 
 export const wState = window.wState;
 
+const restoredBackup = restoreActiveWorkoutSessionIfAny();
+if (restoredBackup && wState.subScreen === 'PRINCIPAL') {
+    wState.subScreen = restoredBackup.subScreen || 'SESION_ACTIVA';
+}
+
 export function findExerciseInfo(exerciseId, fallbackName = '') {
     const byId = EXERCISES_LIST.find(e => Number(e.id) === Number(exerciseId));
     if (byId) return byId;
@@ -94,6 +99,45 @@ export function getUserSavedRoutines() {
             isCustom: true,
             days: normalizeRoutineDays(r)
         }));
+}
+
+const ACTIVE_SESSION_STORAGE_KEY = 'weavax_active_workout_backup_v1';
+
+export function persistActiveWorkoutSession() {
+    try {
+        if (wState.activeSession) {
+            localStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, JSON.stringify({
+                activeSession: wState.activeSession,
+                subScreen: ['SESION_ACTIVA', 'POR_FINALIZAR'].includes(wState.subScreen) ? wState.subScreen : 'SESION_ACTIVA',
+                savedAt: Date.now()
+            }));
+        } else {
+            localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+        }
+    } catch (e) {
+        console.warn('No se pudo respaldar la sesión activa en localStorage:', e);
+    }
+}
+
+export function restoreActiveWorkoutSessionIfAny() {
+    try {
+        const raw = localStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.activeSession && Array.isArray(parsed.activeSession.exercises)) {
+            // Recalcular segundos reales transcurridos desde startedAt incluso si el celular estuvo bloqueado
+            const realElapsed = Math.max(
+                Number(parsed.activeSession.elapsedSeconds || 0),
+                Math.floor((Date.now() - Number(parsed.activeSession.startedAt || Date.now())) / 1000)
+            );
+            parsed.activeSession.elapsedSeconds = realElapsed;
+            wState.activeSession = parsed.activeSession;
+            return parsed;
+        }
+    } catch (e) {
+        localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+    }
+    return null;
 }
 
 export function getAllRoutinesAndTemplates() {
