@@ -3,29 +3,64 @@ import {
     wState,
     EXERCISES_LIST,
     findExerciseInfo,
-    getAllRoutinesAndTemplates
+    getAllRoutinesAndTemplates,
+    persistActiveWorkoutSession
 } from './workout-state.js';
+
+const SET_TYPE_STYLES = {
+    W:  { bg: 'bg-amber-500/20 border-amber-500/50 text-amber-400', label: 'W' },
+    F:  { bg: 'bg-red-500/20 border-red-500/50 text-red-400', label: 'F' },
+    L:  { bg: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400', label: 'L' },
+    R:  { bg: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400', label: 'R' },
+    D:  { bg: 'bg-blue-500/20 border-blue-500/50 text-blue-400', label: 'D' },
+    N:  { bg: 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400', label: 'N' },
+    P:  { bg: 'bg-orange-500/20 border-orange-500/50 text-orange-400', label: 'P' },
+    M:  { bg: 'bg-pink-500/20 border-pink-500/50 text-pink-400', label: 'M' },
+    FD: { bg: 'bg-lime-500/20 border-lime-500/50 text-lime-400', label: 'FD' },
+    T:  { bg: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300', label: 'T' },
+    B:  { bg: 'bg-purple-500/20 border-purple-500/50 text-purple-400', label: 'B' }
+};
+
+const SET_TYPES_CATALOG = [
+    { code: 'W',  label: 'Calentamiento',  badge: 'bg-amber-500/20 border-amber-500/50 text-amber-400',   desc: 'Series ligeras de aproximación para preparar articulaciones y sistema nervioso sin generar fatiga.' },
+    { code: 'F',  label: 'Failure',        badge: 'bg-red-500/20 border-red-500/50 text-red-400',         desc: 'Serie llevada al fallo muscular concéntrico absoluto hasta no poder completar una repetición más.' },
+    { code: 'L',  label: 'Izquierda',      badge: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400',      desc: 'Serie unilateral ejecutada exclusivamente con el lado izquierdo.' },
+    { code: 'R',  label: 'Derecha',        badge: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400', desc: 'Serie unilateral ejecutada exclusivamente con el lado derecho.' },
+    { code: 'D',  label: 'Drop Set',       badge: 'bg-blue-500/20 border-blue-500/50 text-blue-400',      desc: 'Al alcanzar el fallo, reduce inmediatamente el peso entre un 20% y 30% y continúa sin descanso.' },
+    { code: 'N',  label: 'Negative',       badge: 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400', desc: 'Énfasis en la fase excéntrica (bajada controlada de 3 a 5 segundos) con carga supramáxima.' },
+    { code: 'P',  label: 'Reps parciales', badge: 'bg-orange-500/20 border-orange-500/50 text-orange-400', desc: 'Repeticiones en rango parcial (estiramiento o acortamiento) tras llegar al fallo en rango completo.' },
+    { code: 'M',  label: 'Myo Reps',       badge: 'bg-pink-500/20 border-pink-500/50 text-pink-400',      desc: 'Serie de activación seguida de mini-series de 3 a 5 reps con descansos de apenas 10-15 segundos.' },
+    { code: 'FD', label: 'Feeder Set',     badge: 'bg-lime-500/20 border-lime-500/50 text-lime-400',      desc: 'Serie de aclimatación rápida con peso intermedio antes de atacar la serie más pesada.' },
+    { code: 'T',  label: 'Top Set',        badge: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300', desc: 'La serie principal más pesada e intensa del ejercicio en la sesión.' },
+    { code: 'B',  label: 'Back-off Set',   badge: 'bg-purple-500/20 border-purple-500/50 text-purple-400', desc: 'Serie posterior al Top Set bajando el peso un 10-20% para acumular volumen efectivo de calidad.' }
+];
+
+function ensureLiveTimerRunning() {
+    if (!wState.activeSession) return;
+    wState.activeSession.elapsedSeconds = Math.floor((Date.now() - Number(wState.activeSession.startedAt || Date.now())) / 1000);
+    if (!wState.timerInterval) {
+        wState.timerInterval = setInterval(() => {
+            if (wState.activeSession) {
+                wState.activeSession.elapsedSeconds = Math.floor((Date.now() - Number(wState.activeSession.startedAt || Date.now())) / 1000);
+                const clock = document.getElementById('live-workout-clock');
+                if (clock) {
+                    clock.textContent = `${String(Math.floor(wState.activeSession.elapsedSeconds / 60)).padStart(2, '0')}:${String(wState.activeSession.elapsedSeconds % 60).padStart(2, '0')}`;
+                }
+                if (wState.activeSession.elapsedSeconds % 5 === 0) {
+                    persistActiveWorkoutSession();
+                }
+            }
+        }, 1000);
+    }
+}
 
 export function renderActiveAndFinishViews(container) {
     if (wState.subScreen === 'SESION_ACTIVA' && wState.activeSession) {
+        ensureLiveTimerRunning();
         const s = wState.activeSession;
         const mins = String(Math.floor(s.elapsedSeconds / 60)).padStart(2, '0');
         const secs = String(s.elapsedSeconds % 60).padStart(2, '0');
         const liveVol = s.exercises.reduce((acc, ex) => acc + ex.sets.filter(st => st.isCompleted).reduce((v, st) => v + (Number(st.weightKg || 0) * Number(st.reps || 0)), 0), 0);
-
-        const SET_TYPE_STYLES = {
-            W:  { bg: 'bg-amber-500/20 border-amber-500/50 text-amber-400', label: 'W' },
-            F:  { bg: 'bg-red-500/20 border-red-500/50 text-red-400', label: 'F' },
-            L:  { bg: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400', label: 'L' },
-            R:  { bg: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400', label: 'R' },
-            D:  { bg: 'bg-blue-500/20 border-blue-500/50 text-blue-400', label: 'D' },
-            N:  { bg: 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400', label: 'N' },
-            P:  { bg: 'bg-orange-500/20 border-orange-500/50 text-orange-400', label: 'P' },
-            M:  { bg: 'bg-pink-500/20 border-pink-500/50 text-pink-400', label: 'M' },
-            FD: { bg: 'bg-lime-500/20 border-lime-500/50 text-lime-400', label: 'FD' },
-            T:  { bg: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300', label: 'T' },
-            B:  { bg: 'bg-purple-500/20 border-purple-500/50 text-purple-400', label: 'B' }
-        };
 
         const setTypeBadge = (st, idx) => {
             const cfg = SET_TYPE_STYLES[st.setType];
@@ -67,7 +102,7 @@ export function renderActiveAndFinishViews(container) {
                                 <button type="button" onclick="removeExerciseFromActive(${exIdx})" class="text-xs text-gray-500 hover:text-red-400">Quitar</button>
                             </div>
                             <div class="grid grid-cols-12 gap-2 text-[10px] font-bold uppercase text-gray-400 px-2">
-                                <div class="col-span-3">Tipo / Serie</div><div class="col-span-3">Peso (kg)</div><div class="col-span-3">Reps</div><div class="col-span-3 text-center">Completar</div>
+                                <div class="col-span-3">Tipo / Serie</div><div class="col-span-3 text-center">Peso (kg)</div><div class="col-span-3 text-center">Reps</div><div class="col-span-3 text-center">Completar</div>
                             </div>
                             <div class="space-y-2">
                                 ${ex.sets.map((st, stIdx) => `
@@ -175,48 +210,39 @@ window.beginActiveWorkoutSession = (routineId, dayNumber) => {
         elapsedSeconds: 0,
         exercises: (d.exercises || []).map(ex => {
             const cat = findExerciseInfo(ex.exerciseId, ex.exerciseName);
+            const hasPlanned = Array.isArray(ex.plannedSets) && ex.plannedSets.length > 0;
             return {
                 ...ex,
                 imageUri: cat.img,
-                sets: Array.from({ length: Number(ex.targetSets || 3) }, (_, i) => ({
-                    setNumber: i + 1,
-                    setType: 'NORMAL',
-                    weightKg: 0,
-                    reps: 0,
-                    isCompleted: false
-                }))
+                sets: hasPlanned
+                    ? ex.plannedSets.map((ps, i) => ({
+                        setNumber: i + 1,
+                        setType: ps.setType || 'NORMAL',
+                        weightKg: Number(ps.targetWeight || 0),
+                        reps: parseInt(ps.targetReps, 10) || 0,
+                        isCompleted: false
+                    }))
+                    : Array.from({ length: Number(ex.targetSets || 3) }, (_, i) => ({
+                        setNumber: i + 1,
+                        setType: 'NORMAL',
+                        weightKg: 0,
+                        reps: 0,
+                        isCompleted: false
+                    }))
             };
         })
     };
 
-    if (wState.timerInterval) clearInterval(wState.timerInterval);
-    wState.timerInterval = setInterval(() => {
-        if (wState.activeSession) {
-            wState.activeSession.elapsedSeconds++;
-            const clock = document.getElementById('live-workout-clock');
-            if (clock) {
-                clock.textContent = `${String(Math.floor(wState.activeSession.elapsedSeconds / 60)).padStart(2, '0')}:${String(wState.activeSession.elapsedSeconds % 60).padStart(2, '0')}`;
-            }
-        }
-    }, 1000);
+    if (wState.timerInterval) {
+        clearInterval(wState.timerInterval);
+        wState.timerInterval = null;
+    }
+    ensureLiveTimerRunning();
+    persistActiveWorkoutSession();
 
     wState.subScreen = 'SESION_ACTIVA';
     window.renderWorkouts();
 };
-
-const SET_TYPES_CATALOG = [
-    { code: 'W',  label: 'Calentamiento',  badge: 'bg-amber-500/20 border-amber-500/50 text-amber-400',   desc: 'Series ligeras de aproximación para preparar articulaciones y sistema nervioso sin generar fatiga.' },
-    { code: 'F',  label: 'Failure',        badge: 'bg-red-500/20 border-red-500/50 text-red-400',         desc: 'Serie llevada al fallo muscular concéntrico absoluto hasta no poder completar una repetición más.' },
-    { code: 'L',  label: 'Izquierda',      badge: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400',      desc: 'Serie unilateral ejecutada exclusivamente con el lado izquierdo.' },
-    { code: 'R',  label: 'Derecha',        badge: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400', desc: 'Serie unilateral ejecutada exclusivamente con el lado derecho.' },
-    { code: 'D',  label: 'Drop Set',       badge: 'bg-blue-500/20 border-blue-500/50 text-blue-400',      desc: 'Al alcanzar el fallo, reduce inmediatamente el peso entre un 20% y 30% y continúa sin descanso.' },
-    { code: 'N',  label: 'Negative',       badge: 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400', desc: 'Énfasis en la fase excéntrica (bajada controlada de 3 a 5 segundos) con carga supramáxima.' },
-    { code: 'P',  label: 'Reps parciales', badge: 'bg-orange-500/20 border-orange-500/50 text-orange-400', desc: 'Repeticiones en rango parcial (estiramiento o acortamiento) tras llegar al fallo en rango completo.' },
-    { code: 'M',  label: 'Myo Reps',       badge: 'bg-pink-500/20 border-pink-500/50 text-pink-400',      desc: 'Serie de activación seguida de mini-series de 3 a 5 reps con descansos de apenas 10-15 segundos.' },
-    { code: 'FD', label: 'Feeder Set',     badge: 'bg-lime-500/20 border-lime-500/50 text-lime-400',      desc: 'Serie de aclimatación rápida con peso intermedio antes de atacar la serie más pesada.' },
-    { code: 'T',  label: 'Top Set',        badge: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300', desc: 'La serie principal más pesada e intensa del ejercicio en la sesión.' },
-    { code: 'B',  label: 'Back-off Set',   badge: 'bg-purple-500/20 border-purple-500/50 text-purple-400', desc: 'Serie posterior al Top Set bajando el peso un 10-20% para acumular volumen efectivo de calidad.' }
-];
 
 window.openSetTypePickerModal = (exIdx, stIdx) => {
     const ex = wState.activeSession.exercises[exIdx];
@@ -226,7 +252,6 @@ window.openSetTypePickerModal = (exIdx, stIdx) => {
         `Tipo de Serie · Serie ${stIdx + 1} (${ex.exerciseName})`,
         `
         <div class="space-y-3 text-xs">
-            <!-- Opción para volver a Serie Normal numerada -->
             <button type="button" onclick="selectSetTypeOption(${exIdx}, ${stIdx}, 'NORMAL')" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border ${cur === 'NORMAL' ? 'border-accent bg-accent/10' : 'border-[#28283C]'} hover:border-accent flex items-center justify-between">
                 <div class="flex items-center space-x-2.5">
                     <span class="w-7 h-7 rounded-lg bg-[#181824] border border-[#28283C] flex items-center justify-center font-black text-white">${stIdx + 1}</span>
@@ -235,7 +260,6 @@ window.openSetTypePickerModal = (exIdx, stIdx) => {
                 ${cur === 'NORMAL' ? '<span class="text-[10px] font-bold text-accent">Activa</span>' : ''}
             </button>
 
-            <!-- Cuadrícula de 2 columnas con los 11 tipos + Eliminar Serie -->
             <div class="grid grid-cols-2 gap-2.5">
                 ${SET_TYPES_CATALOG.map(t => `
                     <div onclick="selectSetTypeOption(${exIdx}, ${stIdx}, '${t.code}')" class="p-2.5 rounded-2xl bg-[#0A0A0F] border ${cur === t.code ? 'border-accent bg-accent/10' : 'border-[#28283C]'} hover:border-accent flex items-center justify-between gap-1.5 cursor-pointer transition-all">
@@ -243,17 +267,15 @@ window.openSetTypePickerModal = (exIdx, stIdx) => {
                             <span class="w-7 h-7 rounded-lg border ${t.badge} flex items-center justify-center text-[11px] font-black shrink-0">${t.code}</span>
                             <span class="font-bold text-[11px] text-gray-200 truncate">${t.label}</span>
                         </div>
-                        <button type="button" onclick="event.stopPropagation(); showSetTypeHelp('${t.code}')" class="w-5 h-5 rounded-full border border-gray-600 text-gray-400 hover:text-white hover:border-white flex items-center justify-center text-[10px] shrink-0" title="¿Qué es?">?</button>
+                        <button type="button" onclick="event.stopPropagation(); showSetTypeHelp('${t.code}')" class="w-5 h-5 rounded-full border border-gray-600 text-gray-400 hover:text-white flex items-center justify-center text-[10px] shrink-0">?</button>
                     </div>
                 `).join('')}
 
-                <!-- Celda 12: Eliminar Serie -->
                 <button type="button" onclick="removeSpecificSetFromActive(${exIdx}, ${stIdx})" class="p-2.5 rounded-2xl bg-red-500/10 border border-red-500/40 hover:bg-red-500/20 flex items-center space-x-2 text-left transition-all">
                     <span class="w-7 h-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center text-xs shrink-0">🗑️</span>
                     <span class="font-extrabold text-[11px] text-red-400">Eliminar Serie</span>
                 </button>
             </div>
-
             <div id="set-type-help-box" class="hidden p-3 rounded-xl bg-[#0A0A0F] border border-accent/40 text-[11px] text-gray-300 leading-relaxed"></div>
         </div>
         `
@@ -276,15 +298,27 @@ window.removeSpecificSetFromActive = (exIdx, stIdx) => {
     }
     sets.splice(stIdx, 1);
     sets.forEach((s, i) => { s.setNumber = i + 1; });
+    persistActiveWorkoutSession();
     window.closeUniversalModal();
     window.renderWorkouts();
 };
 
-window.selectSetTypeOption = (exIdx, stIdx, code) => { wState.activeSession.exercises[exIdx].sets[stIdx].setType = code; window.closeUniversalModal(); window.renderWorkouts(); };
-window.updateActiveSetVal = (exIdx, stIdx, field, val) => { wState.activeSession.exercises[exIdx].sets[stIdx][field] = Math.max(0, Number(val || 0)); };
+window.selectSetTypeOption = (exIdx, stIdx, code) => {
+    wState.activeSession.exercises[exIdx].sets[stIdx].setType = code;
+    persistActiveWorkoutSession();
+    window.closeUniversalModal();
+    window.renderWorkouts();
+};
+
+window.updateActiveSetVal = (exIdx, stIdx, field, val) => {
+    wState.activeSession.exercises[exIdx].sets[stIdx][field] = Math.max(0, Number(val || 0));
+    persistActiveWorkoutSession();
+};
+
 window.toggleActiveSetDone = (exIdx, stIdx) => {
     const st = wState.activeSession.exercises[exIdx].sets[stIdx];
     st.isCompleted = !st.isCompleted;
+    persistActiveWorkoutSession();
     if (st.isCompleted) {
         wState.restSecondsLeft = Number(wState.activeSession.exercises[exIdx].restSeconds || 90);
         if (wState.restInterval) clearInterval(wState.restInterval);
@@ -296,9 +330,26 @@ window.toggleActiveSetDone = (exIdx, stIdx) => {
     }
     window.renderWorkouts();
 };
-window.addSetToActive = (exIdx) => { const sets = wState.activeSession.exercises[exIdx].sets; sets.push({ setNumber: sets.length + 1, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false }); window.renderWorkouts(); };
-window.removeLastSetFromActive = (exIdx) => { const sets = wState.activeSession.exercises[exIdx].sets; if (sets.length > 1) sets.pop(); window.renderWorkouts(); };
-window.removeExerciseFromActive = (exIdx) => { wState.activeSession.exercises.splice(exIdx, 1); window.renderWorkouts(); };
+
+window.addSetToActive = (exIdx) => {
+    const sets = wState.activeSession.exercises[exIdx].sets;
+    sets.push({ setNumber: sets.length + 1, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false });
+    persistActiveWorkoutSession();
+    window.renderWorkouts();
+};
+
+window.removeLastSetFromActive = (exIdx) => {
+    const sets = wState.activeSession.exercises[exIdx].sets;
+    if (sets.length > 1) sets.pop();
+    persistActiveWorkoutSession();
+    window.renderWorkouts();
+};
+
+window.removeExerciseFromActive = (exIdx) => {
+    wState.activeSession.exercises.splice(exIdx, 1);
+    persistActiveWorkoutSession();
+    window.renderWorkouts();
+};
 
 window.openAddExerciseToActiveModal = () => {
     window.openUniversalModal('Añadir Ejercicio', `<div class="max-h-80 overflow-y-auto space-y-2">${EXERCISES_LIST.map(ex => `<button type="button" onclick="addExerciseToActiveSession(${ex.id})" class="w-full p-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] flex items-center space-x-3 text-left hover:border-accent"><img src="${ex.img}" class="w-10 h-10 rounded-lg bg-white p-0.5 object-contain"><div><p class="text-xs font-bold">${ex.name}</p><p class="text-[10px] text-gray-400">${ex.muscleGroup}</p></div></button>`).join('')}</div>`);
@@ -318,6 +369,7 @@ window.addExerciseToActiveSession = (exId) => {
             { setNumber: 2, setType: 'NORMAL', weightKg: 0, reps: 0, isCompleted: false }
         ]
     });
+    persistActiveWorkoutSession();
     window.closeUniversalModal();
     window.renderWorkouts();
 };
@@ -332,7 +384,10 @@ window.attemptFinishWorkout = () => {
 };
 
 window.proceedToPorFinalizarScreen = () => {
-    if (wState.timerInterval) clearInterval(wState.timerInterval);
+    if (wState.timerInterval) {
+        clearInterval(wState.timerInterval);
+        wState.timerInterval = null;
+    }
     const totalSec = Math.max(1, wState.activeSession.elapsedSeconds);
     wState.finishDraft = {
         title: wState.activeSession.routineName,
@@ -343,6 +398,7 @@ window.proceedToPorFinalizarScreen = () => {
         notes: ''
     };
     wState.subScreen = 'POR_FINALIZAR';
+    persistActiveWorkoutSession();
     window.renderWorkouts();
 };
 
@@ -425,17 +481,26 @@ window.finalizeAndSaveWorkoutSession = async () => {
     };
     wState.summarySlideIdx = 0;
     wState.activeSession = null;
+    persistActiveWorkoutSession();
     wState.subScreen = 'RESUMEN_SESION';
     window.renderWorkouts();
 };
 
 window.stepSummarySlide = (d) => { wState.summarySlideIdx = (wState.summarySlideIdx + d + 5) % 5; window.renderWorkouts(); };
+
 window.discardActiveWorkout = () => {
     if (!confirm('¿Descartar este entrenamiento sin guardar?')) return;
-    if (wState.timerInterval) clearInterval(wState.timerInterval);
-    if (wState.restInterval) clearInterval(wState.restInterval);
+    if (wState.timerInterval) {
+        clearInterval(wState.timerInterval);
+        wState.timerInterval = null;
+    }
+    if (wState.restInterval) {
+        clearInterval(wState.restInterval);
+        wState.restInterval = null;
+    }
     wState.activeSession = null;
     wState.finishDraft = null;
+    persistActiveWorkoutSession();
     wState.subScreen = 'PRINCIPAL';
     window.renderWorkouts();
 };
