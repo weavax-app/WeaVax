@@ -12,7 +12,7 @@ export const TEMPLATES_LIST =
 
 if (!window.wState) {
     window.wState = {
-        subScreen: 'PRINCIPAL', // PRINCIPAL | LIBRERIA_RUTINAS | DETALLE_RUTINA | DETALLE_ENTRENAMIENTO | CREAR_EDITAR_RUTINA | BANCO_EJERCICIOS | HISTORIAL | COACH_IA | SESION_ACTIVA | POR_FINALIZAR | RESUMEN_SESION
+        subScreen: 'PRINCIPAL', // PRINCIPAL | LIBRERIA_RUTINAS | DETALLE_RUTINA | DETALLE_ENTRENAMIENTO | DETALLE_EJERCICIO | CREAR_EDITAR_RUTINA | BANCO_EJERCICIOS | HISTORIAL | COACH_IA | SESION_ACTIVA | POR_FINALIZAR | RESUMEN_SESION
         libraryTab: 'MIS_RUTINAS',
         viewMode: 'grid',
         categoryFilter: 'Todas',
@@ -21,7 +21,8 @@ if (!window.wState) {
         selectedRoutineId: Number(localStorage.getItem('weavax_primary_routine_id')) || null,
         viewingRoutine: null,
         viewingDayPlan: null,
-        routineDraft: null, // Borrador para crear o editar programa y días
+        viewingExercise: null,
+        routineDraft: null,
         activeSession: null,
         finishDraft: null,
         summaryData: null,
@@ -163,5 +164,60 @@ export function getWeeklyWorkoutStats() {
         volume: sessions.reduce((acc, s) => acc + Number(s.totalVolumeKg || 0), 0),
         minutes: Math.round(sessions.reduce((acc, s) => acc + Number(s.durationSeconds || 0), 0) / 60),
         sessions
+    };
+}
+export function getExerciseHistoryAndStats(exerciseId, exerciseName = '') {
+    const sessions = getCompletedSessionsList();
+    let best1RM = 0;
+    let maxWeight = 0;
+    let totalSets = 0;
+    let totalVolume = 0;
+    const historyEntries = [];
+
+    sessions.forEach(s => {
+        const sets = Array.isArray(s.sets) ? s.sets : [];
+        const matched = sets.filter(st =>
+            (Number(st.exerciseId) === Number(exerciseId) ||
+             (exerciseName && String(st.exerciseName || '').toLowerCase() === exerciseName.toLowerCase())) &&
+            (st.isCompleted === true || st.isCompleted === 1)
+        );
+        if (matched.length === 0) return;
+
+        let sessionMaxW = 0;
+        let sessionBest1RM = 0;
+        let sessionVol = 0;
+
+        matched.forEach(st => {
+            const w = Number(st.weightKg || 0);
+            const r = Number(st.reps || 0);
+            totalSets++;
+            sessionVol += (w * r);
+            if (w > maxWeight) maxWeight = w;
+            if (w > sessionMaxW) sessionMaxW = w;
+            if (w > 0 && r > 0) {
+                const est1RM = w * (1 + r / 30);
+                if (est1RM > best1RM) best1RM = est1RM;
+                if (est1RM > sessionBest1RM) sessionBest1RM = est1RM;
+            }
+        });
+
+        totalVolume += sessionVol;
+        historyEntries.push({
+            sessionId: s.id,
+            date: Number(s.startedAt || Date.now()),
+            routineName: s.routineName || 'Entrenamiento',
+            sets: matched,
+            maxWeight: sessionMaxW,
+            best1RM: sessionBest1RM,
+            volume: sessionVol
+        });
+    });
+
+    return {
+        best1RM,
+        maxWeight,
+        totalSets,
+        totalVolume,
+        historyEntries
     };
 }
