@@ -222,6 +222,7 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
                         ${isSaved
                             ? `<button type="button" onclick="selectPrimaryRoutine(${r.id})" class="px-4 py-2 rounded-xl bg-accent text-white text-xs font-extrabold">★ Elegir como Rutina Principal</button>`
                             : `<button type="button" onclick="copyTemplateToLibrary(${r.id})" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold">📥 Copiar a mi biblioteca</button>`}
+                            <button type="button" onclick="openRoutineEditor(${r.id})" class="px-4 py-2 rounded-xl bg-[#181824] border border-[#28283C] hover:border-accent text-xs font-bold">✎ Editar Programa</button>
                     </div>
                 </div>
                 <div class="rounded-3xl overflow-hidden bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
@@ -263,6 +264,7 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
                 <div class="flex items-center justify-between">
                     <button type="button" onclick="openRoutineDetailView(${r.id})" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
                     <button type="button" onclick="beginActiveWorkoutSession(${r.id}, ${d.dayNumber})" class="px-5 py-2.5 rounded-full bg-accent text-white text-xs font-extrabold">▶ Iniciar Entrenamiento</button>
+                    ${r.isCustom ? `<button type="button" onclick="openRoutineEditor(${r.id}, ${d.dayNumber})" class="px-4 py-2.5 rounded-full bg-[#181824] border border-[#28283C] hover:border-accent text-xs font-bold">✎ Editar Día</button>` : ''}
                 </div>
                 <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
                     <h3 class="text-xl font-black">${d.dayName}</h3>
@@ -286,7 +288,133 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
         `;
         return;
     }
+    if (wState.subScreen === 'CREAR_EDITAR_RUTINA' && wState.routineDraft) {
+        const draft = wState.routineDraft;
+        const focusDay = draft.focusDayNumber; // null = programa completo, número = día específico
 
+        container.innerHTML = `
+            <div class="space-y-6">
+                <div class="sticky top-16 z-20 p-4 rounded-2xl bg-[#181824] border border-[#28283C] flex flex-wrap items-center justify-between gap-3 shadow-xl">
+                    <div class="flex items-center space-x-3">
+                        <button type="button" onclick="cancelRoutineEditor()" class="px-3.5 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">✕ Cancelar</button>
+                        <div>
+                            <h3 class="text-base sm:text-lg font-black">${draft.isEditing ? (focusDay ? `Editar Día ${focusDay}` : 'Editar Programa') : 'Crear Nuevo Programa'}</h3>
+                            <p class="text-[11px] text-gray-400">Configura días, ejercicios, series, reps y descanso</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        ${draft.isEditing && !focusDay ? `<button type="button" onclick="deleteSavedRoutine(${draft.id})" class="px-3.5 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-bold">🗑️ Eliminar</button>` : ''}
+                        <button type="button" onclick="saveRoutineDraftToFirestore()" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shadow-lg">Guardar Programa</button>
+                    </div>
+                </div>
+
+                <!-- Datos Generales del Programa (Oculto si solo se edita un día puntual) -->
+                ${!focusDay ? `
+                    <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4 text-xs">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-bold uppercase text-gray-400">Nombre del Programa</label>
+                                <input value="${draft.name}" oninput="updateDraftField('name', this.value)" placeholder="Ej. Push Pull Legs Hipertrofia" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] font-bold">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-[10px] font-bold uppercase text-gray-400">Enfoque</label>
+                                    <select onchange="updateDraftField('focusCategory', this.value)" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] font-bold">
+                                        ${['Hipertrofia', 'Fuerza', 'Calistenia', 'Resistencia', 'Funcional'].map(f => `<option value="${f}" ${draft.focusCategory === f ? 'selected' : ''}>${f}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold uppercase text-gray-400">Duración Est. (min)</label>
+                                    <input type="number" min="15" max="180" value="${draft.estimatedDurationMinutes}" oninput="updateDraftField('estimatedDurationMinutes', Number(this.value || 60))" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] font-bold">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-bold uppercase text-gray-400">Descripción</label>
+                                <input value="${draft.description}" oninput="updateDraftField('description', this.value)" placeholder="Objetivo o notas de la rutina..." class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold uppercase text-gray-400">URL Imagen de Portada (Opcional)</label>
+                                <input value="${draft.imageUri}" oninput="updateDraftField('imageUri', this.value)" placeholder="https://..." class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C]">
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Días de Entrenamiento -->
+                <div class="space-y-5">
+                    ${draft.days
+                        .map((day, dIdx) => ({ day, dIdx }))
+                        .filter(({ day }) => !focusDay || Number(day.dayNumber) === Number(focusDay))
+                        .map(({ day, dIdx }) => `
+                        <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 dark:border-[#28283C] pb-4">
+                                <div class="flex items-center space-x-3 flex-1 min-w-[220px]">
+                                    <span class="w-8 h-8 rounded-xl bg-accent/20 text-accent font-black flex items-center justify-center text-xs shrink-0">D${day.dayNumber}</span>
+                                    <input value="${day.dayName}" oninput="updateDraftDayName(${dIdx}, this.value)" placeholder="Nombre del día (ej. Push A - Pecho y Hombro)" class="flex-1 px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] text-sm font-extrabold">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="openDraftExercisePicker(${dIdx})" class="px-3.5 py-2 rounded-xl bg-accent/15 text-accent hover:bg-accent hover:text-white text-xs font-extrabold transition-all">+ Añadir Ejercicio</button>
+                                    ${!focusDay && draft.days.length > 1 ? `<button type="button" onclick="removeDraftDay(${dIdx})" class="px-2.5 py-2 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold" title="Eliminar día">🗑️</button>` : ''}
+                                </div>
+                            </div>
+
+                            ${(day.exercises || []).length === 0 ? `
+                                <div class="p-6 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-dashed border-[#28283C] text-center">
+                                    <p class="text-xs text-gray-400">Sin ejercicios en este día. Pulsa <strong>+ Añadir Ejercicio</strong> para elegir del catálogo.</p>
+                                </div>
+                            ` : `
+                                <div class="space-y-2.5">
+                                    ${day.exercises.map((ex, eIdx) => {
+                                        const info = findExerciseInfo(ex.exerciseId, ex.exerciseName);
+                                        return `
+                                            <div class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex flex-wrap items-center justify-between gap-3">
+                                                <div class="flex items-center space-x-3 min-w-[200px] flex-1">
+                                                    <div class="flex flex-col space-y-1">
+                                                        <button type="button" onclick="moveDraftExercise(${dIdx}, ${eIdx}, -1)" class="text-[10px] text-gray-400 hover:text-white leading-none">▲</button>
+                                                        <button type="button" onclick="moveDraftExercise(${dIdx}, ${eIdx}, 1)" class="text-[10px] text-gray-400 hover:text-white leading-none">▼</button>
+                                                    </div>
+                                                    <img src="${info.img}" class="w-11 h-11 rounded-xl object-contain bg-white p-1 shrink-0">
+                                                    <div class="min-w-0">
+                                                        <p class="text-xs font-extrabold truncate">${ex.exerciseName}</p>
+                                                        <p class="text-[10px] text-gray-400">${ex.muscleGroup} · ${ex.equipment}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex items-center gap-2 text-xs">
+                                                    <div class="w-16">
+                                                        <span class="text-[9px] text-gray-400 uppercase block text-center">Series</span>
+                                                        <input type="number" min="1" max="15" value="${ex.targetSets}" oninput="updateDraftExerciseField(${dIdx}, ${eIdx}, 'targetSets', Number(this.value || 3))" class="w-full px-2 py-1 rounded-lg bg-[#181824] border border-[#28283C] text-center font-bold">
+                                                    </div>
+                                                    <div class="w-20">
+                                                        <span class="text-[9px] text-gray-400 uppercase block text-center">Reps</span>
+                                                        <input value="${ex.targetRepsRange}" oninput="updateDraftExerciseField(${dIdx}, ${eIdx}, 'targetRepsRange', this.value)" class="w-full px-2 py-1 rounded-lg bg-[#181824] border border-[#28283C] text-center font-bold">
+                                                    </div>
+                                                    <div class="w-20">
+                                                        <span class="text-[9px] text-gray-400 uppercase block text-center">Desc (s)</span>
+                                                        <input type="number" min="15" max="300" step="15" value="${ex.restSeconds}" oninput="updateDraftExerciseField(${dIdx}, ${eIdx}, 'restSeconds', Number(this.value || 90))" class="w-full px-2 py-1 rounded-lg bg-[#181824] border border-[#28283C] text-center font-bold">
+                                                    </div>
+                                                    <button type="button" onclick="removeDraftExercise(${dIdx}, ${eIdx})" class="p-2 text-gray-400 hover:text-red-400" title="Quitar ejercicio">✕</button>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            `}
+                        </div>
+                    `).join('')}
+
+                    ${!focusDay ? `
+                        <button type="button" onclick="addDraftDay()" class="w-full py-3.5 rounded-2xl border-2 border-dashed border-accent/50 hover:border-accent text-accent text-xs font-extrabold transition-all">
+                            + Agregar Día de Entrenamiento al Programa
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        return;
+    }
     // 5. BANCO DE EJERCICIOS
     if (wState.subScreen === 'BANCO_EJERCICIOS') {
         const muscles = ['Todos', 'Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales/Glúteos', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Pantorrillas'];
@@ -383,6 +511,7 @@ function renderRoutineCard(r, mode = 'grid', isSystemTemplateCard = false) {
     const actionBtn = isSystemTemplateCard
         ? `<button type="button" onclick="event.stopPropagation(); copyTemplateToLibrary(${r.id})" class="flex-1 py-2 px-3 rounded-xl bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white text-xs font-bold transition-all">📥 Copiar a mi biblioteca</button>`
         : `<button type="button" onclick="event.stopPropagation(); selectPrimaryRoutine(${r.id})" class="flex-1 py-2 px-3 rounded-xl bg-accent/15 text-accent hover:bg-accent hover:text-white text-xs font-bold transition-all">★ Elegir Principal</button>`;
+        <button type="button" onclick="event.stopPropagation(); openRoutineEditor(${r.id})" class="py-2 px-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent text-xs font-bold" title="Editar rutina">✎</button>
 
     if (mode === 'list') {
         return `
@@ -480,58 +609,233 @@ window.showExerciseAnatomyModal = (exId) => {
     `);
 };
 
-window.openRoutineCreatorModal = () => {
-    window.openUniversalModal('Crear Nueva Rutina', `
-        <form onsubmit="saveNewUserRoutine(event)" class="space-y-3 text-xs">
-            <input id="nr-name" required placeholder="Nombre de tu rutina" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-            <input id="nr-desc" placeholder="Descripción" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-            <div class="grid grid-cols-2 gap-2">
-                <select id="nr-focus" class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-                    <option value="Hipertrofia">Hipertrofia</option>
-                    <option value="Fuerza">Fuerza</option>
-                    <option value="Calistenia">Calistenia</option>
-                </select>
-                <input id="nr-days" type="number" min="1" max="7" value="4" class="px-3 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-            </div>
-            <input id="nr-day1" value="Día 1: Entrenamiento A" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-            <button type="submit" class="w-full py-2.5 rounded-xl bg-accent text-white font-bold">Guardar en Mis Rutinas</button>
-        </form>
-    `);
+window.openRoutineCreatorModal = () => window.openRoutineEditor(null, null);
+
+window.openRoutineEditor = (routineId = null, focusDayNumber = null) => {
+    const existing = routineId ? getUserSavedRoutines().find(r => Number(r.id) === Number(routineId)) : null;
+
+    if (existing) {
+        wState.routineDraft = {
+            id: Number(existing.id),
+            isEditing: true,
+            focusDayNumber: focusDayNumber ? Number(focusDayNumber) : null,
+            name: existing.name || 'Mi Rutina',
+            description: existing.description || '',
+            focusCategory: existing.focusCategory || 'Hipertrofia',
+            estimatedDurationMinutes: Number(existing.estimatedDurationMinutes || 60),
+            imageUri: existing.imageUri || DEFAULT_COVER,
+            days: JSON.parse(JSON.stringify(existing.days || []))
+        };
+    } else {
+        wState.routineDraft = {
+            id: Date.now(),
+            isEditing: false,
+            focusDayNumber: null,
+            name: '',
+            description: '',
+            focusCategory: 'Hipertrofia',
+            estimatedDurationMinutes: 60,
+            imageUri: DEFAULT_COVER,
+            days: [
+                { dayNumber: 1, dayName: 'Día 1: Entrenamiento A', dayImageUri: DEFAULT_COVER, exercises: [] }
+            ]
+        };
+    }
+
+    wState.subScreen = 'CREAR_EDITAR_RUTINA';
+    window.renderWorkouts();
 };
 
-window.saveNewUserRoutine = async (e) => {
-    e.preventDefault();
-    const id = Date.now();
-    const dayName = document.getElementById('nr-day1').value.trim() || 'Día 1';
-    const defaultExs = [1, 14, 43].map((exId, idx) => {
-        const info = findExerciseInfo(exId);
+window.cancelRoutineEditor = () => {
+    const draft = wState.routineDraft;
+    wState.routineDraft = null;
+    if (draft?.isEditing && draft?.focusDayNumber && wState.viewingDayPlan) {
+        wState.subScreen = 'DETALLE_ENTRENAMIENTO';
+    } else if (draft?.isEditing && wState.viewingRoutine) {
+        wState.subScreen = 'DETALLE_RUTINA';
+    } else {
+        wState.subScreen = 'PRINCIPAL';
+    }
+    window.renderWorkouts();
+};
+
+window.updateDraftField = (field, val) => {
+    if (wState.routineDraft) wState.routineDraft[field] = val;
+};
+
+window.updateDraftDayName = (dIdx, val) => {
+    if (wState.routineDraft?.days[dIdx]) wState.routineDraft.days[dIdx].dayName = val;
+};
+
+window.addDraftDay = () => {
+    if (!wState.routineDraft) return;
+    const nextNum = wState.routineDraft.days.length + 1;
+    wState.routineDraft.days.push({
+        dayNumber: nextNum,
+        dayName: `Día ${nextNum}: Entrenamiento`,
+        dayImageUri: wState.routineDraft.imageUri || DEFAULT_COVER,
+        exercises: []
+    });
+    window.renderWorkouts();
+};
+
+window.removeDraftDay = (dIdx) => {
+    if (!wState.routineDraft || wState.routineDraft.days.length <= 1) return;
+    wState.routineDraft.days.splice(dIdx, 1);
+    wState.routineDraft.days.forEach((d, idx) => { d.dayNumber = idx + 1; });
+    window.renderWorkouts();
+};
+
+window.openDraftExercisePicker = (dIdx) => {
+    window.openUniversalModal(
+        'Seleccionar Ejercicio del Catálogo',
+        `
+        <div class="space-y-3 text-xs">
+            <input oninput="filterModalExercisePicker(this.value, ${dIdx})" placeholder="Buscar por nombre o músculo (ej. Pecho, Curl, Sentadilla)..." class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
+            <div id="draft-ex-picker-list" class="max-h-80 overflow-y-auto space-y-2">
+                ${renderDraftPickerItems(EXERCISES_LIST, dIdx)}
+            </div>
+        </div>
+        `
+    );
+};
+
+function renderDraftPickerItems(list, dIdx) {
+    return list.map(ex => `
+        <button type="button" onclick="addExerciseToDraftDay(${dIdx}, ${ex.id})" class="w-full p-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent flex items-center space-x-3 text-left">
+            <img src="${ex.img}" class="w-10 h-10 rounded-lg bg-white p-0.5 object-contain shrink-0">
+            <div class="min-w-0 flex-1">
+                <p class="font-bold truncate">${ex.name}</p>
+                <p class="text-[10px] text-gray-400">${ex.muscleGroup} · ${ex.equipment}</p>
+            </div>
+            <span class="text-accent font-extrabold text-xs">+ Añadir</span>
+        </button>
+    `).join('');
+}
+
+window.filterModalExercisePicker = (q, dIdx) => {
+    const term = (q || '').toLowerCase();
+    const filtered = EXERCISES_LIST.filter(e =>
+        e.name.toLowerCase().includes(term) || e.muscleGroup.toLowerCase().includes(term)
+    );
+    const box = document.getElementById('draft-ex-picker-list');
+    if (box) box.innerHTML = renderDraftPickerItems(filtered, dIdx);
+};
+
+window.addExerciseToDraftDay = (dIdx, exId) => {
+    const day = wState.routineDraft?.days[dIdx];
+    if (!day) return;
+    const info = findExerciseInfo(exId);
+    day.exercises.push({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        exerciseId: info.id,
+        exerciseName: info.name,
+        muscleGroup: info.muscleGroup,
+        equipment: info.equipment,
+        imageUri: info.img,
+        orderIndex: day.exercises.length,
+        targetSets: 4,
+        targetRepsRange: '8-12',
+        restSeconds: 90
+    });
+    window.closeUniversalModal();
+    window.renderWorkouts();
+};
+
+window.updateDraftExerciseField = (dIdx, eIdx, field, val) => {
+    const ex = wState.routineDraft?.days[dIdx]?.exercises[eIdx];
+    if (ex) ex[field] = val;
+};
+
+window.removeDraftExercise = (dIdx, eIdx) => {
+    const day = wState.routineDraft?.days[dIdx];
+    if (!day) return;
+    day.exercises.splice(eIdx, 1);
+    day.exercises.forEach((ex, i) => { ex.orderIndex = i; });
+    window.renderWorkouts();
+};
+
+window.moveDraftExercise = (dIdx, eIdx, delta) => {
+    const list = wState.routineDraft?.days[dIdx]?.exercises;
+    if (!list) return;
+    const target = eIdx + delta;
+    if (target < 0 || target >= list.length) return;
+    [list[eIdx], list[target]] = [list[target], list[eIdx]];
+    list.forEach((ex, i) => { ex.orderIndex = i; });
+    window.renderWorkouts();
+};
+
+window.saveRoutineDraftToFirestore = async () => {
+    const draft = wState.routineDraft;
+    if (!draft) return;
+    const cleanName = (draft.name || '').trim() || 'Mi Rutina Personalizada';
+
+    // Construir también la lista plana `exercises` compatible 100% con Android Room/Firestore
+    const flatExercises = [];
+    const cleanDays = draft.days.map((d, dIdx) => {
+        const dayNum = dIdx + 1;
+        const dayExs = (d.exercises || []).map((ex, eIdx) => {
+            const normalizedEx = {
+                id: Number(ex.id || (eIdx + 1)),
+                routineId: Number(draft.id),
+                dayNumber: dayNum,
+                dayName: d.dayName || `Día ${dayNum}`,
+                dayImageUri: d.dayImageUri || draft.imageUri || DEFAULT_COVER,
+                exerciseId: Number(ex.exerciseId),
+                exerciseName: ex.exerciseName,
+                muscleGroup: ex.muscleGroup,
+                equipment: ex.equipment,
+                orderIndex: eIdx,
+                targetSets: Number(ex.targetSets || 3),
+                targetRepsRange: ex.targetRepsRange || '8-12',
+                restSeconds: Number(ex.restSeconds || 90)
+            };
+            flatExercises.push(normalizedEx);
+            return normalizedEx;
+        });
         return {
-            id: idx + 1,
-            exerciseId: info.id,
-            exerciseName: info.name,
-            muscleGroup: info.muscleGroup,
-            equipment: info.equipment,
-            imageUri: info.img,
-            orderIndex: idx,
-            targetSets: 4,
-            targetRepsRange: '8-12',
-            restSeconds: 90
+            dayNumber: dayNum,
+            dayName: d.dayName || `Día ${dayNum}`,
+            dayImageUri: d.dayImageUri || draft.imageUri || DEFAULT_COVER,
+            exercises: dayExs
         };
     });
 
-    await fsActions.setItem('workout_routines', id, {
-        id,
-        name: document.getElementById('nr-name').value.trim(),
-        description: document.getElementById('nr-desc').value.trim(),
-        focusCategory: document.getElementById('nr-focus').value,
-        targetDaysPerWeek: Number(document.getElementById('nr-days').value || 4),
+    const payload = {
+        id: Number(draft.id),
+        name: cleanName,
+        description: (draft.description || '').trim(),
+        focusCategory: draft.focusCategory || 'Hipertrofia',
+        targetDaysPerWeek: cleanDays.length,
+        estimatedDurationMinutes: Number(draft.estimatedDurationMinutes || 60),
         isSystemTemplate: false,
-        imageUri: DEFAULT_COVER,
-        days: [{ dayNumber: 1, dayName, dayImageUri: DEFAULT_COVER, exercises: defaultExs }],
-        createdAt: id
-    });
-    window.closeUniversalModal();
-    wState.selectedRoutineId = id;
-    localStorage.setItem('weavax_primary_routine_id', String(id));
+        imageUri: (draft.imageUri || '').trim() || DEFAULT_COVER,
+        days: cleanDays,
+        exercises: flatExercises,
+        createdAt: draft.isEditing ? undefined : Date.now()
+    };
+
+    await fsActions.setItem('workout_routines', Number(draft.id), payload);
+
+    if (!draft.isEditing) {
+        wState.selectedRoutineId = Number(draft.id);
+        localStorage.setItem('weavax_primary_routine_id', String(draft.id));
+        if (window.state.activeUserDocId) {
+            await fsActions.updateProfile({ primaryRoutineId: Number(draft.id) });
+        }
+    }
+
+    wState.routineDraft = null;
+    wState.viewingRoutine = payload;
+    wState.subScreen = 'DETALLE_RUTINA';
+    window.renderWorkouts();
+};
+
+window.deleteSavedRoutine = async (routineId) => {
+    if (!confirm('¿Eliminar esta rutina de tu biblioteca y de Firestore?')) return;
+    await fsActions.removeItem('workout_routines', String(routineId));
+    wState.routineDraft = null;
+    wState.viewingRoutine = null;
+    wState.subScreen = 'PRINCIPAL';
     window.renderWorkouts();
 };
