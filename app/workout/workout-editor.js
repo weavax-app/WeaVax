@@ -37,6 +37,7 @@ function ensurePlannedSets(ex) {
         ex.plannedSets = Array.from({ length: count }, (_, i) => ({
             setNumber: i + 1,
             setType: 'NORMAL',
+            targetWeight: 0,
             targetReps: ex.targetRepsRange || '8-12'
         }));
     }
@@ -53,7 +54,7 @@ export function renderRoutineEditorView(container) {
         if (cfg) {
             return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-md border ${cfg.bg} text-[11px] font-black">${cfg.label}</span>`;
         }
-        return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[#181824] border border-[#28283C] text-white text-xs font-extrabold">${idx + 1}</span>`;
+        return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[#0A0A0F] border border-[#28283C] text-white text-xs font-extrabold">${idx + 1}</span>`;
     };
 
     container.innerHTML = `
@@ -63,12 +64,12 @@ export function renderRoutineEditorView(container) {
                     <button type="button" onclick="cancelRoutineEditor()" class="px-3.5 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">✕ Cancelar</button>
                     <div>
                         <h3 class="text-base sm:text-lg font-black">${draft.isEditing ? (focusDay ? `Editar Día ${focusDay}` : 'Editar Programa') : 'Crear Nuevo Programa'}</h3>
-                        <p class="text-[11px] text-gray-400">Configura días, ejercicios, tipos de serie, reps y descanso</p>
+                        <p class="text-[11px] text-gray-400">Configura días, ejercicios, series, pesos y reps</p>
                     </div>
                 </div>
                 <div class="flex gap-2">
                     ${draft.isEditing && !focusDay ? `<button type="button" onclick="deleteSavedRoutine(${draft.id})" class="px-3.5 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-bold">🗑️ Eliminar</button>` : ''}
-                    <button type="button" onclick="saveRoutineDraftToFirestore()" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shadow-lg">Guardar Programa</button>
+                    <button type="button" onclick="saveRoutineDraftToFirestore()" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shadow-lg">Guardar</button>
                 </div>
             </div>
 
@@ -110,86 +111,81 @@ export function renderRoutineEditorView(container) {
                     .map((day, dIdx) => ({ day, dIdx }))
                     .filter(({ day }) => !focusDay || Number(day.dayNumber) === Number(focusDay))
                     .map(({ day, dIdx }) => `
-                    <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
-                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 dark:border-[#28283C] pb-4">
+                    <div class="space-y-4">
+                        <div class="p-4 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex flex-wrap items-center justify-between gap-3">
                             <div class="flex items-center space-x-3 flex-1 min-w-[220px]">
                                 <span class="w-8 h-8 rounded-xl bg-accent/20 text-accent font-black flex items-center justify-center text-xs shrink-0">D${day.dayNumber}</span>
                                 <input value="${day.dayName}" oninput="updateDraftDayName(${dIdx}, this.value)" placeholder="Nombre del día" class="flex-1 px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] text-sm font-extrabold">
                             </div>
                             <div class="flex items-center gap-2">
-                                <button type="button" onclick="openDraftExercisePicker(${dIdx})" class="px-3.5 py-2 rounded-xl bg-accent/15 text-accent hover:bg-accent hover:text-white text-xs font-extrabold transition-all">+ Añadir Ejercicio</button>
+                                <button type="button" onclick="openDraftExercisePicker(${dIdx})" class="px-3.5 py-2 rounded-xl bg-accent text-white text-xs font-extrabold">+ Añadir Ejercicio</button>
                                 ${!focusDay && draft.days.length > 1 ? `<button type="button" onclick="removeDraftDay(${dIdx})" class="px-2.5 py-2 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold">🗑️</button>` : ''}
                             </div>
                         </div>
 
                         ${(day.exercises || []).length === 0 ? `
-                            <div class="p-6 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-dashed border-[#28283C] text-center">
+                            <div class="p-6 rounded-2xl bg-[#181824] border border-dashed border-[#28283C] text-center">
                                 <p class="text-xs text-gray-400">Sin ejercicios. Pulsa <strong>+ Añadir Ejercicio</strong> para elegir del catálogo.</p>
                             </div>
-                        ` : `
-                            <div class="space-y-4">
-                                ${day.exercises.map((ex, eIdx) => {
-                                    const info = findExerciseInfo(ex.exerciseId, ex.exerciseName);
-                                    const plannedSets = ensurePlannedSets(ex);
-                                    return `
-                                        <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] space-y-3">
-                                            <!-- Cabecera del Ejercicio -->
-                                            <div class="flex flex-wrap items-center justify-between gap-3">
-                                                <div class="flex items-center space-x-3 min-w-[200px] flex-1">
-                                                    <div class="flex flex-col space-y-1">
-                                                        <button type="button" onclick="moveDraftExercise(${dIdx}, ${eIdx}, -1)" class="text-[10px] text-gray-400 hover:text-white leading-none">▲</button>
-                                                        <button type="button" onclick="moveDraftExercise(${dIdx}, ${eIdx}, 1)" class="text-[10px] text-gray-400 hover:text-white leading-none">▼</button>
-                                                    </div>
-                                                    <img src="${info.img}" onclick="showExerciseAnatomyModal(${info.id})" class="w-12 h-12 rounded-xl object-contain bg-white p-1 shrink-0 cursor-pointer">
-                                                    <div class="min-w-0">
-                                                        <p onclick="showExerciseAnatomyModal(${info.id})" class="text-sm font-extrabold truncate cursor-pointer hover:text-accent">${ex.exerciseName}</p>
-                                                        <p class="text-[11px] text-gray-400">${ex.muscleGroup} · ${ex.equipment}</p>
-                                                    </div>
-                                                </div>
-                                                <div class="flex items-center gap-2 text-xs">
-                                                    <div class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-[#181824] border border-[#28283C]">
-                                                        <span class="text-[10px] text-gray-400 font-bold">⏱ Descanso:</span>
-                                                        <input type="number" min="15" max="300" step="15" value="${ex.restSeconds}" oninput="updateDraftExerciseField(${dIdx}, ${eIdx}, 'restSeconds', Number(this.value || 90))" class="w-12 bg-transparent text-center font-extrabold text-accent">
-                                                        <span class="text-[10px] text-gray-400">s</span>
-                                                    </div>
-                                                    <button type="button" onclick="removeDraftExercise(${dIdx}, ${eIdx})" class="p-2 text-gray-400 hover:text-red-400" title="Quitar ejercicio">✕</button>
-                                                </div>
+                        ` : day.exercises.map((ex, eIdx) => {
+                            const info = findExerciseInfo(ex.exerciseId, ex.exerciseName);
+                            const plannedSets = ensurePlannedSets(ex);
+                            return `
+                                <div class="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
+                                    <div class="flex flex-wrap items-center justify-between gap-3">
+                                        <div class="flex items-center space-x-3.5 min-w-[200px] flex-1">
+                                            <div class="flex flex-col space-y-1">
+                                                <button type="button" onclick="moveDraftExercise(${dIdx}, ${eIdx}, -1)" class="text-[10px] text-gray-400 hover:text-white leading-none">▲</button>
+                                                <button type="button" onclick="moveDraftExercise(${dIdx}, ${eIdx}, 1)" class="text-[10px] text-gray-400 hover:text-white leading-none">▼</button>
                                             </div>
-
-                                            <!-- Tabla de Series Configurables (con selector de Tipo de Serie) -->
-                                            <div class="space-y-1.5 pt-1">
-                                                <div class="grid grid-cols-12 gap-2 text-[10px] font-bold uppercase text-gray-400 px-2">
-                                                    <div class="col-span-4">Tipo de Serie</div>
-                                                    <div class="col-span-5 text-center">Reps Objetivo</div>
-                                                    <div class="col-span-3 text-right">Acción</div>
-                                                </div>
-                                                ${plannedSets.map((st, sIdx) => `
-                                                    <div class="grid grid-cols-12 gap-2 items-center p-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs">
-                                                        <div class="col-span-4">
-                                                            <button type="button" onclick="openDraftSetTypePicker(${dIdx}, ${eIdx}, ${sIdx})" class="w-full px-2.5 py-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] hover:border-accent flex items-center justify-between">
-                                                                <div class="flex items-center space-x-2">
-                                                                    ${renderDraftBadge(st, sIdx)}
-                                                                    <span class="text-[11px] font-bold text-gray-300 hidden sm:inline">${st.setType === 'NORMAL' ? 'Normal' : st.setType}</span>
-                                                                </div>
-                                                                <span class="text-[9px] text-gray-400">▼</span>
-                                                            </button>
-                                                        </div>
-                                                        <div class="col-span-5">
-                                                            <input value="${st.targetReps || ex.targetRepsRange || '8-12'}" oninput="updateDraftPlannedSetReps(${dIdx}, ${eIdx}, ${sIdx}, this.value)" class="w-full px-2.5 py-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-center font-bold">
-                                                        </div>
-                                                        <div class="col-span-3 flex justify-end">
-                                                            <button type="button" onclick="removeDraftPlannedSet(${dIdx}, ${eIdx}, ${sIdx})" class="px-2 py-1 text-[11px] text-gray-400 hover:text-red-400" title="Eliminar serie">🗑️</button>
-                                                        </div>
-                                                    </div>
-                                                `).join('')}
+                                            <img src="${info.img}" onclick="showExerciseAnatomyModal(${info.id})" class="w-12 h-12 rounded-xl object-contain bg-white p-1 shrink-0 cursor-pointer">
+                                            <div class="min-w-0">
+                                                <h4 onclick="showExerciseAnatomyModal(${info.id})" class="text-sm font-extrabold truncate cursor-pointer hover:text-accent">${ex.exerciseName}</h4>
+                                                <p class="text-[11px] text-gray-400">${ex.muscleGroup} · ${ex.equipment}</p>
                                             </div>
-
-                                            <button type="button" onclick="addDraftPlannedSet(${dIdx}, ${eIdx})" class="w-full py-2 rounded-xl bg-[#181824] border border-dashed border-[#28283C] hover:border-accent text-xs font-bold text-accent">+ Agregar Serie</button>
                                         </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        `}
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs">
+                                                <span class="text-gray-400 font-bold">⏱ Descanso:</span>
+                                                <input type="number" min="15" max="300" step="15" value="${ex.restSeconds}" oninput="updateDraftExerciseField(${dIdx}, ${eIdx}, 'restSeconds', Number(this.value || 90))" class="w-12 bg-transparent text-center font-extrabold text-accent">
+                                                <span class="text-gray-400">s</span>
+                                            </div>
+                                            <button type="button" onclick="removeDraftExercise(${dIdx}, ${eIdx})" class="text-xs text-gray-500 hover:text-red-400 font-bold">Quitar</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-12 gap-2 text-[10px] font-bold uppercase text-gray-400 px-2">
+                                        <div class="col-span-3">Tipo / Serie</div>
+                                        <div class="col-span-3 text-center">Anterior</div>
+                                        <div class="col-span-3 text-center">Peso (kg)</div>
+                                        <div class="col-span-3 text-center">Reps</div>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        ${plannedSets.map((st, sIdx) => `
+                                            <div class="grid grid-cols-12 gap-2 items-center p-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] text-xs">
+                                                <div class="col-span-3">
+                                                    <button type="button" onclick="openDraftSetTypePicker(${dIdx}, ${eIdx}, ${sIdx})" class="w-full px-2.5 py-1.5 rounded-lg bg-[#181824] border border-[#28283C] hover:border-accent flex items-center justify-between text-xs">
+                                                        ${renderDraftBadge(st, sIdx)}<span class="text-[9px] text-gray-400">▼</span>
+                                                    </button>
+                                                </div>
+                                                <div class="col-span-3 text-center text-[11px] font-bold text-gray-500">—</div>
+                                                <div class="col-span-3">
+                                                    <input type="number" step="0.5" placeholder="0" value="${Number(st.targetWeight || 0) > 0 ? st.targetWeight : ''}" oninput="updateDraftPlannedSetField(${dIdx}, ${eIdx}, ${sIdx}, 'targetWeight', Number(this.value || 0))" class="w-full px-2 py-1.5 rounded-lg bg-[#181824] border border-[#28283C] text-center font-bold">
+                                                </div>
+                                                <div class="col-span-3">
+                                                    <input type="text" placeholder="8-12" value="${st.targetReps || ex.targetRepsRange || '8-12'}" oninput="updateDraftPlannedSetField(${dIdx}, ${eIdx}, ${sIdx}, 'targetReps', this.value)" class="w-full px-2 py-1.5 rounded-lg bg-[#181824] border border-[#28283C] text-center font-bold">
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+
+                                    <div class="flex gap-3 pt-1">
+                                        <button type="button" onclick="addDraftPlannedSet(${dIdx}, ${eIdx})" class="text-xs font-bold text-accent">+ Añadir Serie</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
                 `).join('')}
 
@@ -203,7 +199,6 @@ export function renderRoutineEditorView(container) {
     `;
 }
 
-// Selector de Tipo de Serie en 2 columnas dentro del Editor de Rutina / Día
 window.openDraftSetTypePicker = (dIdx, eIdx, sIdx) => {
     const ex = wState.routineDraft?.days[dIdx]?.exercises[eIdx];
     if (!ex) return;
@@ -265,18 +260,18 @@ window.addDraftPlannedSet = (dIdx, eIdx) => {
     const ex = wState.routineDraft?.days[dIdx]?.exercises[eIdx];
     if (!ex) return;
     const sets = ensurePlannedSets(ex);
-    const lastReps = sets[sets.length - 1]?.targetReps || ex.targetRepsRange || '8-12';
-    sets.push({ setNumber: sets.length + 1, setType: 'NORMAL', targetReps: lastReps });
+    const last = sets[sets.length - 1] || {};
+    sets.push({ setNumber: sets.length + 1, setType: 'NORMAL', targetWeight: Number(last.targetWeight || 0), targetReps: last.targetReps || ex.targetRepsRange || '8-12' });
     ex.targetSets = sets.length;
     window.renderWorkouts();
 };
 
-window.updateDraftPlannedSetReps = (dIdx, eIdx, sIdx, val) => {
+window.updateDraftPlannedSetField = (dIdx, eIdx, sIdx, field, val) => {
     const ex = wState.routineDraft?.days[dIdx]?.exercises[eIdx];
     if (!ex) return;
     const sets = ensurePlannedSets(ex);
-    if (sets[sIdx]) sets[sIdx].targetReps = val;
-    if (sIdx === 0) ex.targetRepsRange = val;
+    if (sets[sIdx]) sets[sIdx][field] = val;
+    if (field === 'targetReps' && sIdx === 0) ex.targetRepsRange = val;
 };
 
 window.removeDraftPlannedSet = (dIdx, eIdx, sIdx, closeModal = false) => {
@@ -398,10 +393,10 @@ window.addExerciseToDraftDay = (dIdx, exId) => {
         targetRepsRange: '8-12',
         restSeconds: 90,
         plannedSets: [
-            { setNumber: 1, setType: 'W', targetReps: '12-15' },
-            { setNumber: 2, setType: 'NORMAL', targetReps: '8-12' },
-            { setNumber: 3, setType: 'NORMAL', targetReps: '8-12' },
-            { setNumber: 4, setType: 'NORMAL', targetReps: '8-12' }
+            { setNumber: 1, setType: 'W', targetWeight: 0, targetReps: '12-15' },
+            { setNumber: 2, setType: 'NORMAL', targetWeight: 0, targetReps: '8-12' },
+            { setNumber: 3, setType: 'NORMAL', targetWeight: 0, targetReps: '8-12' },
+            { setNumber: 4, setType: 'NORMAL', targetWeight: 0, targetReps: '8-12' }
         ]
     });
     window.closeUniversalModal();
