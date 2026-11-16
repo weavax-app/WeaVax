@@ -1,4 +1,5 @@
 import { fsActions } from '../firebase-sync.js';
+import { openUnifiedExercisePickerModal } from './workout-editor.js';
 import {
     wState,
     EXERCISES_LIST,
@@ -352,7 +353,7 @@ window.removeExerciseFromActive = (exIdx) => {
 };
 
 window.openAddExerciseToActiveModal = () => {
-    window.openUniversalModal('Añadir Ejercicio', `<div class="max-h-80 overflow-y-auto space-y-2">${EXERCISES_LIST.map(ex => `<button type="button" onclick="addExerciseToActiveSession(${ex.id})" class="w-full p-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] flex items-center space-x-3 text-left hover:border-accent"><img src="${ex.img}" class="w-10 h-10 rounded-lg bg-white p-0.5 object-contain"><div><p class="text-xs font-bold">${ex.name}</p><p class="text-[10px] text-gray-400">${ex.muscleGroup}</p></div></button>`).join('')}</div>`);
+    openUnifiedExercisePickerModal('ACTIVE_SESSION', 0);
 };
 
 window.addExerciseToActiveSession = (exId) => {
