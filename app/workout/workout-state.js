@@ -12,15 +12,16 @@ export const TEMPLATES_LIST =
 
 if (!window.wState) {
     window.wState = {
-        subScreen: 'PRINCIPAL', // PRINCIPAL | LIBRERIA_RUTINAS | DETALLE_RUTINA | DETALLE_ENTRENAMIENTO | BANCO_EJERCICIOS | HISTORIAL | COACH_IA | SESION_ACTIVA | POR_FINALIZAR | RESUMEN_SESION
-        libraryTab: 'MIS_RUTINAS', // MIS_RUTINAS | PLANTILLAS
-        viewMode: 'grid', // grid | list
+        subScreen: 'PRINCIPAL', // PRINCIPAL | LIBRERIA_RUTINAS | DETALLE_RUTINA | DETALLE_ENTRENAMIENTO | CREAR_EDITAR_RUTINA | BANCO_EJERCICIOS | HISTORIAL | COACH_IA | SESION_ACTIVA | POR_FINALIZAR | RESUMEN_SESION
+        libraryTab: 'MIS_RUTINAS',
+        viewMode: 'grid',
         categoryFilter: 'Todas',
         muscleFilter: 'Todos',
         searchQuery: '',
         selectedRoutineId: Number(localStorage.getItem('weavax_primary_routine_id')) || null,
         viewingRoutine: null,
         viewingDayPlan: null,
+        routineDraft: null, // Borrador para crear o editar programa y días
         activeSession: null,
         finishDraft: null,
         summaryData: null,
