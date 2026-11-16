@@ -12,7 +12,7 @@ export const TEMPLATES_LIST =
 
 if (!window.wState) {
     window.wState = {
-        subScreen: 'PRINCIPAL', // PRINCIPAL | LIBRERIA_RUTINAS | DETALLE_RUTINA | DETALLE_ENTRENAMIENTO | DETALLE_EJERCICIO | CREAR_EDITAR_RUTINA | BANCO_EJERCICIOS | HISTORIAL | COACH_IA | SESION_ACTIVA | POR_FINALIZAR | RESUMEN_SESION
+        subScreen: 'PRINCIPAL',
         libraryTab: 'MIS_RUTINAS',
         viewMode: 'grid',
         categoryFilter: 'Todas',
@@ -22,6 +22,7 @@ if (!window.wState) {
         viewingRoutine: null,
         viewingDayPlan: null,
         viewingExercise: null,
+        previousSubBeforeExerciseDetail: 'BANCO_EJERCICIOS',
         routineDraft: null,
         activeSession: null,
         finishDraft: null,
@@ -34,6 +35,44 @@ if (!window.wState) {
 }
 
 export const wState = window.wState;
+
+const ACTIVE_SESSION_STORAGE_KEY = 'weavax_active_workout_backup_v1';
+
+export function persistActiveWorkoutSession() {
+    try {
+        if (wState.activeSession) {
+            localStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, JSON.stringify({
+                activeSession: wState.activeSession,
+                subScreen: ['SESION_ACTIVA', 'POR_FINALIZAR'].includes(wState.subScreen) ? wState.subScreen : 'SESION_ACTIVA',
+                savedAt: Date.now()
+            }));
+        } else {
+            localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+        }
+    } catch (e) {
+        console.warn('No se pudo respaldar la sesión activa:', e);
+    }
+}
+
+export function restoreActiveWorkoutSessionIfAny() {
+    try {
+        const raw = localStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.activeSession && Array.isArray(parsed.activeSession.exercises)) {
+            const realElapsed = Math.max(
+                Number(parsed.activeSession.elapsedSeconds || 0),
+                Math.floor((Date.now() - Number(parsed.activeSession.startedAt || Date.now())) / 1000)
+            );
+            parsed.activeSession.elapsedSeconds = realElapsed;
+            wState.activeSession = parsed.activeSession;
+            return parsed;
+        }
+    } catch (e) {
+        localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+    }
+    return null;
+}
 
 const restoredBackup = restoreActiveWorkoutSessionIfAny();
 if (restoredBackup && wState.subScreen === 'PRINCIPAL') {
@@ -65,7 +104,6 @@ function normalizeRoutineDays(r) {
             exercises: Array.isArray(d.exercises) ? d.exercises : []
         }));
     }
-    // Reconstruir días desde la lista plana `exercises` si viene así desde Android Room/Firestore
     if (Array.isArray(r.exercises) && r.exercises.length > 0) {
         const grouped = {};
         r.exercises.forEach(ex => {
@@ -101,45 +139,6 @@ export function getUserSavedRoutines() {
         }));
 }
 
-const ACTIVE_SESSION_STORAGE_KEY = 'weavax_active_workout_backup_v1';
-
-export function persistActiveWorkoutSession() {
-    try {
-        if (wState.activeSession) {
-            localStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, JSON.stringify({
-                activeSession: wState.activeSession,
-                subScreen: ['SESION_ACTIVA', 'POR_FINALIZAR'].includes(wState.subScreen) ? wState.subScreen : 'SESION_ACTIVA',
-                savedAt: Date.now()
-            }));
-        } else {
-            localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
-        }
-    } catch (e) {
-        console.warn('No se pudo respaldar la sesión activa en localStorage:', e);
-    }
-}
-
-export function restoreActiveWorkoutSessionIfAny() {
-    try {
-        const raw = localStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.activeSession && Array.isArray(parsed.activeSession.exercises)) {
-            // Recalcular segundos reales transcurridos desde startedAt incluso si el celular estuvo bloqueado
-            const realElapsed = Math.max(
-                Number(parsed.activeSession.elapsedSeconds || 0),
-                Math.floor((Date.now() - Number(parsed.activeSession.startedAt || Date.now())) / 1000)
-            );
-            parsed.activeSession.elapsedSeconds = realElapsed;
-            wState.activeSession = parsed.activeSession;
-            return parsed;
-        }
-    } catch (e) {
-        localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
-    }
-    return null;
-}
-
 export function getAllRoutinesAndTemplates() {
     const userRoutines = getUserSavedRoutines();
     const templates = TEMPLATES_LIST.map(t => ({
@@ -156,7 +155,6 @@ export function getActiveMainRoutine() {
         const cloudId = Number(window.state.profile?.primaryRoutineId || 0);
         const localId = Number(wState.selectedRoutineId || localStorage.getItem('weavax_primary_routine_id') || 0);
         const targetId = cloudId || localId;
-
         if (targetId > 0) {
             const found = userRoutines.find(r => Number(r.id) === targetId);
             if (found) return found;
@@ -210,12 +208,10 @@ export function getWeeklyWorkoutStats() {
         sessions
     };
 }
+
 export function getExerciseHistoryAndStats(exerciseId, exerciseName = '') {
     const sessions = getCompletedSessionsList();
-    let best1RM = 0;
-    let maxWeight = 0;
-    let totalSets = 0;
-    let totalVolume = 0;
+    let best1RM = 0, maxWeight = 0, totalSets = 0, totalVolume = 0;
     const historyEntries = [];
 
     sessions.forEach(s => {
@@ -227,10 +223,7 @@ export function getExerciseHistoryAndStats(exerciseId, exerciseName = '') {
         );
         if (matched.length === 0) return;
 
-        let sessionMaxW = 0;
-        let sessionBest1RM = 0;
-        let sessionVol = 0;
-
+        let sessionMaxW = 0, sessionBest1RM = 0, sessionVol = 0;
         matched.forEach(st => {
             const w = Number(st.weightKg || 0);
             const r = Number(st.reps || 0);
@@ -257,11 +250,5 @@ export function getExerciseHistoryAndStats(exerciseId, exerciseName = '') {
         });
     });
 
-    return {
-        best1RM,
-        maxWeight,
-        totalSets,
-        totalVolume,
-        historyEntries
-    };
+    return { best1RM, maxWeight, totalSets, totalVolume, historyEntries };
 }
