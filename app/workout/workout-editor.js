@@ -3,10 +3,58 @@ import { wState, EXERCISES_LIST, findExerciseInfo, getUserSavedRoutines } from '
 
 const DEFAULT_COVER = 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800';
 
+const DRAFT_SET_BADGES = {
+    W:  { bg: 'bg-amber-500/20 border-amber-500/50 text-amber-400', label: 'W' },
+    F:  { bg: 'bg-red-500/20 border-red-500/50 text-red-400', label: 'F' },
+    L:  { bg: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400', label: 'L' },
+    R:  { bg: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400', label: 'R' },
+    D:  { bg: 'bg-blue-500/20 border-blue-500/50 text-blue-400', label: 'D' },
+    N:  { bg: 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400', label: 'N' },
+    P:  { bg: 'bg-orange-500/20 border-orange-500/50 text-orange-400', label: 'P' },
+    M:  { bg: 'bg-pink-500/20 border-pink-500/50 text-pink-400', label: 'M' },
+    FD: { bg: 'bg-lime-500/20 border-lime-500/50 text-lime-400', label: 'FD' },
+    T:  { bg: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300', label: 'T' },
+    B:  { bg: 'bg-purple-500/20 border-purple-500/50 text-purple-400', label: 'B' }
+};
+
+const DRAFT_SET_TYPES = [
+    { code: 'W',  label: 'Calentamiento',  badge: 'bg-amber-500/20 border-amber-500/50 text-amber-400',   desc: 'Series ligeras de aproximación para preparar articulaciones y sistema nervioso.' },
+    { code: 'F',  label: 'Failure',        badge: 'bg-red-500/20 border-red-500/50 text-red-400',         desc: 'Serie llevada al fallo muscular concéntrico absoluto.' },
+    { code: 'L',  label: 'Izquierda',      badge: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400',      desc: 'Serie unilateral ejecutada exclusivamente con el lado izquierdo.' },
+    { code: 'R',  label: 'Derecha',        badge: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400', desc: 'Serie unilateral ejecutada exclusivamente con el lado derecho.' },
+    { code: 'D',  label: 'Drop Set',       badge: 'bg-blue-500/20 border-blue-500/50 text-blue-400',      desc: 'Al alcanzar el fallo, reduce inmediatamente el peso un 20-30% sin descanso.' },
+    { code: 'N',  label: 'Negative',       badge: 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400', desc: 'Énfasis en la fase excéntrica lenta (3 a 5 segundos).' },
+    { code: 'P',  label: 'Reps parciales', badge: 'bg-orange-500/20 border-orange-500/50 text-orange-400', desc: 'Repeticiones en rango parcial tras llegar al fallo completo.' },
+    { code: 'M',  label: 'Myo Reps',       badge: 'bg-pink-500/20 border-pink-500/50 text-pink-400',      desc: 'Serie de activación seguida de mini-series de 3-5 reps con 10-15s de descanso.' },
+    { code: 'FD', label: 'Feeder Set',     badge: 'bg-lime-500/20 border-lime-500/50 text-lime-400',      desc: 'Serie de aclimatación rápida antes de la serie pesada principal.' },
+    { code: 'T',  label: 'Top Set',        badge: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300', desc: 'La serie principal más pesada e intensa del ejercicio.' },
+    { code: 'B',  label: 'Back-off Set',   badge: 'bg-purple-500/20 border-purple-500/50 text-purple-400', desc: 'Serie posterior al Top Set bajando el peso un 10-20% para volumen.' }
+];
+
+function ensurePlannedSets(ex) {
+    if (!Array.isArray(ex.plannedSets) || ex.plannedSets.length === 0) {
+        const count = Math.max(1, Number(ex.targetSets || 3));
+        ex.plannedSets = Array.from({ length: count }, (_, i) => ({
+            setNumber: i + 1,
+            setType: 'NORMAL',
+            targetReps: ex.targetRepsRange || '8-12'
+        }));
+    }
+    return ex.plannedSets;
+}
+
 export function renderRoutineEditorView(container) {
     const draft = wState.routineDraft;
     if (!draft) return;
     const focusDay = draft.focusDayNumber;
+
+    const renderDraftBadge = (st, idx) => {
+        const cfg = DRAFT_SET_BADGES[st.setType];
+        if (cfg) {
+            return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-md border ${cfg.bg} text-[11px] font-black">${cfg.label}</span>`;
+        }
+        return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-[#181824] border border-[#28283C] text-white text-xs font-extrabold">${idx + 1}</span>`;
+    };
 
     container.innerHTML = `
         <div class="space-y-6">
@@ -15,7 +63,7 @@ export function renderRoutineEditorView(container) {
                     <button type="button" onclick="cancelRoutineEditor()" class="px-3.5 py-2 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-xs font-bold">✕ Cancelar</button>
                     <div>
                         <h3 class="text-base sm:text-lg font-black">${draft.isEditing ? (focusDay ? `Editar Día ${focusDay}` : 'Editar Programa') : 'Crear Nuevo Programa'}</h3>
-                        <p class="text-[11px] text-gray-400">Configura días, ejercicios, series, reps y descanso</p>
+                        <p class="text-[11px] text-gray-400">Configura días, ejercicios, tipos de serie, reps y descanso</p>
                     </div>
                 </div>
                 <div class="flex gap-2">
@@ -79,37 +127,64 @@ export function renderRoutineEditorView(container) {
                                 <p class="text-xs text-gray-400">Sin ejercicios. Pulsa <strong>+ Añadir Ejercicio</strong> para elegir del catálogo.</p>
                             </div>
                         ` : `
-                            <div class="space-y-2.5">
+                            <div class="space-y-4">
                                 ${day.exercises.map((ex, eIdx) => {
                                     const info = findExerciseInfo(ex.exerciseId, ex.exerciseName);
+                                    const plannedSets = ensurePlannedSets(ex);
                                     return `
-                                        <div class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex flex-wrap items-center justify-between gap-3">
-                                            <div class="flex items-center space-x-3 min-w-[200px] flex-1">
-                                                <div class="flex flex-col space-y-1">
-                                                    <button type="button" onclick="moveDraftExercise(${dIdx},${eIdx}, -1)" class="text-[10px] text-gray-400 hover:text-white leading-none">▲</button>
-                                                    <button type="button" onclick="moveDraftExercise(${dIdx},${eIdx}, 1)" class="text-[10px] text-gray-400 hover:text-white leading-none">▼</button>
+                                        <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] space-y-3">
+                                            <!-- Cabecera del Ejercicio -->
+                                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                                <div class="flex items-center space-x-3 min-w-[200px] flex-1">
+                                                    <div class="flex flex-col space-y-1">
+                                                        <button type="button" onclick="moveDraftExercise(${dIdx}, ${eIdx}, -1)" class="text-[10px] text-gray-400 hover:text-white leading-none">▲</button>
+                                                        <button type="button" onclick="moveDraftExercise(${dIdx}, ${eIdx}, 1)" class="text-[10px] text-gray-400 hover:text-white leading-none">▼</button>
+                                                    </div>
+                                                    <img src="${info.img}" onclick="showExerciseAnatomyModal(${info.id})" class="w-12 h-12 rounded-xl object-contain bg-white p-1 shrink-0 cursor-pointer">
+                                                    <div class="min-w-0">
+                                                        <p onclick="showExerciseAnatomyModal(${info.id})" class="text-sm font-extrabold truncate cursor-pointer hover:text-accent">${ex.exerciseName}</p>
+                                                        <p class="text-[11px] text-gray-400">${ex.muscleGroup} · ${ex.equipment}</p>
+                                                    </div>
                                                 </div>
-                                                <img src="${info.img}" class="w-11 h-11 rounded-xl object-contain bg-white p-1 shrink-0">
-                                                <div class="min-w-0">
-                                                    <p class="text-xs font-extrabold truncate">${ex.exerciseName}</p>
-                                                    <p class="text-[10px] text-gray-400">${ex.muscleGroup} ·${ex.equipment}</p>
+                                                <div class="flex items-center gap-2 text-xs">
+                                                    <div class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-[#181824] border border-[#28283C]">
+                                                        <span class="text-[10px] text-gray-400 font-bold">⏱ Descanso:</span>
+                                                        <input type="number" min="15" max="300" step="15" value="${ex.restSeconds}" oninput="updateDraftExerciseField(${dIdx}, ${eIdx}, 'restSeconds', Number(this.value || 90))" class="w-12 bg-transparent text-center font-extrabold text-accent">
+                                                        <span class="text-[10px] text-gray-400">s</span>
+                                                    </div>
+                                                    <button type="button" onclick="removeDraftExercise(${dIdx}, ${eIdx})" class="p-2 text-gray-400 hover:text-red-400" title="Quitar ejercicio">✕</button>
                                                 </div>
                                             </div>
-                                            <div class="flex items-center gap-2 text-xs">
-                                                <div class="w-16">
-                                                    <span class="text-[9px] text-gray-400 uppercase block text-center">Series</span>
-                                                    <input type="number" min="1" max="15" value="${ex.targetSets}" oninput="updateDraftExerciseField(${dIdx},${eIdx}, 'targetSets', Number(this.value || 3))" class="w-full px-2 py-1 rounded-lg bg-[#181824] border border-[#28283C] text-center font-bold">
+
+                                            <!-- Tabla de Series Configurables (con selector de Tipo de Serie) -->
+                                            <div class="space-y-1.5 pt-1">
+                                                <div class="grid grid-cols-12 gap-2 text-[10px] font-bold uppercase text-gray-400 px-2">
+                                                    <div class="col-span-4">Tipo de Serie</div>
+                                                    <div class="col-span-5 text-center">Reps Objetivo</div>
+                                                    <div class="col-span-3 text-right">Acción</div>
                                                 </div>
-                                                <div class="w-20">
-                                                    <span class="text-[9px] text-gray-400 uppercase block text-center">Reps</span>
-                                                    <input value="${ex.targetRepsRange}" oninput="updateDraftExerciseField(${dIdx},${eIdx}, 'targetRepsRange', this.value)" class="w-full px-2 py-1 rounded-lg bg-[#181824] border border-[#28283C] text-center font-bold">
-                                                </div>
-                                                <div class="w-20">
-                                                    <span class="text-[9px] text-gray-400 uppercase block text-center">Desc (s)</span>
-                                                    <input type="number" min="15" max="300" step="15" value="${ex.restSeconds}" oninput="updateDraftExerciseField(${dIdx},${eIdx}, 'restSeconds', Number(this.value || 90))" class="w-full px-2 py-1 rounded-lg bg-[#181824] border border-[#28283C] text-center font-bold">
-                                                </div>
-                                                <button type="button" onclick="removeDraftExercise(${dIdx},${eIdx})" class="p-2 text-gray-400 hover:text-red-400">✕</button>
+                                                ${plannedSets.map((st, sIdx) => `
+                                                    <div class="grid grid-cols-12 gap-2 items-center p-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs">
+                                                        <div class="col-span-4">
+                                                            <button type="button" onclick="openDraftSetTypePicker(${dIdx}, ${eIdx}, ${sIdx})" class="w-full px-2.5 py-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] hover:border-accent flex items-center justify-between">
+                                                                <div class="flex items-center space-x-2">
+                                                                    ${renderDraftBadge(st, sIdx)}
+                                                                    <span class="text-[11px] font-bold text-gray-300 hidden sm:inline">${st.setType === 'NORMAL' ? 'Normal' : st.setType}</span>
+                                                                </div>
+                                                                <span class="text-[9px] text-gray-400">▼</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="col-span-5">
+                                                            <input value="${st.targetReps || ex.targetRepsRange || '8-12'}" oninput="updateDraftPlannedSetReps(${dIdx}, ${eIdx}, ${sIdx}, this.value)" class="w-full px-2.5 py-1.5 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-center font-bold">
+                                                        </div>
+                                                        <div class="col-span-3 flex justify-end">
+                                                            <button type="button" onclick="removeDraftPlannedSet(${dIdx}, ${eIdx}, ${sIdx})" class="px-2 py-1 text-[11px] text-gray-400 hover:text-red-400" title="Eliminar serie">🗑️</button>
+                                                        </div>
+                                                    </div>
+                                                `).join('')}
                                             </div>
+
+                                            <button type="button" onclick="addDraftPlannedSet(${dIdx}, ${eIdx})" class="w-full py-2 rounded-xl bg-[#181824] border border-dashed border-[#28283C] hover:border-accent text-xs font-bold text-accent">+ Agregar Serie</button>
                                         </div>
                                     `;
                                 }).join('')}
@@ -127,6 +202,97 @@ export function renderRoutineEditorView(container) {
         </div>
     `;
 }
+
+// Selector de Tipo de Serie en 2 columnas dentro del Editor de Rutina / Día
+window.openDraftSetTypePicker = (dIdx, eIdx, sIdx) => {
+    const ex = wState.routineDraft?.days[dIdx]?.exercises[eIdx];
+    if (!ex) return;
+    const plannedSets = ensurePlannedSets(ex);
+    const cur = plannedSets[sIdx]?.setType || 'NORMAL';
+
+    window.openUniversalModal(
+        `Tipo de Serie · Serie ${sIdx + 1} (${ex.exerciseName})`,
+        `
+        <div class="space-y-3 text-xs">
+            <button type="button" onclick="selectDraftSetType(${dIdx}, ${eIdx}, ${sIdx}, 'NORMAL')" class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border ${cur === 'NORMAL' ? 'border-accent bg-accent/10' : 'border-[#28283C]'} hover:border-accent flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                    <span class="w-7 h-7 rounded-lg bg-[#181824] border border-[#28283C] flex items-center justify-center font-black text-white">${sIdx + 1}</span>
+                    <span class="font-bold text-gray-200">Serie Normal (Estándar)</span>
+                </div>
+                ${cur === 'NORMAL' ? '<span class="text-[10px] font-bold text-accent">Activa</span>' : ''}
+            </button>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                ${DRAFT_SET_TYPES.map(t => `
+                    <div onclick="selectDraftSetType(${dIdx}, ${eIdx}, ${sIdx}, '${t.code}')" class="p-2.5 rounded-2xl bg-[#0A0A0F] border ${cur === t.code ? 'border-accent bg-accent/10' : 'border-[#28283C]'} hover:border-accent flex items-center justify-between gap-1.5 cursor-pointer transition-all">
+                        <div class="flex items-center space-x-2 min-w-0">
+                            <span class="w-7 h-7 rounded-lg border ${t.badge} flex items-center justify-center text-[11px] font-black shrink-0">${t.code}</span>
+                            <span class="font-bold text-[11px] text-gray-200 truncate">${t.label}</span>
+                        </div>
+                        <button type="button" onclick="event.stopPropagation(); showDraftSetHelp('${t.code}')" class="w-5 h-5 rounded-full border border-gray-600 text-gray-400 hover:text-white flex items-center justify-center text-[10px] shrink-0">?</button>
+                    </div>
+                `).join('')}
+
+                <button type="button" onclick="removeDraftPlannedSet(${dIdx}, ${eIdx}, ${sIdx}, true)" class="p-2.5 rounded-2xl bg-red-500/10 border border-red-500/40 hover:bg-red-500/20 flex items-center space-x-2 text-left transition-all">
+                    <span class="w-7 h-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center text-xs shrink-0">🗑️</span>
+                    <span class="font-extrabold text-[11px] text-red-400">Eliminar Serie</span>
+                </button>
+            </div>
+            <div id="draft-set-help-box" class="hidden p-3 rounded-xl bg-[#0A0A0F] border border-accent/40 text-[11px] text-gray-300 leading-relaxed"></div>
+        </div>
+        `
+    );
+};
+
+window.showDraftSetHelp = (code) => {
+    const item = DRAFT_SET_TYPES.find(t => t.code === code);
+    const box = document.getElementById('draft-set-help-box');
+    if (!item || !box) return;
+    box.classList.remove('hidden');
+    box.innerHTML = `<strong class="text-white">${item.code} · ${item.label}:</strong> ${item.desc}`;
+};
+
+window.selectDraftSetType = (dIdx, eIdx, sIdx, code) => {
+    const ex = wState.routineDraft?.days[dIdx]?.exercises[eIdx];
+    if (!ex) return;
+    const sets = ensurePlannedSets(ex);
+    if (sets[sIdx]) sets[sIdx].setType = code;
+    window.closeUniversalModal();
+    window.renderWorkouts();
+};
+
+window.addDraftPlannedSet = (dIdx, eIdx) => {
+    const ex = wState.routineDraft?.days[dIdx]?.exercises[eIdx];
+    if (!ex) return;
+    const sets = ensurePlannedSets(ex);
+    const lastReps = sets[sets.length - 1]?.targetReps || ex.targetRepsRange || '8-12';
+    sets.push({ setNumber: sets.length + 1, setType: 'NORMAL', targetReps: lastReps });
+    ex.targetSets = sets.length;
+    window.renderWorkouts();
+};
+
+window.updateDraftPlannedSetReps = (dIdx, eIdx, sIdx, val) => {
+    const ex = wState.routineDraft?.days[dIdx]?.exercises[eIdx];
+    if (!ex) return;
+    const sets = ensurePlannedSets(ex);
+    if (sets[sIdx]) sets[sIdx].targetReps = val;
+    if (sIdx === 0) ex.targetRepsRange = val;
+};
+
+window.removeDraftPlannedSet = (dIdx, eIdx, sIdx, closeModal = false) => {
+    const ex = wState.routineDraft?.days[dIdx]?.exercises[eIdx];
+    if (!ex) return;
+    const sets = ensurePlannedSets(ex);
+    if (sets.length <= 1) {
+        alert('Debe quedar al menos 1 serie en el ejercicio.');
+        return;
+    }
+    sets.splice(sIdx, 1);
+    sets.forEach((s, i) => { s.setNumber = i + 1; });
+    ex.targetSets = sets.length;
+    if (closeModal) window.closeUniversalModal();
+    window.renderWorkouts();
+};
 
 window.openRoutineCreatorModal = () => window.openRoutineEditor(null, null);
 
@@ -230,7 +396,13 @@ window.addExerciseToDraftDay = (dIdx, exId) => {
         orderIndex: day.exercises.length,
         targetSets: 4,
         targetRepsRange: '8-12',
-        restSeconds: 90
+        restSeconds: 90,
+        plannedSets: [
+            { setNumber: 1, setType: 'W', targetReps: '12-15' },
+            { setNumber: 2, setType: 'NORMAL', targetReps: '8-12' },
+            { setNumber: 3, setType: 'NORMAL', targetReps: '8-12' },
+            { setNumber: 4, setType: 'NORMAL', targetReps: '8-12' }
+        ]
     });
     window.closeUniversalModal();
     window.renderWorkouts();
@@ -267,6 +439,7 @@ window.saveRoutineDraftToFirestore = async () => {
     const cleanDays = draft.days.map((d, dIdx) => {
         const dayNum = dIdx + 1;
         const dayExs = (d.exercises || []).map((ex, eIdx) => {
+            const pSets = ensurePlannedSets(ex);
             const norm = {
                 id: Number(ex.id || (eIdx + 1)),
                 routineId: Number(draft.id),
@@ -278,9 +451,10 @@ window.saveRoutineDraftToFirestore = async () => {
                 muscleGroup: ex.muscleGroup,
                 equipment: ex.equipment,
                 orderIndex: eIdx,
-                targetSets: Number(ex.targetSets || 3),
-                targetRepsRange: ex.targetRepsRange || '8-12',
-                restSeconds: Number(ex.restSeconds || 90)
+                targetSets: pSets.length,
+                targetRepsRange: pSets[0]?.targetReps || ex.targetRepsRange || '8-12',
+                restSeconds: Number(ex.restSeconds || 90),
+                plannedSets: pSets
             };
             flatExercises.push(norm);
             return norm;
