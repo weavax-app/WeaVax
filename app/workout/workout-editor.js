@@ -31,6 +31,143 @@ const DRAFT_SET_TYPES = [
     { code: 'B',  label: 'Back-off Set',   badge: 'bg-purple-500/20 border-purple-500/50 text-purple-400', desc: 'Serie posterior al Top Set bajando el peso un 10-20% para volumen.' }
 ];
 
+// =========================================================================
+// SELECTOR UNIFICADO DE EJERCICIOS (ESTILO BANCO DE EJERCICIOS ANDROID)
+// =========================================================================
+const pickerState = {
+    mode: 'DRAFT', // 'DRAFT' | 'ACTIVE_SESSION'
+    dayIdx: 0,
+    query: '',
+    muscle: 'Todos',
+    equipment: 'Todos'
+};
+
+export function openUnifiedExercisePickerModal(mode, dayIdx = 0) {
+    pickerState.mode = mode;
+    pickerState.dayIdx = dayIdx;
+    pickerState.query = '';
+    pickerState.muscle = 'Todos';
+    pickerState.equipment = 'Todos';
+
+    const muscles = ['Todos', 'Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales/Glúteos', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Pantorrillas'];
+    const equipments = ['Todos', 'Barra', 'Mancuerna', 'Polea', 'Máquina', 'Corporal'];
+
+    window.openUniversalModal(
+        'Seleccionar Ejercicio',
+        `
+        <div class="space-y-3 text-xs">
+            <div class="relative">
+                <input id="unified-ex-search" oninput="updateUnifiedPickerFilter('query', this.value)" placeholder="Buscar por nombre (ej. Press banca, Curl, Remo)..." class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] focus:border-accent outline-none font-medium">
+            </div>
+
+            <!-- Filtros por Músculo -->
+            <div class="space-y-1">
+                <span class="text-[10px] font-bold uppercase text-gray-400">Grupo Muscular</span>
+                <div id="unified-muscle-pills" class="flex flex-wrap gap-1.5">
+                    ${muscles.map(m => `
+                        <button type="button" data-muscle="${m}" onclick="updateUnifiedPickerFilter('muscle', '${m}')" class="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${m === 'Todos' ? 'bg-accent text-white' : 'bg-[#0A0A0F] border border-[#28283C] text-gray-400 hover:text-white'}">${m}</button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Filtros por Equipamiento -->
+            <div class="space-y-1">
+                <span class="text-[10px] font-bold uppercase text-gray-400">Equipamiento</span>
+                <div id="unified-equip-pills" class="flex flex-wrap gap-1.5">
+                    ${equipments.map(eq => `
+                        <button type="button" data-equip="${eq}" onclick="updateUnifiedPickerFilter('equipment', '${eq}')" class="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${eq === 'Todos' ? 'bg-emerald-600 text-white' : 'bg-[#0A0A0F] border border-[#28283C] text-gray-400 hover:text-white'}">${eq}</button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1 border-t border-[#28283C]">
+                <span id="unified-picker-count" class="text-[11px] font-bold text-gray-400">${EXERCISES_LIST.length} ejercicios disponibles</span>
+                <button type="button" onclick="resetUnifiedPickerFilters()" class="text-[10px] font-bold text-accent hover:underline">Limpiar filtros</button>
+            </div>
+
+            <!-- Lista de resultados -->
+            <div id="unified-ex-picker-list" class="max-h-72 overflow-y-auto space-y-2 pr-1">
+                ${renderUnifiedPickerList()}
+            </div>
+        </div>
+        `
+    );
+}
+
+function renderUnifiedPickerList() {
+    const term = pickerState.query.toLowerCase().trim();
+    const filtered = EXERCISES_LIST.filter(ex => {
+        const matchQuery = !term || ex.name.toLowerCase().includes(term) || ex.muscleGroup.toLowerCase().includes(term);
+        const matchMuscle = pickerState.muscle === 'Todos' || ex.muscleGroup === pickerState.muscle;
+        const matchEquip = pickerState.equipment === 'Todos' || ex.equipment === pickerState.equipment;
+        return matchQuery && matchMuscle && matchEquip;
+    });
+
+    const countEl = document.getElementById('unified-picker-count');
+    if (countEl) countEl.textContent = `${filtered.length} ejercicio${filtered.length === 1 ? '' : 's'} encontrado${filtered.length === 1 ? '' : 's'}`;
+
+    if (filtered.length === 0) {
+        return `<div class="p-6 text-center text-gray-400 text-xs">No se encontraron ejercicios con esos filtros.</div>`;
+    }
+
+    return filtered.map(ex => `
+        <div onclick="confirmUnifiedExerciseSelection(${ex.id})" class="p-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent flex items-center justify-between gap-3 cursor-pointer transition-all">
+            <div class="flex items-center space-x-3 min-w-0 flex-1">
+                <img src="${ex.img}" class="w-11 h-11 rounded-lg bg-white p-0.5 object-contain shrink-0">
+                <div class="min-w-0 flex-1">
+                    <p class="font-bold text-xs text-white truncate">${ex.name}</p>
+                    <div class="flex items-center gap-1.5 mt-1">
+                        <span class="px-2 py-0.5 rounded bg-accent/15 text-accent text-[9px] font-extrabold">${ex.muscleGroup}</span>
+                        <span class="px-2 py-0.5 rounded bg-[#181824] text-gray-300 text-[9px] font-bold">${ex.equipment}</span>
+                    </div>
+                </div>
+            </div>
+            <span class="px-2.5 py-1.5 rounded-lg bg-accent/20 text-accent font-extrabold text-[11px] shrink-0">+ Elegir</span>
+        </div>
+    `).join('');
+}
+
+window.updateUnifiedPickerFilter = (key, val) => {
+    pickerState[key] = val;
+
+    if (key === 'muscle') {
+        document.querySelectorAll('#unified-muscle-pills button').forEach(btn => {
+            const active = btn.getAttribute('data-muscle') === val;
+            btn.className = `px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${active ? 'bg-accent text-white' : 'bg-[#0A0A0F] border border-[#28283C] text-gray-400 hover:text-white'}`;
+        });
+    }
+    if (key === 'equipment') {
+        document.querySelectorAll('#unified-equip-pills button').forEach(btn => {
+            const active = btn.getAttribute('data-equip') === val;
+            btn.className = `px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${active ? 'bg-emerald-600 text-white' : 'bg-[#0A0A0F] border border-[#28283C] text-gray-400 hover:text-white'}`;
+        });
+    }
+
+    const listEl = document.getElementById('unified-ex-picker-list');
+    if (listEl) listEl.innerHTML = renderUnifiedPickerList();
+};
+
+window.resetUnifiedPickerFilters = () => {
+    pickerState.query = '';
+    pickerState.muscle = 'Todos';
+    pickerState.equipment = 'Todos';
+    const input = document.getElementById('unified-ex-search');
+    if (input) input.value = '';
+    window.updateUnifiedPickerFilter('muscle', 'Todos');
+    window.updateUnifiedPickerFilter('equipment', 'Todos');
+};
+
+window.confirmUnifiedExerciseSelection = (exId) => {
+    if (pickerState.mode === 'ACTIVE_SESSION') {
+        if (window.addExerciseToActiveSession) window.addExerciseToActiveSession(exId);
+    } else {
+        window.addExerciseToDraftDay(pickerState.dayIdx, exId);
+    }
+};
+
+// =========================================================================
+// EDITOR DE RUTINAS Y DÍAS (MISMO FORMATO VISUAL QUE SESIÓN ACTIVA)
+// =========================================================================
 function ensurePlannedSets(ex) {
     if (!Array.isArray(ex.plannedSets) || ex.plannedSets.length === 0) {
         const count = Math.max(1, Number(ex.targetSets || 3));
@@ -348,33 +485,8 @@ window.removeDraftDay = (dIdx) => {
     window.renderWorkouts();
 };
 
-function renderDraftPickerItems(list, dIdx) {
-    return list.map(ex => `
-        <button type="button" onclick="addExerciseToDraftDay(${dIdx}, ${ex.id})" class="w-full p-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] hover:border-accent flex items-center space-x-3 text-left">
-            <img src="${ex.img}" class="w-10 h-10 rounded-lg bg-white p-0.5 object-contain shrink-0">
-            <div class="min-w-0 flex-1">
-                <p class="font-bold truncate">${ex.name}</p>
-                <p class="text-[10px] text-gray-400">${ex.muscleGroup} · ${ex.equipment}</p>
-            </div>
-            <span class="text-accent font-extrabold text-xs">+ Añadir</span>
-        </button>
-    `).join('');
-}
-
 window.openDraftExercisePicker = (dIdx) => {
-    window.openUniversalModal('Seleccionar Ejercicio', `
-        <div class="space-y-3 text-xs">
-            <input oninput="filterModalExercisePicker(this.value, ${dIdx})" placeholder="Buscar ejercicio o músculo..." class="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C]">
-            <div id="draft-ex-picker-list" class="max-h-80 overflow-y-auto space-y-2">${renderDraftPickerItems(EXERCISES_LIST, dIdx)}</div>
-        </div>
-    `);
-};
-
-window.filterModalExercisePicker = (q, dIdx) => {
-    const term = (q || '').toLowerCase();
-    const filtered = EXERCISES_LIST.filter(e => e.name.toLowerCase().includes(term) || e.muscleGroup.toLowerCase().includes(term));
-    const box = document.getElementById('draft-ex-picker-list');
-    if (box) box.innerHTML = renderDraftPickerItems(filtered, dIdx);
+    openUnifiedExercisePickerModal('DRAFT', dIdx);
 };
 
 window.addExerciseToDraftDay = (dIdx, exId) => {
