@@ -20,6 +20,109 @@ export function renderLibraryAndHub(container, minimizedBannerHtml) {
         renderRoutineEditorView(container);
         return;
     }
+    if (wState.subScreen === 'DETALLE_EJERCICIO' && wState.viewingExercise) {
+        const ex = wState.viewingExercise;
+        const stats = getExerciseHistoryAndStats(ex.id, ex.name);
+        const recentEntries = stats.historyEntries.slice(0, 12);
+
+        const SET_BADGES = {
+            W:  { bg: 'bg-amber-500/20 text-amber-400 border-amber-500/40', label: 'W' },
+            F:  { bg: 'bg-red-500/20 text-red-400 border-red-500/40', label: 'F' },
+            L:  { bg: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40', label: 'L' },
+            R:  { bg: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40', label: 'R' },
+            D:  { bg: 'bg-blue-500/20 text-blue-400 border-blue-500/40', label: 'D' },
+            N:  { bg: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/40', label: 'N' },
+            P:  { bg: 'bg-orange-500/20 text-orange-400 border-orange-500/40', label: 'P' },
+            M:  { bg: 'bg-pink-500/20 text-pink-400 border-pink-500/40', label: 'M' },
+            FD: { bg: 'bg-lime-500/20 text-lime-400 border-lime-500/40', label: 'FD' },
+            T:  { bg: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40', label: 'T' },
+            B:  { bg: 'bg-purple-500/20 text-purple-400 border-purple-500/40', label: 'B' }
+        };
+
+        container.innerHTML = `
+            <div class="space-y-6">
+                ${minimizedBannerHtml}
+                <div class="flex items-center justify-between gap-3">
+                    <button type="button" onclick="returnFromExerciseDetail()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">← Volver</button>
+                    <span class="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-accent/15 text-accent">${ex.muscleGroup} · ${ex.equipment}</span>
+                </div>
+
+                <!-- Cabecera con Gráfico Anatómico e Información Técnica -->
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    <div class="md:col-span-4 flex justify-center">
+                        <div class="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl bg-white p-3 flex items-center justify-center shadow-inner">
+                            <img src="${ex.img}" class="max-h-full max-w-full object-contain">
+                        </div>
+                    </div>
+                    <div class="md:col-span-8 space-y-4">
+                        <div>
+                            <h3 class="text-2xl font-black tracking-tight">${ex.name}</h3>
+                            <p class="text-xs text-gray-400 mt-1">Grupo muscular principal: <strong class="text-white">${ex.muscleGroup}</strong> · Equipamiento: <strong class="text-white">${ex.equipment}</strong></p>
+                        </div>
+
+                        <!-- Récords Personales (PRs) y Analítica -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                            <div class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-[#28283C]">
+                                <span class="text-[10px] font-bold uppercase text-amber-400">Récord 1RM Est.</span>
+                                <p class="text-lg font-black mt-1">${stats.best1RM > 0 ? `${stats.best1RM.toFixed(1)} kg` : '—'}</p>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-[#28283C]">
+                                <span class="text-[10px] font-bold uppercase text-accent">Peso Máximo</span>
+                                <p class="text-lg font-black mt-1">${stats.maxWeight > 0 ? `${stats.maxWeight} kg` : '—'}</p>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-[#28283C]">
+                                <span class="text-[10px] font-bold uppercase text-emerald-400">Series Totales</span>
+                                <p class="text-lg font-black mt-1">${stats.totalSets}</p>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-[#28283C]">
+                                <span class="text-[10px] font-bold uppercase text-blue-400">Volumen Total</span>
+                                <p class="text-lg font-black mt-1">${Math.round(stats.totalVolume).toLocaleString('es-BO')} kg</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progresión Reciente e Historial de Series -->
+                <div class="p-6 rounded-3xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-base font-black">Historial y Progresión (${stats.historyEntries.length} sesiones)</h4>
+                        <span class="text-xs text-gray-400">Últimas marcas registradas</span>
+                    </div>
+
+                    ${recentEntries.length === 0 ? `
+                        <p class="text-xs text-gray-400 py-4">Aún no has completado series de este ejercicio en tus sesiones registradas.</p>
+                    ` : `
+                        <div class="space-y-3">
+                            ${recentEntries.map(entry => `
+                                <div class="p-4 rounded-2xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] space-y-2.5">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div>
+                                            <p class="text-xs font-extrabold">${entry.routineName}</p>
+                                            <p class="text-[11px] text-gray-400">${new Date(entry.date).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                        </div>
+                                        <div class="flex gap-2 text-[11px] font-bold">
+                                            <span class="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-400">1RM: ${entry.best1RM.toFixed(1)} kg</span>
+                                            <span class="px-2.5 py-1 rounded-lg bg-accent/15 text-accent">Vol: ${Math.round(entry.volume)} kg</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${entry.sets.map((st, idx) => {
+                                            const badge = SET_BADGES[st.setType];
+                                            const tag = badge
+                                                ? `<span class="px-1.5 py-0.5 rounded border ${badge.bg} text-[10px] font-black">${badge.label}</span>`
+                                                : `<span class="text-gray-400 font-bold">#${idx + 1}</span>`;
+                                            return `<div class="px-2.5 py-1 rounded-lg bg-[#181824] border border-[#28283C] text-xs flex items-center space-x-1.5">${tag}<span class="font-extrabold text-white">${st.weightKg} kg × ${st.reps}</span></div>`;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+        return;
+    }
 
     const userLibraryRoutines = getUserSavedRoutines();
     const primaryRoutine = getActiveMainRoutine();
@@ -409,6 +512,14 @@ window.openDayDetailView = (rId, dNum) => {
     window.renderWorkouts();
 };
 window.showExerciseAnatomyModal = (exId) => {
-    const ex = findExerciseInfo(exId);
-    window.openUniversalModal(ex.name, `<div class="space-y-3 text-center"><img src="${ex.img}" class="w-48 h-48 mx-auto rounded-2xl object-contain bg-white p-2"><div class="flex justify-center gap-2 text-xs font-bold"><span class="px-3 py-1 rounded-full bg-accent/20 text-accent">${ex.muscleGroup}</span><span class="px-3 py-1 rounded-full bg-[#0A0A0F] border border-[#28283C]">${ex.equipment}</span></div></div>`);
+    wState.previousSubBeforeExerciseDetail = wState.subScreen;
+    wState.viewingExercise = findExerciseInfo(exId);
+    wState.subScreen = 'DETALLE_EJERCICIO';
+    window.renderWorkouts();
+};
+
+window.returnFromExerciseDetail = () => {
+    wState.viewingExercise = null;
+    wState.subScreen = wState.previousSubBeforeExerciseDetail || 'BANCO_EJERCICIOS';
+    window.renderWorkouts();
 };
