@@ -88,7 +88,7 @@
                     <img id="user-avatar-img" src="../weavax_logo.png" class="w-full h-full object-cover">
                 </div>
                 <div class="sidebar-label min-w-0 flex-1">
-                    <p id="user-name" class="text-sm font-bold truncate">Marce</p>
+                    <p id="user-name" class="text-sm font-bold truncate">Usuario</p>
                     <p id="user-level-xp" class="text-[11px] text-gray-400">Nivel 1 · 0 XP</p>
                 </div>
             </div>
@@ -118,7 +118,7 @@
         <!-- MAIN -->
         <main id="app-main" class="flex-1 md:pl-64 pb-24 md:pb-12 transition-all duration-200">
             <header class="h-16 px-4 sm:px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
-                <h2 id="header-greeting" class="text-base sm:text-lg font-extrabold truncate">Hola, Marce</h2>
+                <h2 id="header-greeting" class="text-base sm:text-lg font-extrabold truncate">Hola, Usuario</h2>
                 <div class="flex items-center space-x-2">
                     <span class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] text-xs font-bold">🔥 <span id="streak-count">0 d</span></span>
                     <span class="px-3 py-1 rounded-full bg-accent/15 border border-accent/40 text-accent text-xs font-extrabold">Día <span id="daily-score-pct">0</span>%</span>
@@ -336,7 +336,7 @@
                 const p = window.state.profile || {};
                 const u = window.state.user || {};
                 const xp = Number(p.xp || 0);
-                const displayName = p.name || u.displayName || 'Marce';
+                const displayName = p.name || u.displayName || 'Usuario';
 
                 const nameEl = document.getElementById('user-name');
                 const greetEl = document.getElementById('header-greeting');
