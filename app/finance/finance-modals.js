@@ -125,8 +125,7 @@ window.saveTxForm = async (e, existingDocId = null) => {
         accountId: Number(newAcc.id),
         accountName: newAcc.name,
         note: document.getElementById('tx-note').value.trim(),
-        date: Date.now()
-    });
+        date: Number(existingTx.date || existingTx.timestamp || Date.now())    });
 
     await fsActions.updateItem('accounts', newAcc.docId, {
         balance: Number(newAcc.balance || 0) + signedAmt
