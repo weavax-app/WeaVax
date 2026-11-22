@@ -8,14 +8,8 @@ import {
     saveFastPresets
 } from './finance-state.js';
 
-// Evita el bloqueo de GitHub Secret Scanning y permite clave personalizada en Ajustes
-function getGroqApiKey() {
-    const custom = localStorage.getItem('weavax_groq_api_key');
-    if (custom && custom.trim().startsWith('gsk_')) return custom.trim();
-    const p1 = "gsk_FYiFASnHhsvSkcLHm6TK";
-    const p2 = "WGdyb3FYPFZL6EYz7yWudUh661Kd0lgG";
-    return p1 + p2;
-}
+const WEAVAX_PROXY_URL = 'https://weavax-ai-proxy.onrender.com/api/ai';
+const WEAVAX_APP_SECRET = 'L4_fr4se3_qu3_t3_113v4r4_41_3x1t0';
 
 // 1. MODAL DE GASTO / INGRESO (Categoría vacía por defecto y Cuenta vacía o Predeterminada)
 window.openTxModal = (tipo = 'gasto', preset = null) => {
@@ -96,10 +90,13 @@ window.saveTxForm = async (e, existingDocId = null) => {
     const newAcc = (window.state.accounts || []).find(a => String(a.id) === String(accId) || String(a.docId) === String(accId));
     if (!newAcc) return alert('Selecciona una cuenta válida.');
 
-    // Si estamos editando, primero revertir el saldo anterior como en FinanceDao.kt
+    let originalDate = Date.now();
+
+    // Si estamos editando, primero revertir el saldo anterior y conservar la fecha original
     if (existingDocId) {
         const oldTx = (window.state.transactions || []).find(t => String(t.docId) === String(existingDocId));
         if (oldTx) {
+            originalDate = Number(oldTx.date || oldTx.timestamp || Date.now());
             const oldAcc = (window.state.accounts || []).find(a => Number(a.id) === Number(oldTx.accountId));
             if (oldAcc) {
                 const revertDelta = (oldTx.type === 'gasto' || Number(oldTx.amount) < 0)
@@ -125,7 +122,8 @@ window.saveTxForm = async (e, existingDocId = null) => {
         accountId: Number(newAcc.id),
         accountName: newAcc.name,
         note: document.getElementById('tx-note').value.trim(),
-        date: Number(existingTx.date || existingTx.timestamp || Date.now())    });
+        date: originalDate
+    });
 
     await fsActions.updateItem('accounts', newAcc.docId, {
         balance: Number(newAcc.balance || 0) + signedAmt
@@ -134,7 +132,6 @@ window.saveTxForm = async (e, existingDocId = null) => {
     window.closeUniversalModal();
 };
 
-// 3. MODAL DE TRANSFERENCIA ENTRE CUENTAS (recordTransfer de FinanceDao.kt)
 // 3. MODAL DE TRANSFERENCIA ENTRE CUENTAS
 window.openTransferModal = () => {
     const accounts = window.state.accounts || [];
@@ -181,7 +178,7 @@ window.openTransferModal = () => {
             <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 text-white font-extrabold">Ejecutar Transferencia</button>
         </form>
     `);
-};    
+};
 
 window.saveTransferForm = async (e) => {
     e.preventDefault();
@@ -515,7 +512,7 @@ window.deleteFastPreset = (id) => {
     window.renderFinances();
 };
 
-// 9. ESCÁNER IA DE COMPROBANTES QR (ReceiptScannerService.kt)
+// 9. ESCÁNER IA DE COMPROBANTES QR (Conectado al Proxy Seguro de Render)
 window.openReceiptScannerModal = () => {
     window.openUniversalModal('📷 Escáner IA de Comprobante / QR', `
         <div class="space-y-3 text-xs">
@@ -529,33 +526,37 @@ window.openReceiptScannerModal = () => {
 
 window.processReceiptWithGroq = async () => {
     const allowed = await consumeAiScanQuota();
-if (!allowed) return;
+    if (!allowed) return;
     const file = document.getElementById('receipt-file')?.files?.[0];
     if (!file) return alert('Selecciona una imagen primero');
-    document.getElementById('scan-status').classList.remove('hidden');
+    const statusEl = document.getElementById('scan-status');
+    statusEl.classList.remove('hidden');
 
     const reader = new FileReader();
     reader.onload = async () => {
         const base64 = reader.result.split(',')[1];
         try {
-            const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${getGroqApiKey()}`, "Content-Type": "application/json" },
+            const resp = await fetch(WEAVAX_PROXY_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-weavax-key': WEAVAX_APP_SECRET
+                },
                 body: JSON.stringify({
-                    model: "qwen/qwen3.8-27b",
-                    temperature: 0.1,
-                    response_format: { type: "json_object" },
-                    messages: [{
-                        role: "user",
-                        content: [
-                            { type: "text", text: "Extrae del comprobante bancario: merchant (destinatario o glosa, JAMÁS el pagador), amount (decimal puro), sourceBank (ej. BCP, Yape, Unión), category (Alimentación, Transporte, Suscripción, Servicios, Salud, Ocio, Educación, Compras). Responde en JSON." },
-                            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } }
-                        ]
-                    }]
+                    provider: 'gemini',
+                    model: 'gemini-2.5-flash',
+                    systemPrompt: 'Eres un extractor de datos de comprobantes bancarios de Bolivia. Responde ÚNICAMENTE con un objeto JSON válido sin bloques markdown ni texto adicional.',
+                    prompt: 'Extrae del comprobante bancario: merchant (destinatario o glosa, JAMÁS el pagador), amount (número decimal puro), sourceBank (ej. BCP, BNB, Unión, Yape, Tigo Money), category (una de: Alimentación, Transporte, Suscripción, Servicios, Salud, Ocio, Educación, Compras). Devuelve JSON con las claves: merchant, amount, sourceBank, category.',
+                    imageBase64: base64
                 })
             });
+
             const json = await resp.json();
-            const parsed = JSON.parse(json.choices[0].message.content);
+            if (!resp.ok) throw new Error(json.error || 'Error en el servidor de IA');
+
+            const cleanJsonStr = (json.text || '').replace(/```json|```/g, '').trim();
+            const parsed = JSON.parse(cleanJsonStr);
+
             window.openTxModal('gasto', {
                 title: parsed.merchant || 'Pago QR',
                 defaultAmount: parsed.amount || '',
@@ -563,7 +564,8 @@ if (!allowed) return;
                 accountName: parsed.sourceBank || ''
             });
         } catch (err) {
-            alert("Error al analizar comprobante: " + err.message);
+            statusEl.classList.add('hidden');
+            alert('Error al analizar comprobante: ' + err.message);
         }
     };
     reader.readAsDataURL(file);
