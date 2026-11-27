@@ -1,129 +1,125 @@
-import { getTodayScheduledWorkoutInfo } from './ui-workouts.js';
-import {
-    isHabitScheduledToday,
-    renderMiDiaHabitsCard,
-    renderHabitsFullScreenOverlay
-} from './habits/habits-views.js';
-import './habits/habits-modals.js';
+import { computeCrossModuleInsights } from './insights.js';
+import { getMyFriendships } from './social/social-service.js';
 
-const today = new Date();
-const todayDay = today.getDate();
-const todayMonth = today.getMonth() + 1;
-const todayYear = today.getFullYear();
+let cachedPendingFriends = 0;
+let cachedAcceptedFriends = 0;
 
-export function calculateDailyScore() {
-    const habitsList = window.state.habits || [];
-    const tasksList = window.state.tasks || [];
-    const sessionsList = window.state.workout_sessions || [];
+export async function renderDashboardView(container) {
+    const p = window.state?.profile || {};
+    const isSilent = p.gamificationMode === 'SILENT_MINIMAL';
+    const todayIso = new Date().toISOString().split('T')[0];
 
-    const todayHabits = habitsList.filter(h => isHabitScheduledToday(h));
-    const completedHabits = todayHabits.filter(h => h.isCompleted).length;
+    const habits = window.state?.habits || [];
+    const doneHabits = habits.filter(h => (h.completedDates || []).includes(todayIso)).length;
+    const tasksToday = (window.state?.tasks || []).filter(t => !t.dueDate || t.dueDate === todayIso);
+    const doneTasks = tasksToday.filter(t => t.isCompleted).length;
 
-    const todayTasks = tasksList.filter(t => !t.isEvent && !t.inInbox && Number(t.day) === todayDay && Number(t.month) === todayMonth && Number(t.year) === todayYear);
-    const completedTasks = todayTasks.filter(t => t.isCompleted).length;
+    const totalItems = habits.length + tasksToday.length;
+    const dailyScore = totalItems > 0 ? Math.round(((doneHabits + doneTasks) / totalItems) * 100) : 100;
+    if (window.state) window.state.dailyScorePercent = dailyScore;
 
-    const startOfToday = new Date(todayYear, todayMonth - 1, todayDay).getTime();
-    const trainedToday = sessionsList.some(s => Number(s.startedAt || 0) >= startOfToday && s.isCompleted);
+    const accounts = window.state?.accounts || [];
+    const totalBalanceBs = accounts
+        .filter(a => !a.isArchived && (a.currency === 'Bs' || !a.currency))
+        .reduce((acc, a) => acc + Number(a.balance || 0), 0);
 
-    const total = todayHabits.length + todayTasks.length + (trainedToday ? 1 : 0);
-    const done = completedHabits + completedTasks + (trainedToday ? 1 : 0);
-    const score = total === 0 ? 0 : Math.round((done / total) * 100);
+    const insights = computeCrossModuleInsights();
 
-    return {
-        score,
-        todayHabits,
-        todayTasks,
-        trainedToday,
-        habitPct: todayHabits.length ? Math.round((completedHabits / todayHabits.length) * 100) : 0,
-        taskPct: todayTasks.length ? Math.round((completedTasks / todayTasks.length) * 100) : 0,
-        workoutPct: trainedToday ? 100 : 0
-    };
-}
-
-export function renderDashboard() {
-    const ds = calculateDailyScore();
-    const scoreEl = document.getElementById('daily-score-pct');
-    if (scoreEl) scoreEl.textContent = ds.score;
-
-    // 1. Renderizar Hábitos de Mi Día y Overlay de Pantalla Completa / Detalle
-    renderMiDiaHabitsCard();
-    renderHabitsFullScreenOverlay();
-
-    // 2. Renderizar Agenda de Hoy
-    const agendaEl = document.getElementById('dashboard-agenda-list');
-    if (agendaEl) {
-        const todayItems = (window.state.tasks || []).filter(t => !t.inInbox && Number(t.day) === todayDay && Number(t.month) === todayMonth && Number(t.year) === todayYear);
-        agendaEl.innerHTML = todayItems.length === 0
-            ? `<p class="text-xs text-gray-400">Agenda libre para hoy.</p>`
-            : todayItems.map(t => t.isEvent ? `
-                <div class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span>📅</span>
-                        <div>
-                            <p class="text-xs font-bold text-blue-300">${t.title}</p>
-                            <p class="text-[10px] text-gray-400">${t.time || 'Todo el día'}${t.endTime ? ' - ' + t.endTime : ''} ${t.location ? '· 📍 ' + t.location : ''}</p>
-                        </div>
-                    </div>
-                    <button onclick="deleteDocItem('tasks', '${t.docId}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
-                </div>
-            ` : `
-                <div class="p-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0A0F] border border-gray-200 dark:border-[#28283C] flex items-center justify-between">
-                    <div class="flex items-center space-x-2.5">
-                        <input type="checkbox" ${t.isCompleted ? 'checked' : ''} onchange="toggleTaskCheck('${t.docId}', ${!t.isCompleted})" class="w-4 h-4 rounded cursor-pointer">
-                        <div>
-                            <p class="text-xs ${t.isCompleted ? 'line-through text-gray-500' : 'font-semibold'}">${t.title}</p>
-                            <p class="text-[10px] text-gray-400">${t.priority || 'Media'} ${t.project ? '· 📁 ' + t.project : ''}</p>
-                        </div>
-                    </div>
-                    <button onclick="deleteDocItem('tasks', '${t.docId}')" class="text-xs text-gray-500 hover:text-red-400">✕</button>
-                </div>
-            `).join('');
+    try {
+        const fr = await getMyFriendships();
+        cachedPendingFriends = fr.pendingIncoming.length;
+        cachedAcceptedFriends = fr.accepted.length;
+    } catch {
+        // Offline-first fallback
     }
 
-    // 3. Tarjeta de qué entrenamiento toca hoy
-    const workoutTodayBox = document.getElementById('dashboard-today-workout-box');
-    if (workoutTodayBox) {
-        const info = getTodayScheduledWorkoutInfo();
-        workoutTodayBox.innerHTML = !info ? `
-            <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex items-center justify-between">
+    container.innerHTML = `
+        <div class="space-y-6" style="font-variant-numeric: tabular-nums;">
+            <!-- Cabecera limpia con botón de Captura Rápida -->
+            <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <span class="text-[10px] font-bold uppercase text-gray-400">Entrenamiento de Hoy</span>
-                    <p class="text-sm font-bold mt-0.5">Sin rutina principal seleccionada</p>
+                    <h2 class="text-2xl font-black tracking-tight text-white">Hola, ${p.name || 'Atleta'}</h2>
+                    <p class="text-xs text-gray-400 mt-1">Tu resumen operativo de hoy · Sincronizado offline-first</p>
                 </div>
-                <button onclick="navigate('workouts')" class="px-4 py-2 rounded-xl bg-accent/15 text-accent text-xs font-bold">Elegir Rutina →</button>
+                <div class="flex flex-wrap items-center gap-2.5">
+                    ${!isSilent ? `
+                        <div class="px-3.5 py-2 rounded-xl bg-[#121216] border border-[#1F1F26] text-xs font-extrabold text-amber-400">
+                            🔥 Racha: ${p.streak || 0}d · 🛡️ ${p.restShieldsAvailable ?? 2} escudos
+                        </div>
+                    ` : ''}
+                    <button type="button" onclick="openQuickCaptureModal()" class="px-4 py-2.5 rounded-xl bg-[#8B5CF6] hover:opacity-90 text-white text-xs font-extrabold shadow-lg">
+                        ⚡ Captura Rápida (Ctrl+K)
+                    </button>
+                </div>
             </div>
-        ` : `
-            <div class="p-5 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <span class="text-[10px] font-bold uppercase text-accent">Entrenamiento de Hoy · ${info.routineName}</span>
-                    <h4 class="text-base font-black mt-0.5">${info.dayName}</h4>
-                    <p class="text-xs text-gray-400 mt-0.5">${info.exercisesCount} ejercicios · ~${info.estimatedMin} min ${info.doneToday ? '· <span class="text-emerald-400 font-bold">✓ Completado hoy</span>' : ''}</p>
+
+            <!-- Resumen Principal: Daily Score + Balance + Progreso -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="p-5 rounded-2xl bg-[#121216] border border-[#1F1F26] flex flex-col justify-between space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold uppercase text-gray-400">Daily Score de Hoy</span>
+                            <span class="text-xs font-black text-[#10B981]">${doneHabits + doneTasks}/${totalItems} completados</span>
+                        </div>
+                        <div class="text-3xl font-black text-white mt-2">${dailyScore}%</div>
+                        <div class="w-full h-2 rounded-full bg-[#0A0A0C] mt-3 overflow-hidden">
+                            <div class="h-full bg-[#8B5CF6] transition-all" style="width:${dailyScore}%"></div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="navigate('progress')" class="w-full py-2 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] hover:border-[#8B5CF6] text-xs font-extrabold text-[#8B5CF6]">
+                        Ver Progreso y Analíticas →
+                    </button>
                 </div>
-                <button onclick="beginActiveWorkoutSession(${info.routineId}, ${info.dayNumber})" class="px-5 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold shadow-lg">
-                    ▶ Entrenar Ahora
+
+                <div class="p-5 rounded-2xl bg-[#121216] border border-[#1F1F26] flex flex-col justify-between space-y-4">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase text-gray-400">Liquidez Total (Bs)</span>
+                        <div class="text-3xl font-black text-white mt-2">Bs ${totalBalanceBs.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <p class="text-[11px] text-gray-400 mt-1">${accounts.length} cuentas activas · 100% privadas</p>
+                    </div>
+                    <button type="button" onclick="navigate('finances')" class="w-full py-2 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] hover:border-[#10B981] text-xs font-extrabold text-[#10B981]">
+                        Gestionar Finanzas →
+                    </button>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-[#121216] border border-[#1F1F26] flex flex-col justify-between space-y-4">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase text-gray-400">Entrenamiento</span>
+                        <div class="text-xl font-black text-white mt-2">${(window.state?.workout_sessions || []).filter(s => s.isCompleted).length} sesiones</div>
+                        <p class="text-[11px] text-gray-400 mt-1">Sobrecarga progresiva y Vax Coach</p>
+                    </div>
+                    <button type="button" onclick="navigate('workouts')" class="w-full py-2 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] hover:border-[#8B5CF6] text-xs font-extrabold text-white">
+                        Ir a Entrenar →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Comunidad y Amigos (Debajo del resumen principal) -->
+            <div class="p-5 rounded-2xl bg-[#121216] border border-[#8B5CF6]/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <h3 class="text-base font-black text-white">👥 Comunidad y Amigos</h3>
+                        <span class="px-2.5 py-0.5 rounded-full bg-[#8B5CF6]/15 text-[#8B5CF6] text-[11px] font-bold">${cachedAcceptedFriends} amigos</span>
+                        ${cachedPendingFriends > 0 ? `<span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-extrabold">${cachedPendingFriends} solicitudes</span>` : ''}
+                    </div>
+                    <p class="text-xs text-gray-400">Revisa el muro de entrenamientos, clona rutinas públicas y compara récords cara a cara.</p>
+                </div>
+                <button type="button" onclick="navigate('social')" class="px-4 py-2.5 rounded-xl bg-[#8B5CF6] text-white text-xs font-extrabold shrink-0">
+                    Abrir Comunidad →
                 </button>
             </div>
-        `;
-    }
 
-    // 4. Barras de Progreso
-    const progMods = [
-        { label: 'Hábitos del Día', pct: ds.habitPct },
-        { label: 'Tareas del Día', pct: ds.taskPct },
-        { label: 'Entrenamiento', pct: ds.workoutPct }
-    ].filter(m => m.pct > 0);
-
-    const progEl = document.getElementById('progress-bars-container');
-    if (progEl) {
-        progEl.innerHTML = progMods.length === 0
-            ? `<p class="text-xs text-gray-400">Completa al menos un hábito, tarea o entrenamiento hoy para mostrar la distribución.</p>`
-            : progMods.map(m => `
-                <div>
-                    <div class="flex justify-between text-xs font-bold mb-1"><span>${m.label}</span><span>${m.pct}%</span></div>
-                    <div class="w-full h-2.5 bg-gray-200 dark:bg-[#0A0A0F] rounded-full overflow-hidden">
-                        <div class="h-full bg-accent" style="width:${m.pct}%"></div>
-                    </div>
+            <!-- Motor de Correlaciones Cruzadas (Máx. 2 tarjetas) -->
+            ${insights.length > 0 ? `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${insights.map(ins => `
+                        <div class="p-4 rounded-2xl border ${ins.colorClass} space-y-1.5">
+                            <span class="text-[10px] font-black uppercase tracking-wider">${ins.badge}</span>
+                            <p class="text-xs leading-relaxed text-gray-200">${ins.text}</p>
+                        </div>
+                    `).join('')}
                 </div>
-            `).join('');
-    }
+            ` : ''}
+        </div>
+    `;
 }
