@@ -247,24 +247,208 @@
 
     <!-- 3. REPORTES PROFESIONALES EN EXCEL (.XLSX) DINÁMICO -->
     <section id="excel-dinamico" class="py-20 border-b border-[#1F1F26]">
+        <!-- 3. REPORTES PROFESIONALES EN EXCEL (.XLSX) DINÁMICO -->
+    <section id="excel-dinamico" class="py-20 border-b border-[#1F1F26]">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            <div class="lg:col-span-7 p-6 rounded-3xl bg-[#121216] border border-[#1F1F26] space-y-4">
-                <div class="flex items-center justify-between border-b border-[#1F1F26] pb-3">
-                    <span class="text-xs font-black text-[#10B981]">📊 WeaVax_Finanzas_2026.xlsx</span>
-                    <span class="text-[11px] text-gray-400">Multi-hoja · Fórmulas Vivas</span>
+            
+            <!-- Visor Interactivo estilo Excel Real (7 columnas) -->
+            <div class="lg:col-span-7 rounded-2xl bg-[#121216] border border-[#1F1F26] overflow-hidden shadow-2xl">
+                
+                <!-- Barra Superior de Archivo Excel -->
+                <div class="px-4 py-2.5 bg-[#0E1713] border-b border-[#1F1F26] flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-5 h-5 rounded bg-[#10B981] text-black font-black text-[11px] flex items-center justify-center">X</span>
+                        <span class="text-xs font-extrabold text-white">WeaVax_Finanzas_2026.xlsx</span>
+                    </div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">Fórmulas Vivas · Multi-hoja</span>
                 </div>
-                <div class="grid grid-cols-3 gap-2 text-[11px] font-bold">
-                    <div class="p-2.5 rounded-xl bg-[#0A0A0C] border border-[#10B981]/40 text-[#10B981] text-center">Hoja 1: Resumen Ejecutivo</div>
-                    <div class="p-2.5 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] text-gray-300 text-center">Hoja 2: Libro Diario</div>
-                    <div class="p-2.5 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] text-gray-300 text-center">Hoja 3: Presupuestos y Metas</div>
+
+                <!-- Barra de Fórmulas (fx) -->
+                <div class="px-3 py-1.5 bg-[#0A0A0C] border-b border-[#1F1F26] flex items-center space-x-2 text-[11px] font-mono">
+                    <span id="xl-cell-ref" class="px-2 py-0.5 rounded bg-[#121216] border border-[#1F1F26] text-gray-300 font-bold w-12 text-center">C4</span>
+                    <span class="text-[#10B981] font-black italic">fx</span>
+                    <span id="xl-formula-bar" class="text-gray-300 truncate">=SUMIFS('Libro Diario'!E:E, 'Libro Diario'!C:C, "Ingreso")</span>
                 </div>
-                <div class="p-4 rounded-2xl bg-[#0A0A0C] border border-[#1F1F26] font-mono text-xs space-y-1.5 text-gray-300">
-                    <div class="flex justify-between"><span>Ingresos Totales:</span><span class="text-[#10B981]">=SUMIFS(Movimientos!D:D, ...)</span></div>
-                    <div class="flex justify-between"><span>Gastos del Periodo:</span><span class="text-amber-400">=SUMIFS(Movimientos!D:D, ...)</span></div>
-                    <div class="flex justify-between"><span>Tasa de Ahorro Neta:</span><span class="text-[#8B5CF6]">=(Ingresos - Gastos) / Ingresos</span></div>
+
+                <!-- Contenedor de la Cuadrícula de Celdas -->
+                <div class="overflow-x-auto bg-[#0A0A0C]">
+                    
+                    <!-- HOJA 1: RESUMEN EJECUTIVO -->
+                    <table id="xl-sheet-resumen" class="w-full text-left border-collapse text-[11px] font-mono" style="font-variant-numeric: tabular-nums;">
+                        <thead>
+                            <tr class="bg-[#16161D] text-gray-500 border-b border-[#1F1F26] text-center select-none">
+                                <th class="w-8 py-1 border-r border-[#1F1F26]"></th>
+                                <th class="py-1 border-r border-[#1F1F26] font-semibold">A</th>
+                                <th class="py-1 border-r border-[#1F1F26] font-semibold">B</th>
+                                <th class="py-1 border-r border-[#1F1F26] font-semibold">C</th>
+                                <th class="py-1 font-semibold">D</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#1F1F26]">
+                            <tr class="bg-[#121216]">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-1.5">1</td>
+                                <td colspan="4" class="px-3 py-1.5 font-sans font-black text-xs text-white">BALANCE GENERAL CONSOLIDADO · NOVIEMBRE 2026</td>
+                            </tr>
+                            <tr class="bg-[#121216]/60 text-gray-400 font-sans font-bold">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-1.5">2</td>
+                                <td class="px-3 py-1.5 border-r border-[#1F1F26]">Indicador</td>
+                                <td class="px-3 py-1.5 border-r border-[#1F1F26]">Moneda</td>
+                                <td class="px-3 py-1.5 border-r border-[#1F1F26] text-right">Monto Actual</td>
+                                <td class="px-3 py-1.5 text-right">Variación</td>
+                            </tr>
+                            <tr onclick="setXlFormula('C3', '=SUM(Cuentas!C2:C5)')" class="hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">3</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] font-sans text-gray-200">Liquidez Total Cuentas</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-gray-400">Bs</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right font-bold text-white">8,450.00</td>
+                                <td class="px-3 py-2 text-right text-[#10B981]">+12.4%</td>
+                            </tr>
+                            <tr onclick="setXlFormula('C4', '=SUMIFS(\'Libro Diario\'!E:E, \'Libro Diario\'!C:C, &quot;Ingreso&quot;)')" class="bg-[#10B981]/5 hover:bg-[#10B981]/15 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">4</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] font-sans text-gray-200">Ingresos del Mes</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-gray-400">Bs</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right font-bold text-[#10B981] ring-1 ring-inset ring-[#10B981]">4,200.00</td>
+                                <td class="px-3 py-2 text-right text-[#10B981]">100%</td>
+                            </tr>
+                            <tr onclick="setXlFormula('C5', '=SUMIFS(\'Libro Diario\'!E:E, \'Libro Diario\'!C:C, &quot;Gasto&quot;)')" class="hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">5</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] font-sans text-gray-200">Gastos Operativos</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-gray-400">Bs</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right font-bold text-amber-400">-1,845.50</td>
+                                <td class="px-3 py-2 text-right text-gray-400">43.9%</td>
+                            </tr>
+                            <tr onclick="setXlFormula('C6', '=(C4+C5)/C4')" class="bg-[#121216] hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">6</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] font-sans font-bold text-white">Ahorro Neto & Tasa</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-gray-400">Bs</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right font-black text-[#8B5CF6]">2,354.50</td>
+                                <td class="px-3 py-2 text-right font-bold text-[#8B5CF6]">56.1%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- HOJA 2: LIBRO DIARIO -->
+                    <table id="xl-sheet-diario" class="hidden w-full text-left border-collapse text-[11px] font-mono" style="font-variant-numeric: tabular-nums;">
+                        <thead>
+                            <tr class="bg-[#16161D] text-gray-500 border-b border-[#1F1F26] text-center select-none">
+                                <th class="w-8 py-1 border-r border-[#1F1F26]"></th>
+                                <th class="py-1 border-r border-[#1F1F26] font-semibold">A</th>
+                                <th class="py-1 border-r border-[#1F1F26] font-semibold">B</th>
+                                <th class="py-1 border-r border-[#1F1F26] font-semibold">C</th>
+                                <th class="py-1 border-r border-[#1F1F26] font-semibold">D</th>
+                                <th class="py-1 font-semibold">E</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#1F1F26]">
+                            <tr class="bg-[#121216]/60 text-gray-400 font-sans font-bold">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-1.5">1</td>
+                                <td class="px-2.5 py-1.5 border-r border-[#1F1F26]">Fecha</td>
+                                <td class="px-2.5 py-1.5 border-r border-[#1F1F26]">Concepto</td>
+                                <td class="px-2.5 py-1.5 border-r border-[#1F1F26]">Tipo</td>
+                                <td class="px-2.5 py-1.5 border-r border-[#1F1F26]">Cuenta</td>
+                                <td class="px-2.5 py-1.5 text-right">Monto (Bs)</td>
+                            </tr>
+                            <tr onclick="setXlFormula('E2', '3500.00')" class="hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">2</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-gray-400">2026-11-01</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] font-sans text-white">Desarrollo App Cliente</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-[#10B981]">Ingreso</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-gray-300">BCP Principal</td>
+                                <td class="px-2.5 py-2 text-right font-bold text-[#10B981]">+3,500.00</td>
+                            </tr>
+                            <tr onclick="setXlFormula('E3', '-35.00')" class="hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">3</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-gray-400">2026-11-12</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] font-sans text-white">Almuerzo Ejecutivo (QR)</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-amber-400">Gasto</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-gray-300">Yape / QR</td>
+                                <td class="px-2.5 py-2 text-right font-bold text-amber-400">-35.00</td>
+                            </tr>
+                            <tr onclick="setXlFormula('E4', '-280.00')" class="hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">4</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-gray-400">2026-11-15</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] font-sans text-white">Membresía Gym + Suplemento</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-amber-400">Gasto</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-gray-300">BCP Principal</td>
+                                <td class="px-2.5 py-2 text-right font-bold text-amber-400">-280.00</td>
+                            </tr>
+                            <tr onclick="setXlFormula('E5', '700.00')" class="hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">5</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-gray-400">2026-11-22</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] font-sans text-white">Consultoría UI/UX</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-[#10B981]">Ingreso</td>
+                                <td class="px-2.5 py-2 border-r border-[#1F1F26] text-gray-300">Efectivo</td>
+                                <td class="px-2.5 py-2 text-right font-bold text-[#10B981]">+700.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- HOJA 3: PRESUPUESTOS Y METAS -->
+                    <table id="xl-sheet-presupuestos" class="hidden w-full text-left border-collapse text-[11px] font-mono" style="font-variant-numeric: tabular-nums;">
+                        <thead>
+                            <tr class="bg-[#16161D] text-gray-500 border-b border-[#1F1F26] text-center select-none">
+                                <th class="w-8 py-1 border-r border-[#1F1F26]"></th>
+                                <th class="py-1 border-r border-[#1F1F26] font-semibold">A</th>
+                                <th class="py-1 border-r border-[#1F1F26] font-semibold">B</th>
+                                <th class="py-1 border-r border-[#1F1F26] font-semibold">C</th>
+                                <th class="py-1 font-semibold">D</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#1F1F26]">
+                            <tr class="bg-[#121216]/60 text-gray-400 font-sans font-bold">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-1.5">1</td>
+                                <td class="px-3 py-1.5 border-r border-[#1F1F26]">Categoría / Meta</td>
+                                <td class="px-3 py-1.5 border-r border-[#1F1F26] text-right">Límite / Objetivo</td>
+                                <td class="px-3 py-1.5 border-r border-[#1F1F26] text-right">Ejecutado</td>
+                                <td class="px-3 py-1.5 text-right">Estado (%)</td>
+                            </tr>
+                            <tr onclick="setXlFormula('D2', '=C2/B2')" class="hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">2</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] font-sans text-white">Alimentación & Café</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right text-gray-300">1,000.00</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right text-white">620.00</td>
+                                <td class="px-3 py-2 text-right font-bold text-[#10B981]">62.0%</td>
+                            </tr>
+                            <tr onclick="setXlFormula('D3', '=C3/B3')" class="hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">3</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] font-sans text-white">Gimnasio & Nutrición</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right text-gray-300">500.00</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right text-white">410.00</td>
+                                <td class="px-3 py-2 text-right font-bold text-amber-400">82.0%</td>
+                            </tr>
+                            <tr onclick="setXlFormula('D4', '=C4/B4')" class="hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">4</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] font-sans text-white">Meta: Fondo de Emergencia</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right text-gray-300">10,000.00</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right text-[#8B5CF6] font-bold">7,850.00</td>
+                                <td class="px-3 py-2 text-right font-bold text-[#8B5CF6]">78.5%</td>
+                            </tr>
+                            <tr onclick="setXlFormula('D5', '=C5/B5')" class="hover:bg-[#10B981]/10 cursor-pointer">
+                                <td class="text-center text-gray-500 bg-[#16161D] border-r border-[#1F1F26] py-2">5</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] font-sans text-white">Meta: Setup & Hardware</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right text-gray-300">4,500.00</td>
+                                <td class="px-3 py-2 border-r border-[#1F1F26] text-right text-[#10B981] font-bold">4,500.00</td>
+                                <td class="px-3 py-2 text-right font-bold text-[#10B981]">100.0%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pestañas Inferiores estilo Excel Real -->
+                <div class="px-2 pt-1.5 bg-[#121216] border-t border-[#1F1F26] flex items-center space-x-1 text-[11px] font-bold overflow-x-auto">
+                    <button type="button" onclick="switchXlSheet('resumen', this)" class="xl-tab px-3.5 py-1.5 rounded-t-lg bg-[#0A0A0C] text-[#10B981] border-t-2 border-[#10B981] shrink-0">
+                        Resumen Ejecutivo
+                    </button>
+                    <button type="button" onclick="switchXlSheet('diario', this)" class="xl-tab px-3.5 py-1.5 rounded-t-lg text-gray-400 hover:text-white shrink-0">
+                        Libro Diario
+                    </button>
+                    <button type="button" onclick="switchXlSheet('presupuestos', this)" class="xl-tab px-3.5 py-1.5 rounded-t-lg text-gray-400 hover:text-white shrink-0">
+                        Presupuestos y Metas
+                    </button>
                 </div>
             </div>
 
+            <!-- Descripción Comercial (5 columnas) -->
             <div class="lg:col-span-5 space-y-4">
                 <span class="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
                     Analítica Exportable
@@ -273,10 +457,44 @@
                     Reportes en Excel (.xlsx) dinámico con fórmulas vivas.
                 </h2>
                 <p class="text-sm text-gray-400 leading-relaxed">
-                    Exporta tu contabilidad personal en archivos <code class="text-white">.xlsx</code> nativos con múltiples pestañas, tablas estructuradas, fórmulas dinámicas recalculables, gráficos nativos y estilos adaptados a tu paleta visual.
+                    Haz clic en las pestañas inferiores o en cualquier celda de la tabla para inspeccionar cómo WeaVax genera libros <code class="text-white">.xlsx</code> nativos con múltiples hojas, fórmulas dinámicas recalculables y formatos contables listos para auditar.
                 </p>
             </div>
         </div>
+
+        <script>
+            function switchXlSheet(sheetKey, btnEl) {
+                ['resumen', 'diario', 'presupuestos'].forEach(key => {
+                    const tbl = document.getElementById('xl-sheet-' + key);
+                    if (tbl) tbl.classList.toggle('hidden', key !== sheetKey);
+                });
+
+                document.querySelectorAll('.xl-tab').forEach(tab => {
+                    tab.classList.remove('bg-[#0A0A0C]', 'text-[#10B981]', 'border-t-2', 'border-[#10B981]');
+                    tab.classList.add('text-gray-400');
+                });
+
+                btnEl.classList.remove('text-gray-400');
+                btnEl.classList.add('bg-[#0A0A0C]', 'text-[#10B981]', 'border-t-2', 'border-[#10B981]');
+
+                const defaultFormulas = {
+                    resumen: ['C4', '=SUMIFS(\'Libro Diario\'!E:E, \'Libro Diario\'!C:C, "Ingreso")'],
+                    diario: ['E2', '3500.00'],
+                    presupuestos: ['D2', '=C2/B2']
+                };
+                if (defaultFormulas[sheetKey]) {
+                    setXlFormula(defaultFormulas[sheetKey][0], defaultFormulas[sheetKey][1]);
+                }
+            }
+
+            function setXlFormula(cellRef, formulaText) {
+                const refEl = document.getElementById('xl-cell-ref');
+                const barEl = document.getElementById('xl-formula-bar');
+                if (refEl) refEl.textContent = cellRef;
+                if (barEl) barEl.textContent = formulaText;
+            }
+        </script>
+    </section>
     </section>
 
     <!-- 4. PRODUCTIVIDAD SIN CULPA + CORRELACIONES CRUZADAS + OFFLINE-FIRST -->
