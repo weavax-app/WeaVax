@@ -49,7 +49,7 @@ export async function checkProExpiration() {
     const pro = window.state.pro;
     if (!pro) return;
 
-    const VitalicioMark = 9000000000000; // Equivalente JS seguro para Long.MAX_VALUE
+    const VitalicioMark = 9000000000000;
     if (pro.isPro && pro.expiresAt > 0 && pro.expiresAt < VitalicioMark) {
         const now = Date.now();
         if (now >= pro.expiresAt) {
@@ -70,7 +70,7 @@ export async function checkProExpiration() {
                 const warnKey = `warned_pro_expiry_${daysLeft}`;
                 if (!localStorage.getItem(warnKey)) {
                     localStorage.setItem(warnKey, 'true');
-                    alert(`¡Hey, ya se te va a acabar el premium! Te quedan ${daysLeft} días de WeaVax Pro.`);
+                    alert(`Recordatorio transparente: te quedan ${daysLeft} días de tu suscripción WeaVax Pro.`);
                 }
             }
         }
@@ -233,81 +233,12 @@ export function updateProHeaderBadge() {
     if (badge) {
         badge.className = isPro
             ? 'px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-purple-500/20 border border-amber-400/50 text-amber-300 text-xs font-extrabold'
-            : 'px-3 py-1 rounded-full bg-[#181824] border border-[#28283C] hover:border-accent text-gray-300 text-xs font-bold';
+            : 'px-3 py-1 rounded-full bg-[#121216] border border-[#1F1F26] hover:border-accent text-gray-300 text-xs font-bold';
         badge.innerHTML = isPro ? '👑 PRO' : '⚡ Hazte Pro';
     }
 }
 
-// Modal Interactivo WeavaxProDialog
-window.openProPaywall = (customReason = '') => {
-    const pro = window.state.pro || {};
-    const isPro = Boolean(pro.isPro);
-    const expDateStr = (pro.expiresAt && pro.expiresAt < 9000000000000)
-        ? new Date(pro.expiresAt).toLocaleDateString('es-BO')
-        : (isPro ? 'Vitalicio ∞' : 'Sin suscripción activa');
-
-    window.openUniversalModal('👑 WeaVax Pro · Centro de Suscripción', `
-        <div class="space-y-4 text-xs">
-            ${customReason ? `
-                <div class="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold">
-                    🔒 ${customReason}
-                </div>
-            ` : ''}
-
-            <div class="flex justify-between text-[11px]"><span class="text-gray-400">🎨 Colores Esmeralda, Ámbar, Frambuesa y Cian</span><span class="font-bold text-emerald-400">Desbloqueados</span></div>
-                <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${isPro ? 'bg-emerald-500/20 text-emerald-300' : 'bg-gray-500/20 text-gray-300'}">
-                        Estado: ${isPro ? `PRO ACTIVO (${pro.planName})` : 'PLAN GRATUITO'}
-                    </span>
-                    <span class="text-[11px] text-gray-400">Escaneos IA: <strong>${isPro ? 'Ilimitados' : `${pro.scansUsed || 0}/${FREE_LIMITS.MAX_AI_SCANS_MONTH}`}</strong></span>
-                </div>
-                ${isPro ? `<p class="text-[11px] text-gray-300">Vencimiento: <strong>${expDateStr}</strong></p>` : ''}
-            </div>
-
-            <!-- Comparativa Gratuito vs Pro -->
-            <div class="space-y-2 p-3.5 rounded-2xl bg-[#0A0A0F] border border-[#28283C]">
-                <p class="font-extrabold text-white mb-1">Beneficios incluidos en WeaVax Pro:</p>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400">📷 Escáner IA de recibos y QR</span><span class="font-bold text-emerald-400">Ilimitado (Gratis: 5/mes)</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400">🤖 Entrenador Personal IA (Vax Coach)</span><span class="font-bold text-emerald-400">Desbloqueado</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400">🎨 Los 7 Colores de Tema Oficiales</span><span class="font-bold text-emerald-400">Desbloqueados</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400">🔥 Hábitos, Cuentas, Metas y Rutinas</span><span class="font-bold text-emerald-400">Sin límites</span></div>
-            </div>
-
-            <!-- Canjear Código Único -->
-            <form onsubmit="handleRedeemProSubmit(event)" class="space-y-2">
-                <label class="text-[10px] font-bold uppercase text-gray-400">Canjear Código de Activación WeaVax Pro</label>
-                <div class="flex gap-2">
-                    <input id="pro-code-input" required placeholder="Ej. WVX-1M-XXXXXXXX" class="flex-1 px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-mono uppercase font-bold">
-                    <button type="submit" class="px-4 py-2.5 rounded-xl bg-accent text-white font-extrabold">Activar</button>
-                </div>
-                <p id="pro-redeem-feedback" class="text-[11px] font-bold hidden"></p>
-            </form>
-
-            <!-- Botón directo a Instagram @weavax.app -->
-            <div class="pt-2 border-t border-[#28283C] flex items-center justify-between">
-                <span class="text-[11px] text-gray-400">¿Aún no tienes tu código?</span>
-                <a href="https://www.instagram.com/weavax.app/" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 rounded-xl bg-pink-500/15 text-pink-300 border border-pink-500/30 font-bold hover:bg-pink-500/25">
-                    📲 Solicitar en @weavax.app →
-                </a>
-            </div>
-        </div>
-    `);
-};
-
-window.handleRedeemProSubmit = async (e) => {
-    e.preventDefault();
-    const code = document.getElementById('pro-code-input')?.value;
-    const res = await window.redeemProCode(code);
-    const fb = document.getElementById('pro-redeem-feedback');
-    if (fb) {
-        fb.classList.remove('hidden');
-        fb.className = `text-[11px] font-bold ${res.ok ? 'text-emerald-400' : 'text-red-400'}`;
-        fb.textContent = res.msg;
-    }
-    if (res.ok) {
-        setTimeout(() => window.openProPaywall(), 900);
-    }
-};
+// Paywall Transparente WeaVax Pro (Cero anuncios + Plan Anual destacado + Recordatorio 48h + Canje de Código)
 export function openProPaywall(customReason = '') {
     const pro = window.state.pro || {};
     const isPro = Boolean(pro.isPro);
@@ -316,14 +247,14 @@ export function openProPaywall(customReason = '') {
         : (isPro ? 'Vitalicio ∞' : 'Sin suscripción activa');
 
     window.openUniversalModal('👑 WeaVax Pro · Centro de Suscripción', `
-        <div class="space-y-4 text-xs">
+        <div class="space-y-4 text-xs" style="font-variant-numeric: tabular-nums;">
             ${customReason ? `
                 <div class="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold">
                     🔒 ${customReason}
                 </div>
             ` : ''}
 
-            <div class="p-4 rounded-2xl bg-gradient-to-br from-[#181824] via-purple-900/25 to-[#0A0A0F] border border-accent/40 space-y-2">
+            <div class="p-3.5 rounded-2xl bg-[#121216] border border-accent/40 space-y-1.5">
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${isPro ? 'bg-emerald-500/20 text-emerald-300' : 'bg-gray-500/20 text-gray-300'}">
                         Estado: ${isPro ? `PRO ACTIVO (${pro.planName})` : 'PLAN GRATUITO'}
@@ -331,27 +262,48 @@ export function openProPaywall(customReason = '') {
                     <span class="text-[11px] text-gray-400">Escaneos IA: <strong>${isPro ? 'Ilimitados' : `${pro.scansUsed || 0}/${FREE_LIMITS.MAX_AI_SCANS_MONTH}`}</strong></span>
                 </div>
                 ${isPro ? `<p class="text-[11px] text-gray-300">Vencimiento: <strong>${expDateStr}</strong></p>` : ''}
+                <p class="text-[11px] text-emerald-400 font-bold pt-1">✓ Cero anuncios en ambos planes · Registro manual ilimitado gratis para siempre.</p>
             </div>
 
-           <div class="space-y-2 p-3.5 rounded-2xl bg-[#0A0A0F] border border-[#28283C]">
-                <p class="font-extrabold text-white mb-1">Beneficios incluidos en WeaVax Pro:</p>
+            <!-- Planes Transparentes: Mensual vs Anual Destacado -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3.5 rounded-2xl bg-[#0A0A0C] border border-[#1F1F26] space-y-1">
+                    <span class="text-[10px] font-bold uppercase text-gray-400">Plan Mensual (1M)</span>
+                    <div class="text-xl font-black text-white">7 días gratis</div>
+                    <p class="text-[11px] text-gray-400">Ideal para probar todas las herramientas sin compromiso.</p>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-[#0A0A0C] border-2 border-[#8B5CF6] relative space-y-1">
+                    <span class="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-[#8B5CF6] text-white text-[9px] font-black">AHORRA 40% · ANUAL</span>
+                    <span class="text-[10px] font-bold uppercase text-[#8B5CF6]">Plan Anual (1Y)</span>
+                    <div class="text-xl font-black text-white">14 días gratis</div>
+                    <p class="text-[11px] text-gray-300">El favorito de los atletas WeaVax · Máximo ahorro anual.</p>
+                </div>
+            </div>
+
+            <div class="space-y-1.5 p-3.5 rounded-2xl bg-[#0A0A0C] border border-[#1F1F26]">
+                <p class="font-extrabold text-white mb-1">Desbloqueado con WeaVax Pro:</p>
                 <div class="flex justify-between text-[11px]"><span class="text-gray-400">📷 Escáner IA de recibos y QR</span><span class="font-bold text-emerald-400">Ilimitado (Gratis: 5/mes)</span></div>
+                <div class="flex justify-between text-[11px]"><span class="text-gray-400">📊 Excel (.xlsx) dinámico multi-hoja</span><span class="font-bold text-emerald-400">Desbloqueado</span></div>
                 <div class="flex justify-between text-[11px]"><span class="text-gray-400">🤖 Entrenador Personal IA (Vax Coach)</span><span class="font-bold text-emerald-400">Desbloqueado</span></div>
-                <div class="flex justify-between text-[11px]"><span class="text-gray-400">🎨 Colores Esmeralda, Ámbar, Frambuesa y Cian</span><span class="font-bold text-emerald-400">Desbloqueados</span></div>
+                <div class="flex justify-between text-[11px]"><span class="text-gray-400">🎨 Los 7 Colores de Tema Oficiales</span><span class="font-bold text-emerald-400">Desbloqueados</span></div>
                 <div class="flex justify-between text-[11px]"><span class="text-gray-400">🏦 Cuentas, Presupuestos, Metas y Proyectos</span><span class="font-bold text-emerald-400">Sin límites</span></div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] text-[11px] text-gray-400">
+                🔔 <strong>Transparencia total:</strong> Recibirás un recordatorio <strong>48 horas antes</strong> de que termine tu prueba o periodo activo para evitar cargos inesperados.
             </div>
 
             <form onsubmit="handleRedeemProSubmit(event)" class="space-y-2">
                 <label class="text-[10px] font-bold uppercase text-gray-400">Canjear Código de Activación WeaVax Pro</label>
                 <div class="flex gap-2">
-                    <input id="pro-code-input" required placeholder="Ej. WVX-1M-XXXXXXXX" class="flex-1 px-3.5 py-2.5 rounded-xl bg-[#0A0A0F] border border-[#28283C] font-mono uppercase font-bold">
+                    <input id="pro-code-input" required placeholder="Ej. WVX-1Y-XXXXXXXX" class="flex-1 px-3.5 py-2.5 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] font-mono uppercase font-bold text-white">
                     <button type="submit" class="px-4 py-2.5 rounded-xl bg-accent text-white font-extrabold">Activar</button>
                 </div>
                 <p id="pro-redeem-feedback" class="text-[11px] font-bold hidden"></p>
             </form>
 
-            <div class="pt-2 border-t border-[#28283C] flex items-center justify-between">
-                <span class="text-[11px] text-gray-400">¿Aún no tienes tu código?</span>
+            <div class="pt-2 border-t border-[#1F1F26] flex items-center justify-between">
+                <span class="text-[11px] text-gray-400">¿Aún no tienes tu código o prueba?</span>
                 <a href="https://www.instagram.com/weavax.app/" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 rounded-xl bg-pink-500/15 text-pink-300 border border-pink-500/30 font-bold hover:bg-pink-500/25">
                     📲 Solicitar en @weavax.app →
                 </a>
@@ -360,6 +312,22 @@ export function openProPaywall(customReason = '') {
     `);
 }
 window.openProPaywall = openProPaywall;
+window.openWeavaxProPaywall = openProPaywall;
+
+window.handleRedeemProSubmit = async (e) => {
+    e.preventDefault();
+    const code = document.getElementById('pro-code-input')?.value;
+    const res = await window.redeemProCode(code);
+    const fb = document.getElementById('pro-redeem-feedback');
+    if (fb) {
+        fb.classList.remove('hidden');
+        fb.className = `text-[11px] font-bold ${res.ok ? 'text-emerald-400' : 'text-amber-400'}`;
+        fb.textContent = res.msg;
+    }
+    if (res.ok) {
+        setTimeout(() => window.openProPaywall(), 900);
+    }
+};
 
 window.setProStatusAdmin = async (status) => {
     const pro = window.state.pro;
