@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WeaVax · LifeOS Web & Desktop</title>
-    <meta name="theme-color" content="#0A0A0F">
+    <meta name="theme-color" content="#0A0A0C">
     <link rel="icon" type="image/png" href="../weavax_logo.png">
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="../weavax_logo.png">
@@ -18,22 +18,23 @@
     </script>
     <style>
         :root { --color-primary: #8B5CF6; }
-        body { font-family: 'Inter', sans-serif; background-color: #0A0A0F; color: #F9FAFB; transition: background-color 0.2s, color 0.2s; }
+        body { font-family: 'Inter', sans-serif; background-color: #0A0A0C; color: #F9FAFB; font-variant-numeric: tabular-nums; transition: background-color 0.2s, color 0.2s; }
 
-        body { background-color: #0A0A0C; font-variant-numeric: tabular-nums; }
-body.weavax-silent-mode .xp-gamified-badge,
-body.weavax-silent-mode .xp-progress-bar { display: none !important; }
-        /* Colores dinámicos del tema elegido */
+        body.weavax-silent-mode .xp-gamified-badge,
+        body.weavax-silent-mode .xp-progress-bar { display: none !important; }
+
         .bg-accent { background-color: var(--color-primary) !important; }
         .text-accent { color: var(--color-primary) !important; }
         .border-accent { border-color: var(--color-primary) !important; }
         input[type="checkbox"] { accent-color: var(--color-primary); }
 
-        /* Adaptación automática 100% al Modo Claro en todos los módulos y modales */
         html:not(.dark) body { background-color: #F1F5F9; color: #0F172A; }
-        html:not(.dark) .bg-\[\#181824\] { background-color: #FFFFFF !important; color: #0F172A !important; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-        html:not(.dark) .bg-\[\#0A0A0F\] { background-color: #F8FAFC !important; color: #0F172A !important; }
-        html:not(.dark) .border-\[\#28283C\] { border-color: #E2E8F0 !important; }
+        html:not(.dark) .bg-\[\#181824\],
+        html:not(.dark) .bg-\[\#121216\] { background-color: #FFFFFF !important; color: #0F172A !important; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        html:not(.dark) .bg-\[\#0A0A0F\],
+        html:not(.dark) .bg-\[\#0A0A0C\] { background-color: #F8FAFC !important; color: #0F172A !important; }
+        html:not(.dark) .border-\[\#28283C\],
+        html:not(.dark) .border-\[\#1F1F26\] { border-color: #E2E8F0 !important; }
         html:not(.dark) .text-white { color: #0F172A !important; }
         html:not(.dark) .bg-accent.text-white,
         html:not(.dark) .bg-emerald-600.text-white,
@@ -42,7 +43,6 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
         html:not(.dark) .text-gray-300 { color: #334155 !important; }
         html:not(.dark) .text-gray-400 { color: #64748B !important; }
 
-        /* Barra lateral colapsable */
         #app-sidebar.collapsed { width: 5rem; }
         #app-sidebar.collapsed .sidebar-label { display: none; }
         #app-sidebar.collapsed .nav-btn { justify-content: center; padding-left: 0; padding-right: 0; }
@@ -52,20 +52,20 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
 <body class="min-h-screen antialiased">
 
     <!-- PANTALLA DE CARGA -->
-    <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0A0A0F]">
+    <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0A0A0C]">
         <img src="../weavax_logo.png" class="w-14 h-14 object-contain animate-pulse mb-4">
         <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Sincronizando WeaVax LifeOS...</p>
     </div>
 
     <!-- PANTALLA DE LOGIN -->
-    <div id="auth-screen" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-[#0A0A0F]">
-        <div class="w-full max-w-md p-8 rounded-3xl bg-[#181824] border border-[#28283C] text-center">
+    <div id="auth-screen" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-[#0A0A0C]">
+        <div class="w-full max-w-md p-8 rounded-3xl bg-[#121216] border border-[#1F1F26] text-center">
             <img src="../weavax_logo.png" class="w-14 h-14 object-contain mx-auto mb-3">
             <h1 class="text-2xl font-black text-white">WeaVax <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">LifeOS</span></h1>
             <button id="btn-google-login" class="mt-6 w-full py-3.5 px-4 rounded-xl bg-white text-gray-900 font-bold text-sm">Continuar con Google</button>
             <form id="email-login-form" class="mt-4 space-y-3">
-                <input type="email" id="login-email" required placeholder="Correo" class="w-full px-4 py-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
-                <input type="password" id="login-password" required placeholder="Contraseña" class="w-full px-4 py-3 rounded-xl bg-[#0A0A0F] border border-[#28283C] text-sm">
+                <input type="email" id="login-email" required placeholder="Correo" class="w-full px-4 py-3 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] text-sm">
+                <input type="password" id="login-password" required placeholder="Contraseña" class="w-full px-4 py-3 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] text-sm">
                 <button type="submit" class="w-full py-3 rounded-xl bg-purple-600 text-white font-bold text-sm">Entrar</button>
             </form>
         </div>
@@ -75,24 +75,24 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
     <div id="app-container" class="hidden min-h-screen flex flex-col md:flex-row">
         
         <!-- SIDEBAR EXPANDIBLE / CONTRAÍBLE (ESCRITORIO) -->
-        <aside id="app-sidebar" class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 dark:border-[#28283C] bg-white dark:bg-[#181824] transition-all duration-200 z-30">
-            <div class="h-16 px-4 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
+        <aside id="app-sidebar" class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 dark:border-[#1F1F26] bg-white dark:bg-[#121216] transition-all duration-200 z-30">
+            <div class="h-16 px-4 flex items-center justify-between border-b border-gray-200 dark:border-[#1F1F26]">
                 <div class="flex items-center space-x-2.5 overflow-hidden">
                     <img src="../weavax_logo.png" class="w-7 h-7 object-contain shrink-0">
                     <span class="sidebar-label font-black text-lg tracking-tight">WeaVax</span>
                 </div>
-                <button type="button" onclick="toggleSidebar()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#0A0A0F] text-gray-400 hover:text-white text-xs" title="Expandir / Contraer barra">
+                <button type="button" onclick="toggleSidebar()" class="px-2.5 py-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-[#0A0A0C] text-gray-400 hover:text-white text-xs font-bold" title="Expandir / Contraer barra">
                     ⇔
                 </button>
             </div>
 
-            <div class="p-3.5 border-b border-gray-200 dark:border-[#28283C] flex items-center space-x-3">
-                <div id="user-avatar-box" class="w-10 h-10 rounded-full overflow-hidden border-2 border-accent shrink-0 flex items-center justify-center bg-[#0A0A0F] text-base font-bold">
+            <div class="p-3.5 border-b border-gray-200 dark:border-[#1F1F26] flex items-center space-x-3">
+                <div id="user-avatar-box" class="w-10 h-10 rounded-full overflow-hidden border-2 border-accent shrink-0 flex items-center justify-center bg-[#0A0A0C] text-base font-bold">
                     <img id="user-avatar-img" src="../weavax_logo.png" class="w-full h-full object-cover">
                 </div>
                 <div class="sidebar-label min-w-0 flex-1">
                     <p id="user-name" class="text-sm font-bold truncate">Usuario</p>
-                    <p id="user-level-xp" class="text-[11px] text-gray-400">Nivel 1 · 0 XP</p>
+                    <p id="user-level-xp" class="text-[11px] text-gray-400 xp-gamified-badge">Nivel 1 · 0 XP</p>
                 </div>
             </div>
 
@@ -100,19 +100,22 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
                 <button type="button" onclick="navigate('dashboard')" data-nav="dashboard" title="Inicio / Mi Día" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-accent/15 text-accent font-bold">
                     <span class="text-lg">🏠</span><span class="sidebar-label">Inicio / Mi Día</span>
                 </button>
-                <button type="button" onclick="navigate('plan')" data-nav="plan" title="Plan & Agenda" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button type="button" onclick="navigate('plan')" data-nav="plan" title="Plan & Agenda" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0C]">
                     <span class="text-lg">📅</span><span class="sidebar-label">Plan & Agenda</span>
                 </button>
-                <button type="button" onclick="navigate('finances')" data-nav="finances" title="Finanzas & IA" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button type="button" onclick="navigate('finances')" data-nav="finances" title="Finanzas & IA" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0C]">
                     <span class="text-lg">💳</span><span class="sidebar-label">Finanzas & IA</span>
                 </button>
-                <button type="button" onclick="navigate('workouts')" data-nav="workouts" title="Entrenamiento" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button type="button" onclick="navigate('workouts')" data-nav="workouts" title="Entrenamiento" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0C]">
                     <span class="text-lg">🏋️</span><span class="sidebar-label">Entrenamiento</span>
                 </button>
-                <button type="button" onclick="navigate('progress')" data-nav="progress" title="Progreso" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button type="button" onclick="navigate('social')" data-nav="social" title="Comunidad" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0C]">
+                    <span class="text-lg">👥</span><span class="sidebar-label">Comunidad</span>
+                </button>
+                <button type="button" onclick="navigate('progress')" data-nav="progress" title="Progreso" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0C]">
                     <span class="text-lg">📊</span><span class="sidebar-label">Progreso</span>
                 </button>
-                <button type="button" onclick="navigate('settings')" data-nav="settings" title="Ajustes" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0F]">
+                <button type="button" onclick="navigate('settings')" data-nav="settings" title="Ajustes" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0A0A0C]">
                     <span class="text-lg">⚙️</span><span class="sidebar-label">Ajustes</span>
                 </button>
             </nav>
@@ -120,10 +123,11 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
         
         <!-- MAIN -->
         <main id="app-main" class="flex-1 md:pl-64 pb-24 md:pb-12 transition-all duration-200">
-            <header class="h-16 px-4 sm:px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#28283C]">
+            <header class="h-16 px-4 sm:px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#1F1F26]">
                 <h2 id="header-greeting" class="text-base sm:text-lg font-extrabold truncate">Hola, Usuario</h2>
                 <div class="flex items-center space-x-2">
-                    <span class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] text-xs font-bold">🔥 <span id="streak-count">0 d</span></span>
+                    <button type="button" onclick="openQuickCaptureModal()" class="px-3 py-1 rounded-full bg-accent/15 border border-accent/40 text-accent text-xs font-extrabold">⚡ Captura Rápida</button>
+                    <span class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-[#121216] border border-gray-200 dark:border-[#1F1F26] text-xs font-bold xp-gamified-badge">🔥 <span id="streak-count">0 d</span></span>
                     <span class="px-3 py-1 rounded-full bg-accent/15 border border-accent/40 text-accent text-xs font-extrabold">Día <span id="daily-score-pct">0</span>%</span>
                 </div>
             </header>
@@ -132,20 +136,20 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
 
                 <!-- 1. SECCIÓN MI DÍA -->
                 <section id="view-dashboard" class="app-view grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#121216] border border-gray-200 dark:border-[#1F1F26]">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-xs font-bold uppercase text-gray-400">Balance Consolidado</span>
-                            <button type="button" onclick="toggleBalancePrivacy()" class="text-sm">👁️‍🗨️</button>
+                            <button type="button" onclick="toggleBalancePrivacy()" class="text-xs font-bold text-gray-400 hover:text-white">👁️ Ver/Ocultar</button>
                         </div>
                         <div id="dashboard-total-balance" class="text-3xl font-black my-2">Bs •••••</div>
                         <div class="flex gap-2 mt-4">
-                            <button type="button" onclick="openTxModal('gasto')" class="flex-1 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-bold">+ Gasto</button>
+                            <button type="button" onclick="openTxModal('gasto')" class="flex-1 py-2 rounded-xl bg-amber-500/15 text-amber-400 text-xs font-bold">+ Gasto</button>
                             <button type="button" onclick="openTxModal('ingreso')" class="flex-1 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-bold">+ Ingreso</button>
-                            <button type="button" onclick="openReceiptScannerModal()" class="py-2 px-3 rounded-xl bg-accent/20 text-accent text-xs font-bold" title="Escanear QR/Recibo">📷 IA</button>
+                            <button type="button" onclick="openReceiptScannerModal()" class="py-2 px-3 rounded-xl bg-accent/20 text-accent text-xs font-bold">📷 IA</button>
                         </div>
                     </div>
 
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#121216] border border-gray-200 dark:border-[#1F1F26]">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-extrabold">Hábitos de Hoy</h3>
                             <button type="button" onclick="openHabitModal()" class="text-xs font-bold text-accent">+ Nuevo</button>
@@ -153,7 +157,7 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
                         <div id="dashboard-habits-list" class="space-y-2.5"></div>
                     </div>
 
-                    <div class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                    <div class="p-6 rounded-2xl bg-white dark:bg-[#121216] border border-gray-200 dark:border-[#1F1F26]">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-extrabold">Agenda de Hoy</h3>
                             <div class="space-x-2">
@@ -162,6 +166,18 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
                             </div>
                         </div>
                         <div id="dashboard-agenda-list" class="space-y-2.5"></div>
+                    </div>
+
+                    <!-- Tarjeta de Comunidad y Amigos debajo del resumen principal -->
+                    <div class="lg:col-span-3 p-5 rounded-2xl bg-white dark:bg-[#121216] border border-[#8B5CF6]/40 flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-base font-black">👥 Comunidad y Amigos</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Comparte entrenamientos, clona rutinas públicas y compara récords. Tus finanzas son 100% privadas.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="navigate('progress')" class="px-4 py-2.5 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] text-xs font-bold text-gray-200">Ver Progreso y Analíticas →</button>
+                            <button type="button" onclick="navigate('social')" class="px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-extrabold">Abrir Comunidad →</button>
+                        </div>
                     </div>
 
                     <!-- Tarjeta de qué entrenamiento toca hoy -->
@@ -173,34 +189,34 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div class="flex flex-wrap gap-2">
                             <button type="button" onclick="setPlanSubTab('calendar')" id="btn-plan-calendar" class="px-3.5 py-2 rounded-xl bg-accent text-white text-xs font-bold">📅 Calendario</button>
-                            <button type="button" onclick="setPlanSubTab('tasks')" id="btn-plan-tasks" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">✅ Tareas</button>
-                            <button type="button" onclick="setPlanSubTab('events')" id="btn-plan-events" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">🗓️ Eventos</button>
-                            <button type="button" onclick="setPlanSubTab('inbox')" id="btn-plan-inbox" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">📥 Inbox</button>
-                            <button type="button" onclick="setPlanSubTab('projects')" id="btn-plan-projects" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">📁 Proyectos</button>
+                            <button type="button" onclick="setPlanSubTab('tasks')" id="btn-plan-tasks" class="px-3.5 py-2 rounded-xl bg-[#121216] border border-[#1F1F26] text-xs font-bold">✅ Tareas</button>
+                            <button type="button" onclick="setPlanSubTab('events')" id="btn-plan-events" class="px-3.5 py-2 rounded-xl bg-[#121216] border border-[#1F1F26] text-xs font-bold">🗓️ Eventos</button>
+                            <button type="button" onclick="setPlanSubTab('inbox')" id="btn-plan-inbox" class="px-3.5 py-2 rounded-xl bg-[#121216] border border-[#1F1F26] text-xs font-bold">📥 Inbox</button>
+                            <button type="button" onclick="setPlanSubTab('projects')" id="btn-plan-projects" class="px-3.5 py-2 rounded-xl bg-[#121216] border border-[#1F1F26] text-xs font-bold">📁 Proyectos</button>
                         </div>
                         <div class="flex gap-2">
-                            <button type="button" onclick="openProjectModal()" class="px-3.5 py-2 rounded-xl bg-[#181824] border border-[#28283C] text-xs font-bold">+ Proyecto</button>
+                            <button type="button" onclick="openProjectModal()" class="px-3.5 py-2 rounded-xl bg-[#121216] border border-[#1F1F26] text-xs font-bold">+ Proyecto</button>
                             <button type="button" onclick="openTaskModal(false)" class="px-3.5 py-2 rounded-xl bg-accent text-white text-xs font-bold">+ Tarea</button>
                             <button type="button" onclick="openTaskModal(true)" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold">+ Evento</button>
                         </div>
                     </div>
 
-                    <div id="plan-sub-calendar" class="p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C]">
+                    <div id="plan-sub-calendar" class="p-6 rounded-2xl bg-white dark:bg-[#121216] border border-gray-200 dark:border-[#1F1F26]">
                         <div class="flex justify-between items-center mb-4">
-                            <button type="button" onclick="changeCalendarMonth(-1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs">←</button>
+                            <button type="button" onclick="changeCalendarMonth(-1)" class="px-3 py-1 rounded-lg bg-[#0A0A0C] border border-[#1F1F26] text-xs">← Ant.</button>
                             <h4 id="calendar-month-label" class="text-base font-extrabold capitalize"></h4>
-                            <button type="button" onclick="changeCalendarMonth(1)" class="px-3 py-1 rounded-lg bg-[#0A0A0F] border border-[#28283C] text-xs">→</button>
+                            <button type="button" onclick="changeCalendarMonth(1)" class="px-3 py-1 rounded-lg bg-[#0A0A0C] border border-[#1F1F26] text-xs">Sig. →</button>
                         </div>
                         <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-gray-400 mb-2">
                             <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
                         </div>
                         <div id="calendar-grid-days" class="grid grid-cols-7 gap-1.5"></div>
-                        <div id="calendar-selected-day-items" class="mt-6 pt-4 border-t border-[#28283C] space-y-2"></div>
+                        <div id="calendar-selected-day-items" class="mt-6 pt-4 border-t border-[#1F1F26] space-y-2"></div>
                     </div>
 
-                    <div id="plan-sub-tasks" class="hidden p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-2"><div id="plan-tasks-container" class="space-y-2"></div></div>
-                    <div id="plan-sub-events" class="hidden p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-2"><div id="plan-events-container" class="space-y-2"></div></div>
-                    <div id="plan-sub-inbox" class="hidden p-6 rounded-2xl bg-white dark:bg-[#181824] border border-gray-200 dark:border-[#28283C] space-y-2"><div id="plan-inbox-container" class="space-y-2"></div></div>
+                    <div id="plan-sub-tasks" class="hidden p-6 rounded-2xl bg-white dark:bg-[#121216] border border-gray-200 dark:border-[#1F1F26] space-y-2"><div id="plan-tasks-container" class="space-y-2"></div></div>
+                    <div id="plan-sub-events" class="hidden p-6 rounded-2xl bg-white dark:bg-[#121216] border border-gray-200 dark:border-[#1F1F26] space-y-2"><div id="plan-events-container" class="space-y-2"></div></div>
+                    <div id="plan-sub-inbox" class="hidden p-6 rounded-2xl bg-white dark:bg-[#121216] border border-gray-200 dark:border-[#1F1F26] space-y-2"><div id="plan-inbox-container" class="space-y-2"></div></div>
                     <div id="plan-sub-projects" class="hidden"><div id="plan-projects-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div>
                 </section>
 
@@ -210,19 +226,25 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
                 <!-- 4. SECCIÓN ENTRENAMIENTO -->
                 <section id="view-workouts" class="app-view hidden space-y-6"></section>
 
-                <!-- 5. SECCIÓN PROGRESO -->
+                <!-- 5. SECCIÓN COMUNIDAD -->
+                <section id="view-social" class="app-view hidden space-y-6"></section>
+
+                <!-- 6. SECCIÓN PROGRESO -->
                 <section id="view-progress" class="app-view hidden space-y-6"></section>
 
-                <!-- 6. SECCIÓN AJUSTES -->
+                <!-- 7. SECCIÓN AJUSTES -->
                 <section id="view-settings" class="app-view hidden space-y-6">
-                    <h3 class="text-xl font-black">Ajustes y Configuración General</h3>
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <h3 class="text-xl font-black">Ajustes y Configuración General</h3>
+                        <button type="button" onclick="navigate('progress')" class="px-4 py-2 rounded-xl bg-[#121216] border border-[#8B5CF6]/50 text-[#8B5CF6] text-xs font-extrabold">Ver Progreso y Analíticas →</button>
+                    </div>
                     <div id="settings-full-container"></div>
                 </section>
 
             </div>
 
-            <!-- BARRA INFERIOR DE NAVEGACIÓN MÓVIL (Visible solo en pantallas < 768px) -->
-            <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-[#181824] border-t border-gray-200 dark:border-[#28283C] px-1 py-1.5 flex items-center justify-around">
+            <!-- BARRA INFERIOR DE NAVEGACIÓN MÓVIL (Con icono + etiqueta de texto) -->
+            <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-[#121216] border-t border-gray-200 dark:border-[#1F1F26] px-1 py-1.5 flex items-center justify-around">
                 <button type="button" onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl bg-accent/15 text-accent font-bold text-[10px]">
                     <span class="text-base">🏠</span><span>Inicio</span>
                 </button>
@@ -235,8 +257,8 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
                 <button type="button" onclick="navigate('workouts')" data-nav="workouts" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-gray-400 text-[10px]">
                     <span class="text-base">🏋️</span><span>Gym</span>
                 </button>
-                <button type="button" onclick="navigate('progress')" data-nav="progress" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-gray-400 text-[10px]">
-                    <span class="text-base">📊</span><span>Progreso</span>
+                <button type="button" onclick="navigate('social')" data-nav="social" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-gray-400 text-[10px]">
+                    <span class="text-base">👥</span><span>Social</span>
                 </button>
                 <button type="button" onclick="navigate('settings')" data-nav="settings" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-gray-400 text-[10px]">
                     <span class="text-base">⚙️</span><span>Ajustes</span>
@@ -247,10 +269,10 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
 
     <!-- MODAL UNIVERSAL -->
     <div id="universal-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75">
-        <div class="w-full max-w-md p-6 rounded-3xl bg-[#181824] border border-[#28283C]">
+        <div class="w-full max-w-md p-6 rounded-3xl bg-[#121216] border border-[#1F1F26]">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="modal-title" class="text-base font-extrabold"></h3>
-                <button type="button" onclick="closeUniversalModal()">✕</button>
+                <button type="button" onclick="closeUniversalModal()" class="text-xs font-bold text-gray-400 hover:text-white">Cerrar ✕</button>
             </div>
             <div id="modal-body"></div>
         </div>
@@ -274,7 +296,6 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
         const ts = Date.now();
         const modules = {};
 
-        // 1. Cargar Firebase Sync PRIMERO
         try {
             modules.sync = await import(`./firebase-sync.js?v=${ts}`);
         } catch (e) {
@@ -282,7 +303,6 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
             alert("Error en firebase-sync.js: " + e.message);
         }
 
-        // 2. Cargar cada módulo visual de forma aislada
         const loadSafe = async (key, path) => {
             try {
                 modules[key] = await import(`${path}?v=${ts}`);
@@ -299,8 +319,14 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
             loadSafe('work', './ui-workouts.js'),
             loadSafe('prog', './ui-progress.js'),
             loadSafe('set', './ui-settings.js'),
-            loadSafe('notif', './notifications.js')
+            loadSafe('notif', './notifications.js'),
+            loadSafe('social', './social/social-views.js'),
+            loadSafe('socialSvc', './social/social-service.js'),
+            loadSafe('onboard', './onboarding.js'),
+            loadSafe('quick', './quick-capture.js')
         ]);
+
+        try { modules.quick?.initQuickCaptureBar(); } catch (e) { console.error(e); }
 
         window.navigate = (v) => {
             document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
@@ -318,6 +344,10 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
             if (v === 'plan') (modules.plan?.renderPlanModule || window.renderPlanModule)?.();
             if (v === 'finances') (modules.fin?.renderFinances || window.renderFinances)?.();
             if (v === 'workouts') (modules.work?.renderWorkouts || window.renderWorkouts)?.();
+            if (v === 'social') {
+                const socialContainer = document.getElementById('view-social');
+                if (socialContainer) modules.social?.renderSocialHub(socialContainer);
+            }
             if (v === 'progress') (modules.prog?.renderProgressModule || window.renderProgressModule)?.();
             if (v === 'settings') (modules.set?.renderSettings || window.renderSettings)?.();
         };
@@ -333,7 +363,6 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
         };
         window.toggleTaskCheck = (docId, s) => modules.sync?.fsActions.updateItem('tasks', docId, { isCompleted: s });
 
-        // 3. Iniciar sincronización y sesión
         if (modules.sync?.initSync) {
             modules.sync.initSync(() => {
                 const p = window.state.profile || {};
@@ -366,6 +395,8 @@ body.weavax-silent-mode .xp-progress-bar { display: none !important; }
                 if (p.themeColor) document.documentElement.style.setProperty('--color-primary', p.themeColor);
 
                 try { modules.pro?.initProState(); } catch (e) { console.error(e); }
+                try { modules.onboard?.checkAndLaunchOnboarding(); } catch (e) { console.error(e); }
+                try { modules.socialSvc?.syncPublicProfile(); } catch (e) { console.error(e); }
                 try { (modules.dash?.renderDashboard || window.renderDashboard)?.(); } catch (e) { console.error(e); }
                 try { (modules.plan?.renderPlanModule || window.renderPlanModule)?.(); } catch (e) { console.error(e); }
                 try { (modules.fin?.renderFinances || window.renderFinances)?.(); } catch (e) { console.error(e); }
