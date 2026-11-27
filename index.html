@@ -1,36 +1,28 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
+<html lang="es" class="dark scroll-smooth">
 <head>
-    <link rel="icon" type="image/png" href="weavax_logo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeaVax · LifeOS, Finanzas, Entrenamiento & Agenda</title>
-    <meta name="description" content="WeaVax LifeOS: Sistema operativo personal integral. Gestiona hábitos, finanzas multi-moneda, entrenamientos y agenda con sincronización bidireccional en Google Calendar para Android y Web PC.">
-    <!-- Tailwind CSS CDN -->
+    <title>WeaVax · Tu Sistema Operativo Personal (Gym, Finanzas, Hábitos y Comunidad)</title>
+    <meta name="description" content="WeaVax LifeOS v3.0: entrenamiento con sobrecarga progresiva, comunidad fitness privada, finanzas con escáner IA y Excel dinámico, hábitos y productividad sin culpa. Cero anuncios y offline-first.">
+    <meta name="theme-color" content="#0A0A0C">
+    <link rel="icon" type="image/png" href="./weavax_logo.png">
+    <link rel="apple-touch-icon" href="./weavax_logo.png">
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <!-- Google Fonts Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        darkBg: '#0B0A12',
-                        darkCard: '#151324',
-                        darkCardHover: '#1D1A32',
-                        darkBorder: '#27233D',
-                        purplePrimary: '#8B5CF6',
-                        purpleLight: '#A78BFA',
-                        purpleGlow: 'rgba(139, 92, 246, 0.15)',
-                        greenAccent: '#10B981',
-                        amberAccent: '#F59E0B',
-                        redAccent: '#EF4444',
+                        obsidian: '#0A0A0C',
+                        card: '#121216',
+                        stroke: '#1F1F26',
+                        violetAccent: '#8B5CF6',
+                        emeraldOk: '#10B981',
+                        amberWarn: '#F59E0B'
                     }
                 }
             }
@@ -38,598 +30,408 @@
     </script>
     <style>
         body {
-            background-color: #0B0A12;
-            color: #E2E8F0;
             font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
+            background-color: #0A0A0C;
+            color: #F9FAFB;
+            font-variant-numeric: tabular-nums;
         }
-        .glow-effect {
-            box-shadow: 0 0 50px -10px rgba(139, 92, 246, 0.35);
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.85);
+            backdrop-filter: blur(14px);
         }
-        .hero-mesh {
-            background: radial-gradient(circle at 50% 10%, rgba(139, 92, 246, 0.25) 0%, rgba(11, 10, 18, 0) 70%);
-        }
-        .glass-panel {
-            background: rgba(21, 19, 36, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(139, 92, 246, 0.2);
+        .glow-violet {
+            box-shadow: 0 0 40px -10px rgba(139, 92, 246, 0.35);
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-purplePrimary selection:text-white">
+<body class="bg-[#0A0A0C] text-gray-100 antialiased selection:bg-[#8B5CF6] selection:text-white">
 
-    <!-- BARRA DE NAVEGACIÓN SUPERIOR (LIMPIA) -->
-    <header class="sticky top-0 z-50 bg-[#0B0A12]/80 backdrop-blur-md border-b border-darkBorder">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <!-- Logo WeaVax (Sin recuadro exterior) -->
-            <a href="javascript:void(0)" onclick="showSection('home')" class="flex items-center space-x-2.5 group">
-                <img src="weavax_logo.png" alt="WeaVax Logo" class="w-8 h-8 object-contain group-hover:scale-105 transition-transform duration-200">
-                <span class="text-xl font-extrabold tracking-tight text-white flex items-center">
-                    WeaVax
-                </span>
+    <!-- NAVEGACIÓN SUPERIOR -->
+    <header class="sticky top-0 z-50 glass-nav border-b border-[#1F1F26]">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <a href="#" class="flex items-center space-x-2.5">
+                <img src="./weavax_logo.png" alt="Logo de WeaVax" class="w-8 h-8 object-contain">
+                <span class="font-black text-lg tracking-tight text-white">WeaVax</span>
+                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#8B5CF6]/20 text-[#8B5CF6] border border-[#8B5CF6]/40">v3.0</span>
             </a>
 
-           <!-- Enlaces centrales de navegación -->
-            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-400">
-                <a href="#modulos" onclick="scrollToAnchor('modulos')" class="hover:text-white transition-colors">Módulos</a>
-                <a href="/app/" class="text-purpleLight hover:text-white transition-colors font-semibold flex items-center">
-                    <span class="w-1.5 h-1.5 rounded-full bg-greenAccent mr-1.5 animate-pulse"></span>
-                    Entrar a Web PC
-                </a>
-                <a href="#google-sync" onclick="scrollToAnchor('google-sync')" class="hover:text-white transition-colors">Sincronización</a>
+            <nav class="hidden md:flex items-center space-x-6 text-xs font-semibold text-gray-400">
+                <a href="#comunidad" class="hover:text-white transition-colors">Comunidad Fitness</a>
+                <a href="#captura-rapida" class="hover:text-white transition-colors">Captura 2s & IA</a>
+                <a href="#excel-dinamico" class="hover:text-white transition-colors">Excel (.xlsx)</a>
+                <a href="#sin-culpa" class="hover:text-white transition-colors">Sin Culpa</a>
+                <a href="#planes" class="hover:text-white transition-colors">Gratis vs. Pro</a>
+                <a href="#privacidad" class="hover:text-white transition-colors">Privacidad</a>
             </nav>
 
-            <!-- Acciones Derecha -->
             <div class="flex items-center space-x-2.5">
-                <a href="/app/" class="flex items-center space-x-1.5 text-xs font-bold text-white bg-darkCard hover:bg-darkCardHover border border-purplePrimary/50 px-3.5 py-2 rounded-xl transition-all duration-200">
-                    <svg class="w-4 h-4 text-purpleLight" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                    <span>Abrir Web App</span>
-                </a>
-                <a href="https://github.com/weavax-app/WeaVax/releases/latest/download/WeaVax.apk" download="WeaVax.apk" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2 text-xs font-bold text-white bg-purplePrimary hover:bg-purpleLight px-3.5 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-purplePrimary/30">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span class="hidden sm:inline">Descargar APK</span>
+                <a href="./app/" class="px-4 py-2 rounded-xl bg-[#8B5CF6] hover:opacity-90 text-white text-xs font-extrabold transition-all shadow-lg">
+                    Abrir Web App →
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- CONTENEDOR PRINCIPAL -->
-    <main class="flex-grow">
+    <!-- HERO SECTION -->
+    <section class="relative overflow-hidden pt-16 pb-20 sm:pt-24 sm:pb-28 border-b border-[#1F1F26]">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 text-center space-y-6">
+            <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-[#121216] border border-[#1F1F26] text-xs font-bold text-gray-300">
+                <span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                <span>Android + Web + Desktop · Sincronización en tiempo real · 0% Anuncios</span>
+            </div>
 
-        <!-- ======================================================== -->
-        <!-- VISTA 1: HOME (LANDING PAGE & PRODUCT EXPERIENCE) -->
-        <!-- ======================================================== -->
-        <div id="view-home" class="block">
-            <!-- Hero Section -->
-            <div class="relative hero-mesh pt-16 pb-24 px-4 sm:px-6">
-                <div class="max-w-4xl mx-auto text-center">
-                    <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-purplePrimary/15 border border-purplePrimary/40 text-purpleLight text-xs font-semibold mb-6">
-                        <span class="w-2 h-2 rounded-full bg-greenAccent animate-pulse"></span>
-                        <span>Ecosistema Multiplataforma · Android Nativo & Próximamente Web para PC</span>
+            <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-[1.08]">
+                Entrena con ciencia, domina tus finanzas y organiza tu vida <span class="text-[#8B5CF6]">sin fricción.</span>
+            </h1>
+
+            <p class="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                WeaVax v3.0 unifica tus rutinas de gimnasio, comunidad fitness privada, finanzas personales con escáner IA, reportes Excel dinámicos y hábitos diarios en una arquitectura offline-first instantánea.
+            </p>
+
+            <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <a href="./app/" class="px-6 py-3.5 rounded-2xl bg-[#8B5CF6] hover:opacity-90 text-white text-sm font-extrabold glow-violet transition-all">
+                    Entrar a WeaVax Web App →
+                </a>
+                <a href="#planes" class="px-6 py-3.5 rounded-2xl bg-[#121216] border border-[#1F1F26] hover:border-[#8B5CF6] text-gray-200 text-sm font-bold transition-all">
+                    Comparar Gratis vs. Pro
+                </a>
+            </div>
+
+            <!-- Métricas Clave -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto pt-8">
+                <div class="p-4 rounded-2xl bg-[#121216] border border-[#1F1F26]">
+                    <div class="text-xl font-black text-white">0 Anuncios</div>
+                    <div class="text-[11px] text-gray-400 mt-0.5">En plan Gratis y Pro</div>
+                </div>
+                <div class="p-4 rounded-2xl bg-[#121216] border border-[#1F1F26]">
+                    <div class="text-xl font-black text-[#10B981]">100% Privado</div>
+                    <div class="text-[11px] text-gray-400 mt-0.5">Finanzas y tareas blindadas</div>
+                </div>
+                <div class="p-4 rounded-2xl bg-[#121216] border border-[#1F1F26]">
+                    <div class="text-xl font-black text-[#8B5CF6]">2 Segundos</div>
+                    <div class="text-[11px] text-gray-400 mt-0.5">Captura por voz o texto</div>
+                </div>
+                <div class="p-4 rounded-2xl bg-[#121216] border border-[#1F1F26]">
+                    <div class="text-xl font-black text-amber-400">Offline-First</div>
+                    <div class="text-[11px] text-gray-400 mt-0.5">Sin esperas en el gimnasio</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 1. RED SOCIAL FITNESS & COMUNIDAD PRIVADA -->
+    <section id="comunidad" class="py-20 border-b border-[#1F1F26]">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div class="lg:col-span-6 space-y-5">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-[#8B5CF6]/15 text-[#8B5CF6] border border-[#8B5CF6]/30">
+                    Nuevo en v3.0 · Red Social Fitness
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                    Comparte tus entrenamientos, clona rutinas y compite cara a cara.
+                </h2>
+                <p class="text-sm text-gray-400 leading-relaxed">
+                    Conecta con tus compañeros de gimnasio mediante <strong class="text-white">@usuario</strong>. Publica tus sesiones con volumen levantado, récords (1RM) y etiqueta con quién entrenaste, manteniendo el control total sobre tu privacidad.
+                </p>
+
+                <ul class="space-y-3 text-xs text-gray-300">
+                    <li class="flex items-start space-x-2.5">
+                        <span class="text-[#8B5CF6] font-black">🔥</span>
+                        <span><strong>Muro de Entrenamientos y Reacciones:</strong> Comparte tu sesión con desglose de series, etiqueta amigos (<em>"Entrenó con @usuario"</em>) y recibe reacciones y comentarios.</span>
+                    </li>
+                    <li class="flex items-start space-x-2.5">
+                        <span class="text-[#8B5CF6] font-black">⚔️</span>
+                        <span><strong>Comparador VS y Clonado de Rutinas:</strong> Compara tus levantamientos máximos (PRs) ejercicio por ejercicio frente a un amigo y guarda sus rutinas públicas en tu biblioteca con un clic.</span>
+                    </li>
+                    <li class="flex items-start space-x-2.5">
+                        <span class="text-[#10B981] font-black">🛡️</span>
+                        <span><strong>Tus finanzas son 100% privadas:</strong> Tus cuentas bancarias, transacciones, presupuestos, tareas y notas privadas jamás son visibles para otros usuarios.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tarjeta Preview Simulada del Muro Social -->
+            <div class="lg:col-span-6">
+                <div class="p-6 rounded-3xl bg-[#121216] border border-[#1F1F26] space-y-4 shadow-2xl">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-[#8B5CF6]/20 border border-[#8B5CF6] flex items-center justify-center font-black text-[#8B5CF6]">M</div>
+                            <div>
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="text-sm font-extrabold text-white">Marce</span>
+                                    <span class="text-xs text-gray-400">@marce_fit</span>
+                                    <span class="px-1.5 py-0.5 rounded bg-[#8B5CF6]/20 text-[#8B5CF6] text-[9px] font-black">PRO</span>
+                                </div>
+                                <p class="text-[11px] text-[#10B981] font-bold">🤝 Entrenó con @chibolo · Hoy</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[11px] font-bold">🏆 Nuevo PR 1RM</span>
                     </div>
 
-                    <h1 class="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight sm:leading-none">
-                        Domina tus <span class="bg-gradient-to-r from-purplePrimary via-purpleLight to-pink-500 bg-clip-text text-transparent">Hábitos, Finanzas</span> y Entrenamiento.
-                    </h1>
-
-                    <p class="mt-6 text-base sm:text-lg text-gray-300 max-w-2xl mx-auto font-normal leading-relaxed">
-                        Tu sistema operativo personal definitivo. Una arquitectura local-first con sincronización continua en la nube, diseñada para potenciar tu disciplina diaria desde tu teléfono y muy pronto desde tu computadora.
-                    </p>
-
-                    <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <a href="https://github.com/weavax-app/WeaVax/releases/latest/download/WeaVax.apk" download="WeaVax.apk" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2 text-xs font-bold text-white bg-purplePrimary hover:bg-purpleLight px-3.5 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-purplePrimary/30">
-    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="7 10 12 15 17 10"></polyline>
-        <line x1="12" y1="15" x2="12" y2="3"></line>
-    </svg>
-    <span>Descargar APK</span>
-</a>
-                        <a href="#web-pc" onclick="scrollToAnchor('web-pc')" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl bg-darkCard border border-darkBorder hover:border-purplePrimary/50 text-gray-300 hover:text-white font-semibold text-sm transition-all">
-                            <svg class="w-4 h-4 text-purpleLight" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                            <span>Explorar Web PC</span>
-                        </a>
+                    <div>
+                        <h4 class="text-base font-black text-white">Upper Hypertrophy · Torso Fuerza & Volumen</h4>
+                        <p class="text-xs text-gray-400 mt-1">Top set sólido en press inclinado y superserie de espalda alta + deltoides.</p>
                     </div>
 
-                    <!-- Métricas destacadas -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-16 max-w-3xl mx-auto">
-                        <div class="p-4 rounded-2xl bg-darkCard/60 border border-darkBorder text-center">
-                            <div class="text-2xl font-black text-purpleLight">100%</div>
-                            <div class="text-xs text-gray-400 mt-1">Local-First & Offline</div>
+                    <div class="grid grid-cols-3 gap-2.5 text-center">
+                        <div class="p-3 rounded-xl bg-[#0A0A0C] border border-[#1F1F26]">
+                            <span class="text-[10px] text-gray-400 uppercase font-bold block">Volumen</span>
+                            <span class="text-sm font-black text-white">9,480 kg</span>
                         </div>
-                        <div class="p-4 rounded-2xl bg-darkCard/60 border border-darkBorder text-center">
-                            <div class="text-2xl font-black text-greenAccent">v3</div>
-                            <div class="text-xs text-gray-400 mt-1">Google Calendar Sync</div>
+                        <div class="p-3 rounded-xl bg-[#0A0A0C] border border-[#1F1F26]">
+                            <span class="text-[10px] text-gray-400 uppercase font-bold block">Duración</span>
+                            <span class="text-sm font-black text-white">68 min</span>
                         </div>
-                        <div class="p-4 rounded-2xl bg-darkCard/60 border border-darkBorder text-center">
-                            <div class="text-2xl font-black text-amberAccent">IA</div>
-                            <div class="text-xs text-gray-400 mt-1">Coach & Escáner</div>
+                        <div class="p-3 rounded-xl bg-[#0A0A0C] border border-[#1F1F26]">
+                            <span class="text-[10px] text-gray-400 uppercase font-bold block">Series</span>
+                            <span class="text-sm font-black text-[#10B981]">18</span>
                         </div>
-                        <div class="p-4 rounded-2xl bg-darkCard/60 border border-darkBorder text-center">
-                            <div class="text-2xl font-black text-pink-400">PC</div>
-                            <div class="text-xs text-gray-400 mt-1">Acceso Web Próximo</div>
-                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-[#1F1F26] text-xs">
+                        <span class="px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-extrabold">🔥 14 Reacciones</span>
+                        <span class="text-gray-400 font-bold">💬 4 Comentarios · 📚 Clonar Rutina</span>
                     </div>
                 </div>
             </div>
-
-            <!-- ======================================================== -->
-            <!-- SECCIÓN DEDICADA: DESCARGA DE WEAVAX APK (ANDROID)       -->
-            <!-- ======================================================== -->
-            <section id="descargar" class="py-16 px-4 sm:px-6 max-w-6xl mx-auto border-t border-darkBorder scroll-mt-20">
-                <div class="rounded-3xl p-8 sm:p-12 glass-panel border border-purplePrimary/40 relative overflow-hidden bg-gradient-to-br from-darkCard via-darkCard to-purplePrimary/10 shadow-2xl">
-                    <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-purplePrimary/20 rounded-full blur-3xl pointer-events-none"></div>
-                    <div class="absolute -right-20 -top-20 w-80 h-80 bg-greenAccent/15 rounded-full blur-3xl pointer-events-none"></div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-                        <!-- Columna Izquierda: Información de Descarga y Botón Principal (7 cols) -->
-                        <div class="lg:col-span-7">
-                            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-greenAccent/15 border border-greenAccent/30 text-greenAccent text-xs font-bold mb-4">
-                                <span class="w-2 h-2 rounded-full bg-greenAccent animate-pulse"></span>
-                                <span>Descarga Directa Oficial · Versión 2.12</span>
-                            </div>
-
-                            <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-                                Instala WeaVax en tu <span class="bg-gradient-to-r from-purpleLight to-greenAccent bg-clip-text text-transparent">Android</span>
-                            </h2>
-
-                            <p class="text-sm sm:text-base text-gray-300 mt-4 leading-relaxed">
-                                Obtén el archivo APK oficial directamente desde nuestro dominio, sin intermediarios ni demoras. Tu sistema operativo personal con sincronización a Google Calendar listo en tu teléfono.
-                            </p>
-
-                            <!-- Botón Principal de Descarga APK -->
-                          <!-- BLOQUE ACTUALIZADO -->
-<div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-    <!-- Descarga directa vía GitHub Releases -->
-    <a href="https://github.com/weavax-app/WeaVax/releases/latest/download/weavax.apk" 
-       download="weavax.apk" 
-       class="inline-flex items-center justify-center space-x-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-purplePrimary via-purpleLight to-purplePrimary text-white font-extrabold text-base transition-all duration-300 shadow-xl shadow-purplePrimary/30 hover:scale-[1.02] active:scale-[0.98]">
-        <svg class="w-6 h-6 text-white animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-        <div class="text-left">
-            <div class="leading-none">Descargar APK Oficial</div>
-            <div class="text-[11px] font-normal text-purple-200 mt-1">weavax.apk (~45 MB) · Última versión estable</div>
         </div>
-    </a>
+    </section>
 
-    <!-- Enlace directo alternativo / Copiar -->
-    <div class="flex items-center justify-between sm:justify-start space-x-2 px-4 py-3 rounded-xl bg-darkBg/80 border border-darkBorder text-xs text-gray-400 font-mono">
-        <span class="truncate max-w-[200px] sm:max-w-[240px]">github.com/weavax-app/.../weavax.apk</span>
-        <button onclick="navigator.clipboard.writeText('https://github.com/weavax-app/WeaVax/releases/latest/download/WeaVax.apk'); alert('¡Enlace de descarga directa copiado al portapapeles!');" title="Copiar enlace directo" class="p-1.5 rounded-lg bg-darkCard hover:bg-purplePrimary/20 text-purpleLight hover:text-white transition-colors">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        </button>
-    </div>
-</div>
+    <!-- 2. CAPTURA RÁPIDA EN 2 SEGUNDOS (LENGUAJE NATURAL + VOZ + ESCÁNER IA) -->
+    <section id="captura-rapida" class="py-20 border-b border-[#1F1F26]">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
+                    Captura Multimodal · Ctrl / Cmd + K
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                    Registra en 2 segundos con voz, texto natural o foto.
+                </h2>
+                <p class="text-sm text-gray-400">
+                    Olvídate de navegar entre cinco menús para anotar un café o una serie. Escribe o dicta como hablas y WeaVax clasifica automáticamente el módulo correcto.
+                </p>
+            </div>
 
-                            <!-- Ficha de especificaciones técnicas -->
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
-                                <div class="p-3 rounded-xl bg-darkBg/60 border border-darkBorder">
-                                    <div class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Versión</div>
-                                    <div class="text-sm font-bold text-white mt-0.5">2.12 Estable</div>
-                                </div>
-                                <div class="p-3 rounded-xl bg-darkBg/60 border border-darkBorder">
-                                    <div class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Compatibilidad</div>
-                                    <div class="text-sm font-bold text-greenAccent mt-0.5">Android 8.0+</div>
-                                </div>
-                                <div class="p-3 rounded-xl bg-darkBg/60 border border-darkBorder">
-                                    <div class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Tamaño</div>
-                                    <div class="text-sm font-bold text-white mt-0.5">~45 MB</div>
-                                </div>
-                                <div class="p-3 rounded-xl bg-darkBg/60 border border-darkBorder">
-                                    <div class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Seguridad</div>
-                                    <div class="text-sm font-bold text-purpleLight mt-0.5">Verificado ✓</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Columna Derecha: Guía de Instalación Paso a Paso (5 cols) -->
-                        <div class="lg:col-span-5 bg-darkBg/90 border border-darkBorder/80 rounded-2xl p-6 shadow-inner">
-                            <h3 class="text-sm font-extrabold uppercase tracking-wider text-purpleLight flex items-center mb-4">
-                                <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                                Guía rápida de instalación
-                            </h3>
-
-                            <div class="space-y-4 text-xs">
-                                <div class="flex items-start space-x-3">
-                                    <div class="w-6 h-6 rounded-full bg-purplePrimary/30 text-purpleLight font-black flex items-center justify-center shrink-0 border border-purplePrimary/50">1</div>
-                                    <div>
-                                        <div class="font-bold text-white">Descarga el archivo</div>
-                                        <p class="text-gray-400 mt-0.5">Toca el botón morado. Si Chrome avisa "Este tipo de archivo puede ser dañino", selecciona <strong class="text-gray-200">Descargar de todos modos</strong>.</p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start space-x-3">
-                                    <div class="w-6 h-6 rounded-full bg-purplePrimary/30 text-purpleLight font-black flex items-center justify-center shrink-0 border border-purplePrimary/50">2</div>
-                                    <div>
-                                        <div class="font-bold text-white">Abre el APK</div>
-                                        <p class="text-gray-400 mt-0.5">Al completarse la descarga, pulsa en la notificación o abre <code class="text-purpleLight font-mono">weavax.apk</code> en tu carpeta Descargas.</p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start space-x-3">
-                                    <div class="w-6 h-6 rounded-full bg-purplePrimary/30 text-purpleLight font-black flex items-center justify-center shrink-0 border border-purplePrimary/50">3</div>
-                                    <div>
-                                        <div class="font-bold text-white">Habilita orígenes desconocidos</div>
-                                        <p class="text-gray-400 mt-0.5">Si Android pide autorización, toca <strong class="text-gray-200">Configuración</strong> y activa <strong class="text-gray-200">Permitir desde esta fuente</strong>.</p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start space-x-3">
-                                    <div class="w-6 h-6 rounded-full bg-greenAccent/20 text-greenAccent font-black flex items-center justify-center shrink-0 border border-greenAccent/40">4</div>
-                                    <div>
-                                        <div class="font-bold text-white">Instala y disfruta</div>
-                                        <p class="text-gray-400 mt-0.5">Presiona <strong class="text-gray-200">Instalar</strong>, abre WeaVax y comienza a organizar tus hábitos, finanzas y entrenamientos.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="p-6 rounded-2xl bg-[#121216] border border-[#1F1F26] space-y-3">
+                    <div class="text-xs font-extrabold text-amber-400 uppercase">💸 Finanzas al instante</div>
+                    <div class="p-3.5 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] font-mono text-xs text-white">
+                        "Gasté 35 bs en almuerzo"
                     </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN: EXPERIENCIA WEB PARA PC -->
-            <section id="web-pc" class="py-16 px-4 sm:px-6 max-w-6xl mx-auto border-t border-darkBorder">
-                <div class="rounded-3xl p-8 sm:p-12 glass-panel border border-purplePrimary/30 relative overflow-hidden">
-                    <div class="absolute -right-20 -top-20 w-80 h-80 bg-purplePrimary/15 rounded-full blur-3xl pointer-events-none"></div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                        <div>
-                            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purplePrimary/20 text-purpleLight text-xs font-bold mb-4">
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                                <span>WeaVax Web Desktop</span>
-                            </div>
-                            <h2 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-                                Tu centro de control en pantalla grande para computadora.
-                            </h2>
-                            <p class="text-sm text-gray-300 mt-4 leading-relaxed">
-                                Preparamos la aplicación web de WeaVax para navegadores de escritorio y para dispositivos IOS por el momento. Podrás iniciar sesión con tu misma cuenta y disfrutar de sincronización instantánea:
-                            </p>
-                            <ul class="mt-4 space-y-2.5 text-xs sm:text-sm text-gray-400">
-                                <li class="flex items-center space-x-2">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-greenAccent"></span>
-                                    <span>Gestión panorámica de finanzas con gráficos ampliados e historial.</span>
-                                </li>
-                                <li class="flex items-center space-x-2">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-greenAccent"></span>
-                                    <span>Planificador semanal y agenda vinculada a Google Calendar en vista extendida.</span>
-                                </li>
-                                <li class="flex items-center space-x-2">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-greenAccent"></span>
-                                    <span>Editor cómodo de rutinas y ejercicios para tu gimnasio.</span>
-                                </li>
-                            </ul>
-                           <!-- REEMPLAZAR EL BLOQUE DE "Estado: En desarrollo activo" POR ESTE BOTÓN: -->
-                            <div class="mt-6 flex flex-wrap items-center gap-4">
-                                <a href="/app/" class="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purplePrimary to-purpleLight hover:opacity-95 text-white font-extrabold text-sm shadow-lg shadow-purplePrimary/30 transition-all">
-                                    <span>Entrar a WeaVax Web (PC / iOS)</span>
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                                </a>
-                                <span class="text-xs text-greenAccent font-semibold flex items-center">
-                                    <span class="w-2 h-2 rounded-full bg-greenAccent mr-1.5 animate-pulse"></span>
-                                    Sincronizado con Firebase Cloud
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Mockup visual estilo ventana de navegador -->
-                        <div class="rounded-2xl bg-darkCard border border-darkBorder shadow-2xl p-4">
-                            <div class="flex items-center space-x-2 mb-3 pb-3 border-b border-darkBorder">
-                                <span class="w-3 h-3 rounded-full bg-redAccent/80"></span>
-                                <span class="w-3 h-3 rounded-full bg-amberAccent/80"></span>
-                                <span class="w-3 h-3 rounded-full bg-greenAccent/80"></span>
-                                <span class="ml-2 text-[11px] text-gray-400 font-mono bg-darkBg px-3 py-0.5 rounded-md border border-darkBorder">
-                                    https://weavax.link/app
-                                </span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-3">
-                                <div class="col-span-2 p-3 rounded-xl bg-darkBg border border-darkBorder">
-                                    <div class="text-[11px] text-gray-400 font-semibold mb-1">Balance Consolidado</div>
-                                    <div class="text-lg font-black text-white">Bs 14,850.00</div>
-                                    <div class="text-[10px] text-greenAccent mt-1">+2,400.00 este mes</div>
-                                </div>
-                                <div class="p-3 rounded-xl bg-darkBg border border-darkBorder text-center">
-                                    <div class="text-[11px] text-gray-400 font-semibold mb-1">Racha Activa</div>
-                                    <div class="text-lg font-black text-purpleLight">🔥 18 Días</div>
-                                </div>
-                            </div>
-                            <div class="mt-3 p-3 rounded-xl bg-darkBg border border-darkBorder flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-                                    <span class="text-[11px] text-gray-300 font-medium">Google Calendar sincronizado</span>
-                                </div>
-                                <span class="text-[10px] font-bold text-greenAccent bg-greenAccent/15 px-2 py-0.5 rounded">Al día</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN: MÓDULOS DE WEAVAX -->
-            <section id="modulos" class="py-16 px-4 sm:px-6 max-w-6xl mx-auto">
-                <div class="text-center max-w-2xl mx-auto mb-12">
-                    <h2 class="text-xs font-bold uppercase tracking-widest text-purpleLight mb-2">Ecosistema Integral</h2>
-                    <p class="text-2xl sm:text-3xl font-extrabold text-white">Diseñado para cada pilar de tu vida</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Tarjeta 1: Gimnasio & Fitness -->
-                    <div class="p-6 rounded-2xl bg-darkCard border border-darkBorder hover:border-purplePrimary/50 transition-all duration-300">
-                        <div class="w-12 h-12 rounded-xl bg-purplePrimary/15 border border-purplePrimary/30 flex items-center justify-center text-purpleLight mb-4">
-                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"></path></svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-white">Entrenamiento & Coach IA</h3>
-                        <p class="text-sm text-gray-400 mt-2 leading-relaxed">
-                            Rutinas estilo Lyfta, series efectivas con descansos automáticos, visualización anatómica 3D y entrenador inteligente para sobrecarga progresiva.
-                        </p>
-                    </div>
-
-                    <!-- Tarjeta 2: Finanzas Inteligentes -->
-                    <div class="p-6 rounded-2xl bg-darkCard border border-darkBorder hover:border-greenAccent/50 transition-all duration-300">
-                        <div class="w-12 h-12 rounded-xl bg-greenAccent/15 border border-greenAccent/30 flex items-center justify-center text-greenAccent mb-4">
-                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-white">Finanzas, Presupuestos & Suscripciones</h3>
-                        <p class="text-sm text-gray-400 mt-2 leading-relaxed">
-                            Cuentas en tus divisas habilitadas, presupuestos mensuales editables, gestión de suscripciones con avisos previos de pago y escáner IA de comprobantes.
-                        </p>
-                    </div>
-
-                    <!-- Tarjeta 3: Hábitos y Daily Score -->
-                    <div class="p-6 rounded-2xl bg-darkCard border border-darkBorder hover:border-amberAccent/50 transition-all duration-300">
-                        <div class="w-12 h-12 rounded-xl bg-amberAccent/15 border border-amberAccent/30 flex items-center justify-center text-amberAccent mb-4">
-                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-white">Hábitos, Daily Score & Rachas</h3>
-                        <p class="text-sm text-gray-400 mt-2 leading-relaxed">
-                            Monitoreo diario de hábitos cuantitativos y cualitativos, gamificación con acumulación de puntos de experiencia (XP) y sistema anti-olvido.
-                        </p>
-                    </div>
-
-                    <!-- Tarjeta 4: Plan & Agenda con Google Calendar -->
-                    <div class="p-6 rounded-2xl bg-darkCard border border-darkBorder hover:border-blue-500/50 transition-all duration-300">
-                        <div class="w-12 h-12 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-4">
-                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-white">Plan & Agenda Bidireccional</h3>
-                        <p class="text-sm text-gray-400 mt-2 leading-relaxed">
-                            Sincronización continua de ida y vuelta con Google Calendar. Metas de ahorro a largo plazo o periódicas con fecha límite en calendario nativo.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN: TRANSPARENCIA Y SINCRONIZACIÓN CON GOOGLE CALENDAR -->
-            <section id="google-sync" class="py-16 px-4 sm:px-6 max-w-6xl mx-auto border-t border-darkBorder">
-                <div class="p-8 rounded-3xl bg-darkCard border border-darkBorder">
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400">
-                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-white">Transparencia y Uso de Datos de Google Calendar</h3>
-                            <p class="text-xs text-gray-400">Cumplimiento estricto de las políticas de privacidad de la API de Google</p>
-                        </div>
-                    </div>
-
-                    <p class="text-sm text-gray-300 leading-relaxed">
-                        WeaVax solicita acceso al alcance de Google Calendar (<code class="px-2 py-0.5 rounded bg-darkBg text-purpleLight border border-darkBorder text-xs font-mono">calendar.events</code>) exclusivamente para ofrecer una sincronización bidireccional entre la agenda del usuario y su calendario principal.
+                    <p class="text-xs text-gray-400">
+                        Detecta el monto, descuenta el saldo de tu cuenta predeterminada y asigna la categoría <strong>Alimentación</strong> automáticamente.
                     </p>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 text-xs text-gray-400">
-                        <div class="p-4 rounded-xl bg-darkBg border border-darkBorder">
-                            <span class="font-bold text-white block mb-1">1. Escritura</span>
-                            Crea, actualiza y elimina automáticamente los eventos y tareas que programas en WeaVax dentro de tu Google Calendar.
-                        </div>
-                        <div class="p-4 rounded-xl bg-darkBg border border-darkBorder">
-                            <span class="font-bold text-white block mb-1">2. Lectura</span>
-                            Descarga tus eventos existentes para mostrarlos unificados en la vista de agenda y en los widgets de tu pantalla de inicio.
-                        </div>
-                        <div class="p-4 rounded-xl bg-darkBg border border-darkBorder">
-                            <span class="font-bold text-white block mb-1">3. Cero Transferencia</span>
-                            Tus datos de calendario jamás se venden, no se comparten con terceros, no se usan para publicidad ni para entrenar modelos de IA.
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- ======================================================== -->
-        <!-- VISTA 2: POLÍTICA DE PRIVACIDAD (DISCRETA) -->
-        <!-- ======================================================== -->
-        <div id="view-privacy" class="hidden max-w-4xl mx-auto px-4 sm:px-6 py-12">
-            <button onclick="showSection('home')" class="mb-6 inline-flex items-center space-x-2 text-xs font-semibold text-purpleLight hover:underline">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                <span>← Volver a la página principal</span>
-            </button>
-
-            <div class="p-8 sm:p-12 rounded-3xl bg-darkCard border border-darkBorder">
-                <div class="border-b border-darkBorder pb-6 mb-8">
-                    <span class="text-xs font-bold uppercase tracking-wider text-purpleLight px-3 py-1 rounded-full bg-purplePrimary/15 border border-purplePrimary/30">Documento Legal Oficial</span>
-                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-3">Política de Privacidad de WeaVax</h1>
-                    <p class="text-xs text-gray-400 mt-1">Última actualización: 4 de noviembre de 2026 · Cochabamba, Bolivia</p>
                 </div>
 
-                <div class="space-y-6 text-sm text-gray-300 leading-relaxed">
-                    <p>
-                        En <strong class="text-white">WeaVax</strong> (operada como una aplicación móvil y de escritorio con arquitectura local-first), la privacidad y la protección de los datos de nuestros usuarios son principios fundamentales. Esta política describe con total transparencia cómo recopilamos, utilizamos, almacenamos y protegemos su información.
-                    </p>
-
-                    <h2 class="text-base font-bold text-white pt-2 border-t border-darkBorder flex items-center">
-                        <span class="w-2 h-2 rounded-full bg-purplePrimary mr-2"></span> 1. Información que recopilamos
-                    </h2>
-                    <ul class="list-disc pl-5 space-y-2 text-gray-400">
-                        <li><strong class="text-white">Datos de cuenta:</strong> Correo electrónico y nombre de usuario para sincronización segura en la nube vía Google Firebase.</li>
-                        <li><strong class="text-white">Datos de productividad y bienestar:</strong> Hábitos, tareas, rutinas de entrenamiento y registros financieros almacenados en una base de datos local SQLite (Room) en su dispositivo.</li>
-                        <li><strong class="text-white">Imágenes de comprobantes financieros:</strong> Procesadas localmente en memoria para extracción de importes sin almacenar fotos en servidores externos.</li>
-                    </ul>
-
-                    <h2 class="text-base font-bold text-white pt-2 border-t border-darkBorder flex items-center">
-                        <span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span> 2. Uso de Datos de Google Calendar (API de Google)
-                    </h2>
-                    <p>
-                        WeaVax solicita acceso al alcance de Google Calendar: <code class="px-2 py-0.5 rounded bg-darkBg text-purpleLight border border-darkBorder text-xs font-mono">https://www.googleapis.com/auth/calendar.events</code>.
-                    </p>
-                    <div class="p-4 rounded-xl bg-darkBg border border-darkBorder text-xs text-gray-300 space-y-2">
-                        <p><strong class="text-white">Finalidad exclusiva:</strong> Sincronización continua de ida y vuelta para reflejar los eventos y tareas agendados por el usuario entre WeaVax y su cuenta de Google Calendar.</p>
-                        <p><strong class="text-white">Garantía de no transferencia:</strong> No comercializamos, no transferimos ni utilizamos los datos obtenidos de las APIs de Google para fines publicitarios, creación de perfiles comerciales, ni entrenamiento de modelos de inteligencia artificial.</p>
-                        <p><strong class="text-white">Conformidad:</strong> El uso de la información recibida de las APIs de Google se apega estrictamente a la <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" class="text-purpleLight underline">Google API Services User Data Policy</a>, incluidos los requisitos de uso limitado.</p>
+                <div class="p-6 rounded-2xl bg-[#121216] border border-[#1F1F26] space-y-3">
+                    <div class="text-xs font-extrabold text-[#8B5CF6] uppercase">🏋️ Series en el Gimnasio</div>
+                    <div class="p-3.5 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] font-mono text-xs text-white">
+                        "4x10 press banca 70 kg"
                     </div>
-
-                    <h2 class="text-base font-bold text-white pt-2 border-t border-darkBorder flex items-center">
-                        <span class="w-2 h-2 rounded-full bg-redAccent mr-2"></span> 3. Eliminación permanente de cuenta y datos
-                    </h2>
-                    <p>
-                        En estricto cumplimiento de las políticas de Google Play, cualquier usuario puede eliminar su cuenta y todos sus datos en cualquier momento desde la aplicación en: <strong class="text-white">Perfil > Privacidad y Seguridad > Zona de Peligro > Eliminar cuenta</strong>. Esta acción elimina de forma irreversible todos los registros de la base de datos local SQLite, los documentos en Google Firestore y la cuenta de Firebase Authentication.
+                    <p class="text-xs text-gray-400">
+                        Añade las 4 series con carga y repeticiones directas a tu sesión activa o crea un registro rápido de volumen.
                     </p>
+                </div>
 
-                    <h2 class="text-base font-bold text-white pt-2 border-t border-darkBorder flex items-center">
-                        <span class="w-2 h-2 rounded-full bg-greenAccent mr-2"></span> 4. Contacto de Privacidad
-                    </h2>
-                    <p class="text-gray-400">
-                        Para ejercer sus derechos de acceso, rectificación o eliminación de datos, puede comunicarse directamente mediante nuestra cuenta oficial de Instagram: <a href="https://www.instagram.com/weavax.app/" target="_blank" rel="noopener noreferrer" class="text-purpleLight underline font-semibold">@weavax.app</a> o al correo vinculado a la app.
+                <div class="p-6 rounded-2xl bg-[#121216] border border-[#1F1F26] space-y-3">
+                    <div class="text-xs font-extrabold text-[#10B981] uppercase">📷 Escáner IA de Comprobantes</div>
+                    <div class="p-3.5 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] font-mono text-xs text-white">
+                        Foto de QR / Recibo Bancario
+                    </div>
+                    <p class="text-xs text-gray-400">
+                        Extrae comercio destinatario, banco de origen, monto decimal exacto y categoría sin digitar un solo número.
                     </p>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- ======================================================== -->
-        <!-- VISTA 3: TÉRMINOS Y CONDICIONES (DISCRETA) -->
-        <!-- ======================================================== -->
-        <div id="view-terms" class="hidden max-w-4xl mx-auto px-4 sm:px-6 py-12">
-            <button onclick="showSection('home')" class="mb-6 inline-flex items-center space-x-2 text-xs font-semibold text-purpleLight hover:underline">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                <span>← Volver a la página principal</span>
-            </button>
+    <!-- 3. REPORTES PROFESIONALES EN EXCEL (.XLSX) DINÁMICO -->
+    <section id="excel-dinamico" class="py-20 border-b border-[#1F1F26]">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div class="lg:col-span-7 p-6 rounded-3xl bg-[#121216] border border-[#1F1F26] space-y-4">
+                <div class="flex items-center justify-between border-b border-[#1F1F26] pb-3">
+                    <span class="text-xs font-black text-[#10B981]">📊 WeaVax_Finanzas_2026.xlsx</span>
+                    <span class="text-[11px] text-gray-400">Multi-hoja · Fórmulas Vivas</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-[11px] font-bold">
+                    <div class="p-2.5 rounded-xl bg-[#0A0A0C] border border-[#10B981]/40 text-[#10B981] text-center">Hoja 1: Resumen Ejecutivo</div>
+                    <div class="p-2.5 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] text-gray-300 text-center">Hoja 2: Libro Diario</div>
+                    <div class="p-2.5 rounded-xl bg-[#0A0A0C] border border-[#1F1F26] text-gray-300 text-center">Hoja 3: Presupuestos y Metas</div>
+                </div>
+                <div class="p-4 rounded-2xl bg-[#0A0A0C] border border-[#1F1F26] font-mono text-xs space-y-1.5 text-gray-300">
+                    <div class="flex justify-between"><span>Ingresos Totales:</span><span class="text-[#10B981]">=SUMIFS(Movimientos!D:D, ...)</span></div>
+                    <div class="flex justify-between"><span>Gastos del Periodo:</span><span class="text-amber-400">=SUMIFS(Movimientos!D:D, ...)</span></div>
+                    <div class="flex justify-between"><span>Tasa de Ahorro Neta:</span><span class="text-[#8B5CF6]">=(Ingresos - Gastos) / Ingresos</span></div>
+                </div>
+            </div>
 
-            <div class="p-8 sm:p-12 rounded-3xl bg-darkCard border border-darkBorder">
-                <div class="border-b border-darkBorder pb-6 mb-8">
-                    <span class="text-xs font-bold uppercase tracking-wider text-purpleLight px-3 py-1 rounded-full bg-purplePrimary/15 border border-purplePrimary/30">Acuerdo de Uso</span>
-                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-3">Condiciones del Servicio de WeaVax</h1>
-                    <p class="text-xs text-gray-400 mt-1">Vigente a partir de noviembre de 2026</p>
+            <div class="lg:col-span-5 space-y-4">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                    Analítica Exportable
+                </span>
+                <h2 class="text-3xl font-black text-white tracking-tight">
+                    Reportes en Excel (.xlsx) dinámico con fórmulas vivas.
+                </h2>
+                <p class="text-sm text-gray-400 leading-relaxed">
+                    Exporta tu contabilidad personal en archivos <code class="text-white">.xlsx</code> nativos con múltiples pestañas, tablas estructuradas, fórmulas dinámicas recalculables, gráficos nativos y estilos adaptados a tu paleta visual.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. PRODUCTIVIDAD SIN CULPA + CORRELACIONES CRUZADAS + OFFLINE-FIRST -->
+    <section id="sin-culpa" class="py-20 border-b border-[#1F1F26]">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
+            <div class="max-w-2xl space-y-3">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-[#8B5CF6]/15 text-[#8B5CF6] border border-[#8B5CF6]/30">
+                    Diseño Anti-Parálisis
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                    Productividad sin culpa y correlaciones que conectan tu día.
+                </h2>
+                <p class="text-sm text-gray-400">
+                    Sin alertas rojas punitivas que te hacen abandonar la app cuando tienes un día ocupado.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="p-6 rounded-2xl bg-[#121216] border border-[#1F1F26] space-y-2.5">
+                    <h3 class="text-base font-black text-white">🌿 Reinicio Diario Sin Culpa</h3>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Si ayer quedaron tareas pendientes, tu vista de <strong>Plan</strong> te ofrece moverlas a hoy, reprogramarlas o archivarlas con un solo toque, manteniendo tu pantalla de Inicio limpia y enfocada.
+                    </p>
                 </div>
 
-                <div class="space-y-6 text-sm text-gray-300 leading-relaxed">
-                    <h2 class="text-base font-bold text-white flex items-center">
-                        <span class="w-2 h-2 rounded-full bg-purplePrimary mr-2"></span> 1. Aceptación de los Términos
-                    </h2>
-                    <p>
-                        Al descargar, instalar o utilizar WeaVax en sus versiones móviles o web, el usuario acepta de forma plena y sin reservas los presentes Términos y Condiciones de Uso.
+                <div class="p-6 rounded-2xl bg-[#121216] border border-[#1F1F26] space-y-2.5">
+                    <h3 class="text-base font-black text-white">🛡️ Escudos de Descanso & Modo Silencioso</h3>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Protege tu racha en días de descanso real con Escudos disponibles, o activa el <strong>Modo Silencioso Minimalista</strong> para ocultar barras de XP y niveles si prefieres cero gamificación.
                     </p>
+                </div>
 
-                    <h2 class="text-base font-bold text-white pt-2 border-t border-darkBorder flex items-center">
-                        <span class="w-2 h-2 rounded-full bg-greenAccent mr-2"></span> 2. Modalidades y Códigos de Activación WeaVax Pro
-                    </h2>
-                    <p>
-                        WeaVax ofrece una versión gratuita funcional con acceso a rutinas, ejercicios 3D, finanzas y sincronización con Google Calendar. Las funcionalidades avanzadas están reservadas para usuarios de <strong class="text-purpleLight">WeaVax Pro</strong> mediante códigos de activación con vigencia determinada (1 mes, 3 meses, 1 año o vitalicia), sin cargos automáticos ocultos al finalizar.
-                    </p>
-
-                    <h2 class="text-base font-bold text-white pt-2 border-t border-darkBorder flex items-center">
-                        <span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span> 3. Propiedad Intelectual
-                    </h2>
-                    <p>
-                        El diseño de interfaz, código fuente, algoritmos y marcas de WeaVax son propiedad exclusiva de sus creadores.
-                    </p>
-
-                    <h2 class="text-base font-bold text-white pt-2 border-t border-darkBorder flex items-center">
-                        <span class="w-2 h-2 rounded-full bg-purpleLight mr-2"></span> 4. Soporte y Asistencia
-                    </h2>
-                    <p class="text-gray-400">
-                        Atención directa a usuarios: <a href="https://www.instagram.com/weavax.app/" target="_blank" rel="noopener noreferrer" class="text-purpleLight font-semibold underline">instagram.com/weavax.app</a>
+                <div class="p-6 rounded-2xl bg-[#121216] border border-[#1F1F26] space-y-2.5">
+                    <h3 class="text-base font-black text-white">🧠 Correlaciones Cruzadas</h3>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Cruza automáticamente tu volumen de entrenamiento con tus hábitos de hidratación/descanso y te avisa de forma preventiva si un presupuesto avanza más rápido que los días del mes.
                     </p>
                 </div>
             </div>
         </div>
+    </section>
 
-    </main>
-
-    <!-- PIE DE PÁGINA (FOOTER) DONDE SE UBICAN DISCRETAMENTE LAS POLÍTICAS -->
-    <footer class="bg-darkCard border-t border-darkBorder mt-16 py-12 px-4 sm:px-6">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-gray-500">
-            <div class="flex items-center space-x-3">
-                <span class="font-extrabold text-white text-sm">WeaVax</span>
-                <span>·</span>
-                <span>Cochabamba, Bolivia</span>
-                <span>·</span>
-                <span>© 2026 Todos los derechos reservados.</span>
+    <!-- 5. TABLA COMPARATIVA TRANSPARENTE: GRATIS VS WEAVAX PRO -->
+    <section id="planes" class="py-20 border-b border-[#1F1F26]">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 space-y-10">
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
+                    Transparencia Total · Sin Anuncios
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                    Empieza gratis para siempre. Sube a Pro cuando quieras potencia IA.
+                </h2>
+                <p class="text-sm text-gray-400">
+                    El registro manual es ilimitado y libre de publicidad. En WeaVax Pro obtienes prueba gratuita con recordatorio 48 horas antes de cualquier renovación.
+                </p>
             </div>
 
-            <!-- Enlaces discretos a Políticas y Términos exigidos por Google -->
-            <div class="flex items-center space-x-6">
-                <a href="javascript:void(0)" onclick="showSection('home')" class="hover:text-gray-300 transition-colors">Inicio</a>
-                <a href="javascript:void(0)" onclick="showSection('privacy')" class="hover:text-gray-300 transition-colors">Política de Privacidad</a>
-                <a href="javascript:void(0)" onclick="showSection('terms')" class="hover:text-gray-300 transition-colors">Condiciones del Servicio</a>
-                <a href="https://www.instagram.com/weavax.app/" target="_blank" rel="noopener noreferrer" class="text-purpleLight hover:underline font-semibold">Instagram</a>
+            <div class="overflow-x-auto rounded-3xl bg-[#121216] border border-[#1F1F26]">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-[#1F1F26] bg-[#0A0A0C]">
+                            <th class="p-4 sm:p-5 font-black text-gray-300">Funcionalidad</th>
+                            <th class="p-4 sm:p-5 font-black text-white text-center">Plan Gratuito</th>
+                            <th class="p-4 sm:p-5 font-black text-[#8B5CF6] text-center">WeaVax Pro (Anual -40%)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[#1F1F26]">
+                        <tr>
+                            <td class="p-4 sm:p-5 font-bold text-gray-200">Publicidad y rastreadores de anuncios</td>
+                            <td class="p-4 sm:p-5 text-center font-extrabold text-[#10B981]">Cero anuncios (0%)</td>
+                            <td class="p-4 sm:p-5 text-center font-extrabold text-[#10B981]">Cero anuncios (0%)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 sm:p-5 font-bold text-gray-200">Registro manual de entrenamientos, series y PRs</td>
+                            <td class="p-4 sm:p-5 text-center text-gray-300">Ilimitado</td>
+                            <td class="p-4 sm:p-5 text-center font-bold text-white">Ilimitado + Vax Coach IA</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 sm:p-5 font-bold text-gray-200">Comunidad Fitness, Muro de Amigos y Comparador VS</td>
+                            <td class="p-4 sm:p-5 text-center text-gray-300">Incluido</td>
+                            <td class="p-4 sm:p-5 text-center font-bold text-white">Incluido + Badge PRO</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 sm:p-5 font-bold text-gray-200">Escáner IA de Comprobantes QR y Recibos</td>
+                            <td class="p-4 sm:p-5 text-center text-gray-400">5 escaneos / mes</td>
+                            <td class="p-4 sm:p-5 text-center font-extrabold text-[#10B981]">Ilimitado</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 sm:p-5 font-bold text-gray-200">Exportación Excel (.xlsx) Dinámico Multi-Hoja</td>
+                            <td class="p-4 sm:p-5 text-center text-gray-400">Exportación CSV básica</td>
+                            <td class="p-4 sm:p-5 text-center font-extrabold text-[#10B981]">Excel .xlsx con fórmulas y gráficos</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 sm:p-5 font-bold text-gray-200">Cuentas, Presupuestos, Metas y Proyectos activos</td>
+                            <td class="p-4 sm:p-5 text-center text-gray-300">Hasta 10 cuentas/metas</td>
+                            <td class="p-4 sm:p-5 text-center font-extrabold text-white">Ilimitados</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 sm:p-5 font-bold text-gray-200">Temas visuales oficiales (7 paletas personalizadas)</td>
+                            <td class="p-4 sm:p-5 text-center text-gray-300">Violeta Obsidiana</td>
+                            <td class="p-4 sm:p-5 text-center font-bold text-white">Los 7 temas desbloqueados</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <a href="./app/" class="px-6 py-3.5 rounded-2xl bg-[#8B5CF6] text-white text-xs font-extrabold shadow-lg">
+                    Crear Cuenta Gratis Ahora →
+                </a>
+                <a href="https://www.instagram.com/weavax.app/" target="_blank" rel="noopener noreferrer" class="px-6 py-3.5 rounded-2xl bg-[#121216] border border-[#1F1F26] hover:border-[#8B5CF6] text-gray-200 text-xs font-bold">
+                    Activar Prueba WeaVax Pro (@weavax.app)
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. POLÍTICA DE PRIVACIDAD, GOOGLE CALENDAR API Y CONDICIONES DEL SERVICIO -->
+    <footer id="privacidad" class="py-16 bg-[#0A0A0C] text-xs text-gray-400">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 space-y-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="p-6 rounded-2xl bg-[#121216] border border-[#1F1F26] space-y-3">
+                    <h3 class="text-sm font-black text-white">Política de Privacidad y Protección de Datos</h3>
+                    <p class="leading-relaxed">
+                        En <strong>WeaVax</strong> (<code>weavax.link</code> y app móvil <code>com.Arax.LifeOs</code>), tus datos financieros, cuentas, transacciones, tareas y notas personales se almacenan de forma privada bajo tu cuenta autenticada mediante Firebase Authentication y Cloud Firestore, y nunca se venden ni comparten con terceros o redes publicitarias.
+                    </p>
+                    <p class="leading-relaxed">
+                        En el módulo opcional de Comunidad Fitness, únicamente se muestran los datos que tú decides hacer públicos en <code>public_profiles</code> (nombre, <code>@usuario</code>, nivel y entrenamientos publicados). Puedes modificar tus ajustes de privacidad o eliminar tu cuenta y todos tus registros en cualquier momento desde la sección <strong>Ajustes</strong>.
+                    </p>
+                </div>
+
+                <div id="condiciones" class="p-6 rounded-2xl bg-[#121216] border border-[#1F1F26] space-y-3">
+                    <h3 class="text-sm font-black text-white">Uso de Google Calendar API y Condiciones del Servicio</h3>
+                    <p class="leading-relaxed">
+                        El uso y la transferencia de información recibida de las API de Google por parte de WeaVax cumple con la <strong>Política de Datos de Usuario de los Servicios API de Google</strong>, incluidos los requisitos de Uso Limitado. Solicitamos acceso exclusivamente al alcance <code>https://www.googleapis.com/auth/calendar.events</code> para sincronizar bidireccionalmente los eventos y recordatorios que creas en tu agenda.
+                    </p>
+                    <p class="leading-relaxed">
+                        WeaVax se proporciona como herramienta de organización personal y seguimiento deportivo. Para soporte, solicitudes de eliminación de datos o consultas sobre WeaVax Pro, contáctanos en <a href="https://www.instagram.com/weavax.app/" target="_blank" rel="noopener noreferrer" class="text-[#8B5CF6] underline">@weavax.app</a>.
+                    </p>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-[#1F1F26] flex flex-wrap items-center justify-between gap-4 text-[11px] text-gray-500">
+                <div class="flex items-center space-x-2">
+                    <img src="./weavax_logo.png" alt="WeaVax" class="w-5 h-5 object-contain">
+                    <span>© 2026 WeaVax LifeOS · Cochabamba, Bolivia. Todos los derechos reservados.</span>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#privacidad" class="hover:text-gray-300">Política de Privacidad</a>
+                    <a href="#condiciones" class="hover:text-gray-300">Condiciones del Servicio</a>
+                    <a href="./app/" class="text-[#8B5CF6] font-bold">Iniciar Sesión</a>
+                </div>
             </div>
         </div>
     </footer>
 
-    <!-- SCRIPT DE NAVEGACIÓN LIMPIO -->
-    <script>
-        function showSection(sectionId) {
-            const sections = ['home', 'privacy', 'terms'];
-            sections.forEach(s => {
-                const el = document.getElementById('view-' + s);
-                if (el) {
-                    if (s === sectionId) {
-                        el.classList.remove('hidden');
-                        el.classList.add('block');
-                    } else {
-                        el.classList.remove('block');
-                        el.classList.add('hidden');
-                    }
-                }
-            });
-
-            window.location.hash = sectionId;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function scrollToAnchor(anchorId) {
-            const homeView = document.getElementById('view-home');
-            if (homeView && homeView.classList.contains('hidden')) {
-                const sections = ['home', 'privacy', 'terms'];
-                sections.forEach(s => {
-                    const el = document.getElementById('view-' + s);
-                    if (el) {
-                        if (s === 'home') {
-                            el.classList.remove('hidden');
-                            el.classList.add('block');
-                        } else {
-                            el.classList.remove('block');
-                            el.classList.add('hidden');
-                        }
-                    }
-                });
-            }
-            setTimeout(() => {
-                const target = document.getElementById(anchorId);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }, 60);
-        }
-
-        // Leer hash inicial si el usuario o Google entra con enlaces directos
-        window.addEventListener('DOMContentLoaded', () => {
-            const hash = window.location.hash.replace('#', '').toLowerCase();
-            if (hash === 'privacy' || hash === 'privacidad') {
-                showSection('privacy');
-            } else if (hash === 'terms' || hash === 'terminos') {
-                showSection('terms');
-            } else if (hash === 'descargar' || hash === 'download') {
-                showSection('home');
-                scrollToAnchor('descargar');
-            } else {
-                showSection('home');
-            }
-        });
-    </script>
 </body>
 </html>
